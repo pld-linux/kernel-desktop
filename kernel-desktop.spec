@@ -114,7 +114,6 @@ Patch5:		linux-2.6-vesafb-tng.patch
 #		from linux-2.6.15
 Patch6:		squashfs%{squashfs_version}-patch
 
-Patch7:		linux-alpha-isa.patch
 Patch8:		linux-fbcon-margins.patch
 Patch9:		linux-static-dev.patch
 
@@ -556,13 +555,13 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch4 -p1
 
-%ifarch %{ix86}
+#%%ifarch %{ix86}
+# broken on amd64 ?
 %patch5 -p1
-%endif
+#%%endif
 
 %patch6 -p1
 
-%patch7 -p1
 %patch8 -p1
 %patch9 -p1
 
@@ -609,9 +608,9 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch300 -p1
 
 
-%ifarch %{ix86} x86_64
+#%%ifarch %{ix86} x86_64
 %patch57 -p1
-%endif
+#%%endif
 
 %patch60 -p1
 
