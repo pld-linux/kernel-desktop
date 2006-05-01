@@ -173,8 +173,9 @@ Patch57:	linux-2.6-cpuset_virtualization.patch
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_31.tar.bz2
 Patch60:	linux-2.6-sk98lin-8.31.2.3.patch
 
-# Alpha compile fix
 Patch300:	linux-2.6-alpha-for_each_possible_cpu.patch
+
+Patch301:	kernel-desktop-preempt_ppc_fix.patch
 
 Patch1000:	kernel-desktop-grsec-minimal.patch
 
@@ -608,15 +609,14 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 %patch55 -p1
 %patch56 -p1
 
-
-%patch300 -p1
-
-
 #%%ifarch %{ix86} x86_64
 %patch57 -p1
 #%%endif
 
 %patch60 -p1
+
+%patch300 -p1
+%patch301 -p1
 
 %if %{with grsec_minimal}
 %patch1000 -p1
