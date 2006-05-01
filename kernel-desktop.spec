@@ -12,6 +12,10 @@
 
 %{?debug:%define with_verbose 1}
 
+%ifarch ppc
+%undefine	with_suspend2
+%endif
+
 %ifarch %{ix86} ppc
 %define		have_isa	1
 %else
