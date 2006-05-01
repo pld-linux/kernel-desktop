@@ -96,7 +96,7 @@ Source42:	kernel-desktop-preempt-nopreempt.config
 Source43:	kernel-suspend2.config
 Source44:	kernel-vesafb-tng.config
 Source45:	kernel-squashfs.config
-Source46:	kernel-netfilter.config
+Source46:	kernel-desktop-nonetfilter.config
 Source47:	kernel-grsec.config
 
 ###
@@ -120,32 +120,6 @@ Patch6:		squashfs%{squashfs_version}-patch
 
 Patch8:		linux-fbcon-margins.patch
 Patch9:		linux-static-dev.patch
-
-########	netfilter snap
-## base
-Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
-Patch11:	pom-ng-connlimit-%{_netfilter_snap}.patch
-Patch12:	pom-ng-expire-%{_netfilter_snap}.patch
-Patch13:	pom-ng-fuzzy-%{_netfilter_snap}.patch
-Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
-Patch15:	pom-ng-nth-%{_netfilter_snap}.patch
-Patch16:	pom-ng-osf-%{_netfilter_snap}.patch
-Patch17:	pom-ng-psd-%{_netfilter_snap}.patch
-Patch18:	pom-ng-quota-%{_netfilter_snap}.patch
-Patch19:	pom-ng-random-%{_netfilter_snap}.patch
-Patch20:	pom-ng-set-%{_netfilter_snap}.patch
-Patch21:	pom-ng-time-%{_netfilter_snap}.patch
-Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
-
-## extra
-Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
-Patch31:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-Patch34:	pom-ng-account-%{_netfilter_snap}.patch
-Patch35:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
-########	End netfilter
 
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
 Patch50:	linux-2.6.16-imq2.diff
@@ -204,11 +178,6 @@ Provides:	kernel-net-ipp2p = 1:0.8.0
 Provides:	kernel-net-ipw2100 = 1.1.3
 Provides:	kernel-net-ipw2200 = 1.0.8
 Provides:	module-info
-#Obsoletes:	kernel-misc-fuse
-#Obsoletes:	kernel-modules
-#Obsoletes:	kernel-net-hostap
-#Obsoletes:	kernel-net-ieee80211
-#Obsoletes:	kernel-net-ipp2p
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
@@ -346,10 +315,6 @@ Provides:	kernel-smp-net-ipp2p = 1:0.8.0
 Provides:	kernel-smp-net-ipw2100 = 1.1.3
 Provides:	kernel-smp-net-ipw2200 = 1.0.8
 Provides:	module-info
-#Obsoletes:	kernel-smp-misc-fuse
-#Obsoletes:	kernel-smp-net-hostap
-#Obsoletes:	kernel-smp-net-ieee80211
-#Obsoletes:	kernel-smp-net-ipp2p
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
@@ -538,11 +503,11 @@ Autoreqprov:	no
 
 %description doc
 This is the documentation for the Linux kernel, as found in
-/usr/src/linux/Documentation directory.
+Documentation directory.
 
 %description doc -l pl
 Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
-/usr/src/linux/Documentation.
+Documentation.
 
 %prep
 %setup -q -n linux-%{version}%{_rc} 
@@ -569,32 +534,6 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 
 %patch8 -p1
 %patch9 -p1
-
-### netfilter
-# base
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
-%patch20 -p1
-%patch21 -p1
-%patch22 -p1
-
-## extra
-%patch30 -p1
-%patch31 -p1
-%patch32 -p1
-%patch33 -p1
-%patch34 -p1
-%patch35 -p1
-%patch36 -p1
-### end of netfilter
 
 %patch50 -p1
 
@@ -713,7 +652,7 @@ BuildConfig() {
 	# squashfs
 	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
 
-	# netfilter
+	# no netfilter
 	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
 
 %if %{with grsec_minimal}
