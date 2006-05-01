@@ -1,0 +1,88 @@
+diff -ur linux-2.6.16.11/arch/powerpc/kernel/head_32.S linux-2.6.16.11.ppcfixed/arch/powerpc/kernel/head_32.S
+--- linux-2.6.16.11/arch/powerpc/kernel/head_32.S	2006-04-24 20:20:24.000000000 +0000
++++ linux-2.6.16.11.ppcfixed/arch/powerpc/kernel/head_32.S	2006-05-01 20:23:38.000000000 +0000
+@@ -444,7 +444,7 @@
+ 	EXC_XFER_EE_LITE(0x800, kernel_fp_unavailable_exception)
+ 
+ /* Decrementer */
+-	EXCEPTION(0x900, Decrementer, timer_interrupt, EXC_XFER_LITE)
++	EXCEPTION(0x900, Decrementer, ppc_timer_interrupt, EXC_XFER_LITE)
+ 
+ 	EXCEPTION(0xa00, Trap_0a, unknown_exception, EXC_XFER_EE)
+ 	EXCEPTION(0xb00, Trap_0b, unknown_exception, EXC_XFER_EE)
+diff -ur linux-2.6.16.11/arch/powerpc/kernel/ppc_ksyms.c linux-2.6.16.11.ppcfixed/arch/powerpc/kernel/ppc_ksyms.c
+--- linux-2.6.16.11/arch/powerpc/kernel/ppc_ksyms.c	2006-05-01 20:29:25.000000000 +0000
++++ linux-2.6.16.11.ppcfixed/arch/powerpc/kernel/ppc_ksyms.c	2006-05-01 18:43:25.000000000 +0000
+@@ -192,7 +192,7 @@
+ #endif
+ 
+ #ifdef CONFIG_PPC32
+-EXPORT_SYMBOL(timer_interrupt);
++EXPORT_SYMBOL(ppc_timer_interrupt);
+ EXPORT_SYMBOL(tb_ticks_per_jiffy);
+ EXPORT_SYMBOL(console_drivers);
+ EXPORT_SYMBOL(cacheable_memcpy);
+diff -ur linux-2.6.16.11/arch/powerpc/kernel/time.c linux-2.6.16.11.ppcfixed/arch/powerpc/kernel/time.c
+--- linux-2.6.16.11/arch/powerpc/kernel/time.c	2006-05-01 20:29:25.000000000 +0000
++++ linux-2.6.16.11.ppcfixed/arch/powerpc/kernel/time.c	2006-05-01 20:22:52.000000000 +0000
+@@ -203,6 +203,7 @@
+ /*
+  * This version of gettimeofday has microsecond resolution.
+  */
++#if 0
+ static inline void __do_gettimeofday(struct timeval *tv, u64 tb_val)
+ {
+ 	unsigned long sec, usec;
+@@ -252,6 +253,7 @@
+ 	}
+ 	__do_gettimeofday(tv, get_tb());
+ }
++#endif
+ 
+ EXPORT_SYMBOL(do_gettimeofday);
+ 
+@@ -432,7 +434,7 @@
+  * timer_interrupt - gets called when the decrementer overflows,
+  * with interrupts disabled.
+  */
+-void timer_interrupt(struct pt_regs * regs)
++void ppc_timer_interrupt(struct pt_regs * regs)
+ {
+ 	int next_dec;
+ 	int cpu = smp_processor_id();
+diff -ur linux-2.6.16.11/include/asm-powerpc/hw_irq.h linux-2.6.16.11.ppcfixed/include/asm-powerpc/hw_irq.h
+--- linux-2.6.16.11/include/asm-powerpc/hw_irq.h	2006-05-01 20:29:25.000000000 +0000
++++ linux-2.6.16.11.ppcfixed/include/asm-powerpc/hw_irq.h	2006-05-01 18:42:34.000000000 +0000
+@@ -11,7 +11,7 @@
+ #include <asm/ptrace.h>
+ #include <asm/processor.h>
+ 
+-extern void timer_interrupt(struct pt_regs *);
++extern void ppc_timer_interrupt(struct pt_regs * regs);
+ 
+ #ifdef CONFIG_PPC_ISERIES
+ 
+diff -ur linux-2.6.16.11/include/asm-powerpc/pmac_feature.h linux-2.6.16.11.ppcfixed/include/asm-powerpc/pmac_feature.h
+--- linux-2.6.16.11/include/asm-powerpc/pmac_feature.h	2006-04-24 20:20:24.000000000 +0000
++++ linux-2.6.16.11.ppcfixed/include/asm-powerpc/pmac_feature.h	2006-05-01 18:12:50.000000000 +0000
+@@ -378,7 +378,7 @@
+  * Those are exported by pmac feature for internal use by arch code
+  * only like the platform function callbacks, do not use directly in drivers
+  */
+-extern spinlock_t feature_lock;
++extern raw_spinlock_t feature_lock;
+ extern struct device_node *uninorth_node;
+ extern u32 __iomem *uninorth_base;
+ 
+diff -ur linux-2.6.16.11/kernel/time/clockevents.c linux-2.6.16.11.ppcfixed/kernel/time/clockevents.c
+--- linux-2.6.16.11/kernel/time/clockevents.c	2006-05-01 20:29:25.000000000 +0000
++++ linux-2.6.16.11.ppcfixed/kernel/time/clockevents.c	2006-05-01 18:50:16.000000000 +0000
+@@ -29,6 +29,8 @@
+ #include <linux/percpu.h>
+ #include <linux/sysdev.h>
+ #include <linux/hrtimer.h>
++#include <linux/profile.h>
++#include <linux/irq.h>
+ 
+ #define MAX_CLOCK_EVENTS	4
+ 
