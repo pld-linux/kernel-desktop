@@ -1799,15 +1799,6 @@ Index: linux/Makefile
 ===================================================================
 --- linux.orig/Makefile
 +++ linux/Makefile
-@@ -1,7 +1,7 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 16
--EXTRAVERSION =
-+EXTRAVERSION =-rt18
- NAME=Sliding Snow Leopard
- 
- # *DOCUMENTATION*
 @@ -511,10 +511,14 @@ CFLAGS		+= $(call add-align,CONFIG_CC_AL
  CFLAGS		+= $(call add-align,CONFIG_CC_ALIGN_LOOPS,-loops)
  CFLAGS		+= $(call add-align,CONFIG_CC_ALIGN_JUMPS,-jumps)
@@ -13441,7 +13432,7 @@ Index: linux/arch/x86_64/kernel/entry.S
  /*
   * C code is not supposed to know about undefined top of stack. Every time 
   * a C function with an pt_regs argument is called from the SYSCALL based 
-@@ -231,8 +240,8 @@ sysret_check:		
+@@ -235,8 +244,8 @@
  	/* edx:	work, edi: workmask */	
  sysret_careful:
  	CFI_RESTORE_STATE
@@ -13452,16 +13443,16 @@ Index: linux/arch/x86_64/kernel/entry.S
  	sti
  	pushq %rdi
  	CFI_ADJUST_CFA_OFFSET 8
-@@ -253,7 +262,7 @@ sysret_signal:
+@@ -257,7 +266,7 @@
  	leaq -ARGOFFSET(%rsp),%rdi # &pt_regs -> arg1
  	xorl %esi,%esi # oldset -> arg2
  	call ptregscall_common
 -1:	movl $_TIF_NEED_RESCHED,%edi
 +1:	movl $(_TIF_NEED_RESCHED|_TIF_NEED_RESCHED_DELAYED),%edi
- 	jmp sysret_check
- 	
- badsys:
-@@ -321,8 +330,8 @@ int_with_check:
+ 	/* Use IRET because user could have changed frame. This
+ 	   works because ptregscall_common has called FIXUP_TOP_OF_STACK. */
+ 	cli
+@@ -329,8 +338,8 @@
  	/* First do a reschedule test. */
  	/* edx:	work, edi: workmask */
  int_careful:
@@ -13472,7 +13463,7 @@ Index: linux/arch/x86_64/kernel/entry.S
  	sti
  	pushq %rdi
  	CFI_ADJUST_CFA_OFFSET 8
-@@ -355,7 +364,7 @@ int_signal:
+@@ -363,7 +372,7 @@
  	movq %rsp,%rdi		# &ptregs -> arg1
  	xorl %esi,%esi		# oldset -> arg2
  	call do_notify_resume
@@ -13481,7 +13472,7 @@ Index: linux/arch/x86_64/kernel/entry.S
  int_restore_rest:
  	RESTORE_REST
  	cli
-@@ -561,8 +570,8 @@ bad_iret:
+@@ -553,8 +562,8 @@
  	/* edi: workmask, edx: work */
  retint_careful:
  	CFI_RESTORE_STATE
@@ -13492,7 +13483,7 @@ Index: linux/arch/x86_64/kernel/entry.S
  	sti
  	pushq %rdi
  	CFI_ADJUST_CFA_OFFSET	8
-@@ -584,7 +593,7 @@ retint_signal:
+@@ -576,7 +585,7 @@
  	call do_notify_resume
  	RESTORE_REST
  	cli
@@ -13501,7 +13492,7 @@ Index: linux/arch/x86_64/kernel/entry.S
  	GET_THREAD_INFO(%rcx)
  	jmp retint_check
  
-@@ -600,6 +609,7 @@ retint_kernel:	
+@@ -592,6 +601,7 @@
  	bt   $9,EFLAGS-ARGOFFSET(%rsp)	/* interrupts off? */
  	jnc  retint_restore_args
  	call preempt_schedule_irq
@@ -13509,7 +13500,7 @@ Index: linux/arch/x86_64/kernel/entry.S
  	jmp exit_intr
  #endif	
  	CFI_ENDPROC
-@@ -1059,3 +1069,41 @@ ENTRY(call_softirq)
+@@ -1051,3 +1061,41 @@
  	decl %gs:pda_irqcount
  	ret
  	CFI_ENDPROC
@@ -18148,27 +18139,6 @@ Index: linux/drivers/video/console/fbcon.c
 ===================================================================
 --- linux.orig/drivers/video/console/fbcon.c
 +++ linux/drivers/video/console/fbcon.c
-@@ -1183,7 +1183,6 @@ static void fbcon_clear(struct vc_data *
- {
- 	struct fb_info *info = registered_fb[con2fb_map[vc->vc_num]];
- 	struct fbcon_ops *ops = info->fbcon_par;
--
- 	struct display *p = &fb_display[vc->vc_num];
- 	u_int y_break;
- 
-@@ -1212,10 +1211,11 @@ static void fbcon_putcs(struct vc_data *
- 	struct display *p = &fb_display[vc->vc_num];
- 	struct fbcon_ops *ops = info->fbcon_par;
- 
--	if (!fbcon_is_inactive(vc, info))
-+	if (!fbcon_is_inactive(vc, info)) {
- 		ops->putcs(vc, info, s, count, real_y(p, ypos), xpos,
- 			   get_color(vc, info, scr_readw(s), 1),
- 			   get_color(vc, info, scr_readw(s), 0));
-+	}
- }
- 
- static void fbcon_putc(struct vc_data *vc, int c, int ypos, int xpos)
 @@ -2985,6 +2985,7 @@ static const struct consw fb_con = {
  	.con_screen_pos 	= fbcon_screen_pos,
  	.con_getxy 		= fbcon_getxy,
@@ -26487,19 +26457,6 @@ Index: linux/include/linux/mm.h
 ===================================================================
 --- linux.orig/include/linux/mm.h
 +++ linux/include/linux/mm.h
-@@ -229,10 +229,9 @@ struct page {
- 		unsigned long private;		/* Mapping-private opaque data:
- 					 	 * usually used for buffer_heads
- 						 * if PagePrivate set; used for
--						 * swp_entry_t if PageSwapCache.
--						 * When page is free, this
-+						 * swp_entry_t if PageSwapCache;
- 						 * indicates order in the buddy
--						 * system.
-+						 * system if PG_buddy is set.
- 						 */
- 		struct address_space *mapping;	/* If low bit clear, points to
- 						 * inode address_space, or NULL.
 @@ -1022,13 +1021,20 @@ static inline void vm_stat_account(struc
  }
  #endif /* CONFIG_PROC_FS */
@@ -26686,32 +26643,6 @@ Index: linux/include/linux/oprofile.h
 +extern raw_spinlock_t oprofilefs_lock;
   
  #endif /* OPROFILE_H */
-Index: linux/include/linux/page-flags.h
-===================================================================
---- linux.orig/include/linux/page-flags.h
-+++ linux/include/linux/page-flags.h
-@@ -74,7 +74,9 @@
- #define PG_mappedtodisk		16	/* Has blocks allocated on-disk */
- #define PG_reclaim		17	/* To be reclaimed asap */
- #define PG_nosave_free		18	/* Free, should not be written */
--#define PG_uncached		19	/* Page has been mapped as uncached */
-+#define PG_buddy		19	/* Page is free, on buddy lists */
-+
-+#define PG_uncached		20	/* Page has been mapped as uncached */
- 
- /*
-  * Global page accounting.  One instance per CPU.  Only unsigned longs are
-@@ -319,6 +321,10 @@ extern void __mod_page_state_offset(unsi
- #define SetPageNosaveFree(page)	set_bit(PG_nosave_free, &(page)->flags)
- #define ClearPageNosaveFree(page)		clear_bit(PG_nosave_free, &(page)->flags)
- 
-+#define PageBuddy(page)		test_bit(PG_buddy, &(page)->flags)
-+#define __SetPageBuddy(page)	__set_bit(PG_buddy, &(page)->flags)
-+#define __ClearPageBuddy(page)	__clear_bit(PG_buddy, &(page)->flags)
-+
- #define PageMappedToDisk(page)	test_bit(PG_mappedtodisk, &(page)->flags)
- #define SetPageMappedToDisk(page) set_bit(PG_mappedtodisk, &(page)->flags)
- #define ClearPageMappedToDisk(page) clear_bit(PG_mappedtodisk, &(page)->flags)
 Index: linux/include/linux/pagemap.h
 ===================================================================
 --- linux.orig/include/linux/pagemap.h
@@ -29814,7 +29745,7 @@ Index: linux/include/linux/sysctl.h
  	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
  	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
  	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
-+	KERN_MAX_LOCK_DEPTH=73
++	KERN_MAX_LOCK_DEPTH=80,
  };
  
  
@@ -50167,82 +50098,6 @@ Index: linux/mm/page_alloc.c
  static void __free_pages_ok(struct page *page, unsigned int order);
  
  /*
-@@ -153,7 +153,8 @@ static void bad_page(struct page *page)
- 			1 << PG_reclaim |
- 			1 << PG_slab    |
- 			1 << PG_swapcache |
--			1 << PG_writeback );
-+			1 << PG_writeback |
-+			1 << PG_buddy );
- 	set_page_count(page, 0);
- 	reset_page_mapcount(page);
- 	page->mapping = NULL;
-@@ -224,12 +225,12 @@ static inline unsigned long page_order(s
- 
- static inline void set_page_order(struct page *page, int order) {
- 	set_page_private(page, order);
--	__SetPagePrivate(page);
-+	__SetPageBuddy(page);
- }
- 
- static inline void rmv_page_order(struct page *page)
- {
--	__ClearPagePrivate(page);
-+	__ClearPageBuddy(page);
- 	set_page_private(page, 0);
- }
- 
-@@ -268,11 +269,13 @@ __find_combined_index(unsigned long page
-  * This function checks whether a page is free && is the buddy
-  * we can do coalesce a page and its buddy if
-  * (a) the buddy is not in a hole &&
-- * (b) the buddy is free &&
-- * (c) the buddy is on the buddy system &&
-- * (d) a page and its buddy have the same order.
-- * for recording page's order, we use page_private(page) and PG_private.
-+ * (b) the buddy is in the buddy system &&
-+ * (c) a page and its buddy have the same order.
-+ *
-+ * For recording whether a page is in the buddy system, we use PG_buddy.
-+ * Setting, clearing, and testing PG_buddy is serialized by zone->lock.
-  *
-+ * For recording page's order, we use page_private(page).
-  */
- static inline int page_is_buddy(struct page *page, int order)
- {
-@@ -281,10 +284,10 @@ static inline int page_is_buddy(struct p
- 		return 0;
- #endif
- 
--       if (PagePrivate(page)           &&
--           (page_order(page) == order) &&
--            page_count(page) == 0)
-+       if (PageBuddy(page) && page_order(page) == order) {
-+	       BUG_ON(page_count(page) != 0);
-                return 1;
-+       }
-        return 0;
- }
- 
-@@ -301,7 +304,7 @@ static inline int page_is_buddy(struct p
-  * as necessary, plus some accounting needed to play nicely with other
-  * parts of the VM system.
-  * At each level, we keep a list of pages, which are heads of continuous
-- * free pages of length of (1 << order) and marked with PG_Private.Page's
-+ * free pages of length of (1 << order) and marked with PG_buddy. Page's
-  * order is recorded in page_private(page) field.
-  * So when we are allocating or freeing one, we can derive the state of the
-  * other.  That is, if we allocate a small block, and both were   
-@@ -364,7 +367,8 @@ static inline int free_pages_check(struc
- 			1 << PG_slab	|
- 			1 << PG_swapcache |
- 			1 << PG_writeback |
--			1 << PG_reserved ))))
-+			1 << PG_reserved |
-+			1 << PG_buddy ))))
- 		bad_page(page);
- 	if (PageDirty(page))
- 		__ClearPageDirty(page);
 @@ -390,7 +394,9 @@ static inline int free_pages_check(struc
  static void free_pages_bulk(struct zone *zone, int count,
  					struct list_head *list, int order)
@@ -50296,16 +50151,6 @@ Index: linux/mm/page_alloc.c
  	} else {
  		LIST_HEAD(list);
  		int loop;
-@@ -522,7 +528,8 @@ static int prep_new_page(struct page *pa
- 			1 << PG_slab    |
- 			1 << PG_swapcache |
- 			1 << PG_writeback |
--			1 << PG_reserved ))))
-+			1 << PG_reserved |
-+			1 << PG_buddy ))))
- 		bad_page(page);
- 
- 	/*
 @@ -568,6 +575,7 @@ static struct page *__rmqueue(struct zon
  	return NULL;
  }
