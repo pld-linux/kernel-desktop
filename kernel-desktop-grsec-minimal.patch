@@ -340,7 +340,7 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  		{"locks",	locks_read_proc},
  		{"execdomains",	execdomains_read_proc},
  		{NULL,}
-@@ -731,31 +735,49 @@
+@@ -843,26 +843,43 @@
  	for (p = simple_ones; p->name; p++)
  		create_proc_read_entry(p->name, 0, NULL, p->read_proc, NULL);
  
@@ -352,14 +352,13 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_proc_read_entry("cmdline", gr_mode, NULL, &cmdline_read_proc, NULL);
 +#endif
-+
++	
  	proc_symlink("mounts", NULL, "self/mounts");
  
  	/* And now for trickier ones */
  	entry = create_proc_entry("kmsg", S_IRUSR, &proc_root);
  	if (entry)
  		entry->proc_fops = &proc_kmsg_operations;
-+
 +#ifdef CONFIG_GRKERNSEC_PROC_ADD
 +	create_seq_entry("devices", gr_mode, &proc_devinfo_operations);
 +#else
@@ -386,6 +385,9 @@ diff -urN linux-2.6.16.2/fs/proc/proc_misc.c linux-2.6.16.2-grsec/fs/proc/proc_m
  #endif
  #ifdef CONFIG_SCHEDSTATS
  	create_seq_entry("schedstat", 0, &proc_schedstat_operations);
+@@ -870,7 +887,7 @@
+ #ifdef CONFIG_LATENCY_TRACE
+ 	create_seq_entry("latency_trace", 0, &proc_latency_trace_operations);
  #endif
 -#ifdef CONFIG_PROC_KCORE
 +#if defined(CONFIG_PROC_KCORE) && !defined(CONFIG_GRKERNSEC_PROC_ADD)
@@ -1077,9 +1079,9 @@ diff -urN linux-2.6.16.2/include/linux/sysctl.h linux-2.6.16.2-grsec/include/lin
 --- linux-2.6.16.2/include/linux/sysctl.h	2006-04-07 18:56:47.000000000 +0200
 +++ linux-2.6.16.2-grsec/include/linux/sysctl.h	2006-04-11 18:09:09.244033250 +0200
 @@ -148,6 +148,9 @@
- 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
  	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
  	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
+	KERN_MAX_LOCK_DEPTH=80,
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
