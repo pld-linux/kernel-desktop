@@ -192,8 +192,6 @@ Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel = %{epoch}:%{version}-%{release}
-Provides:	kernel(netfilter) = %{_netfilter_snap}
-Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
 Provides:	kernel-misc-fuse
 Provides:	kernel-net-hostap = 0.4.4
@@ -281,6 +279,26 @@ DRM Kernel Treiber (%{drm_xfree_version}).
 %description drm -l pl
 Sterowniki DRM (%{drm_xfree_version}).
 
+%package net-netfilter
+Summary:	Netfilter kernel modules
+Summary(de):	Netfilter Kernel Treiber
+Summary(pl):	Modu造 Netfiltera
+Group:		Base/Kernel
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	kernel(netfilter) = %{_netfilter_snap}
+Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
+Autoreqprov:	no
+
+%description net-netfilter
+Netfilter kernel modules (%{_netfilter_snap}).
+
+%description net-netfilter -l de
+Netfilter Kernel Treiber (%{_netfilter_snap}).
+
+%description net-netfilter -l pl
+Modu造 Netfiltera (%{_netfilter_snap}).
+
 %package pcmcia
 Summary:	PCMCIA modules
 Summary(de):	PCMCIA Module
@@ -349,8 +367,6 @@ Requires:	coreutils
 Requires:	geninitrd >= 2.26
 Requires:	module-init-tools >= 0.9.9
 Provides:	kernel = %{epoch}:%{version}-%{release}
-Provides:	kernel(netfilter) = %{_netfilter_snap}
-Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
 Provides:	kernel(realtime-lsm) = 0.1.1
 Provides:	kernel-smp-misc-fuse
 Provides:	kernel-smp-net-hostap = 0.4.4
@@ -428,6 +444,26 @@ DRM SMP Kernel Module (%{drm_xfree_version}).
 
 %description smp-drm -l pl
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
+
+%package smp-net-netfilter
+Summary:	Netfilter SMP kernel modules
+Summary(de):	Netfilter SMP Kernel Treiber
+Summary(pl):	Modu造 Netfiltera dla maszyn wieloprocesorowych
+Group:		Base/Kernel
+Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
+Provides:	kernel(netfilter) = %{_netfilter_snap}
+Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
+Autoreqprov:	no
+
+%description smp-net-netfilter
+Netfilter SMP kernel modules (%{_netfilter_snap}).
+
+%description smp-net-netfilter -l de
+Netfilter SMP Kernel Treiber (%{_netfilter_snap}).
+
+%description smp-net-netfilter -l pl
+Modu造 Netfiltera dla maszyn wieloprocesorowych (%{_netfilter_snap}).
 
 %package smp-pcmcia
 Summary:	PCMCIA modules for SMP kernel
@@ -655,9 +691,7 @@ Documentation.
 %patch55 -p1
 %patch56 -p1
 
-#%%ifarch %{ix86} x86_64
 %patch57 -p1
-#%%endif
 
 %patch60 -p1
 
@@ -1090,6 +1124,8 @@ fi
 /lib/modules/%{ver_rel}/kernel/kernel
 /lib/modules/%{ver_rel}/kernel/lib
 /lib/modules/%{ver_rel}/kernel/net
+%exclude /lib/modules/%{ver_rel}/kernel/net/netfilter
+%exclude /lib/modules/%{ver_rel}/kernel/net/*/netfilter
 /lib/modules/%{ver_rel}/kernel/security
 %dir /lib/modules/%{ver_rel}/kernel/sound
 /lib/modules/%{ver_rel}/kernel/sound/soundcore.*
@@ -1118,6 +1154,11 @@ fi
 %files drm
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}/kernel/drivers/char/drm
+
+%files net-netfilter
+%defattr(644,root,root,755)
+/lib/modules/%{ver_rel}/kernel/net/netfilter
+/lib/modules/%{ver_rel}/kernel/net/*/netfilter
 
 %if %{with pcmcia}
 %files pcmcia
@@ -1170,6 +1211,8 @@ fi
 /lib/modules/%{ver_rel}smp/kernel/kernel
 /lib/modules/%{ver_rel}smp/kernel/lib
 /lib/modules/%{ver_rel}smp/kernel/net
+%exclude /lib/modules/%{ver_rel}smp/kernel/net/netfilter
+%exclude /lib/modules/%{ver_rel}smp/kernel/net/*/netfilter
 /lib/modules/%{ver_rel}smp/kernel/security
 %dir /lib/modules/%{ver_rel}smp/kernel/sound
 /lib/modules/%{ver_rel}smp/kernel/sound/soundcore.*
@@ -1198,6 +1241,11 @@ fi
 %files smp-drm
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}smp/kernel/drivers/char/drm
+
+%files smp-net-netfilter
+%defattr(644,root,root,755)
+/lib/modules/%{ver_rel}smp/kernel/net/netfilter
+/lib/modules/%{ver_rel}smp/kernel/net/*/netfilter
 
 %if %{with pcmcia}
 %files smp-pcmcia
