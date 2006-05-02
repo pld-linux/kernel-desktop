@@ -207,7 +207,7 @@ your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
 
 %description -l de
-Das Kernel-Paket enthält den Linux-Kernel (vmlinuz), den Kern des
+Das Kernel-Packet enthält den Linux-Kernel (vmlinuz), den Kern des
 Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
@@ -225,17 +225,22 @@ siê w komputerze, takiego jak sterowniki dysków itp.
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
+Summary(de):	vmlinux - dekompressiertes Kernel Bild
 Summary(pl):	vmlinux - rozpakowany obraz j±dra
 Group:		Base/Kernel
 
 %description vmlinux
 vmlinux - uncompressed kernel image.
 
+%description vmlinux -l de
+vmlinux - dekompressiertes Kernel Bild.
+
 %description vmlinux -l pl
 vmlinux - rozpakowany obraz j±dra.
 
 %package drm
 Summary:	DRM kernel modules
+Summary(de):	DRM Kernel Treiber
 Summary(pl):	Sterowniki DRM
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
@@ -246,11 +251,15 @@ Autoreqprov:	no
 %description drm
 DRM kernel modules (%{drm_xfree_version}).
 
+%description drm -l de
+DRM Kernel Treiber (%{drm_xfree_version}).
+
 %description drm -l pl
 Sterowniki DRM (%{drm_xfree_version}).
 
 %package pcmcia
 Summary:	PCMCIA modules
+Summary(de):	PCMCIA Module
 Summary(pl):	Modu³y PCMCIA
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
@@ -264,11 +273,15 @@ Autoreqprov:	no
 %description pcmcia
 PCMCIA modules (%{pcmcia_version}).
 
+%description pcmcia -l de
+PCMCIA Module (%{pcmcia_version})
+
 %description pcmcia -l pl
 Modu³y PCMCIA (%{pcmcia_version}).
 
 %package sound-alsa
 Summary:	ALSA kernel modules
+Summary(de):	ALSA Kernel Module
 Summary(pl):	Sterowniki d¼wiêku ALSA
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
@@ -278,11 +291,15 @@ Autoreqprov:	no
 %description sound-alsa
 ALSA (Advanced Linux Sound Architecture) sound drivers.
 
+%description sound-alsa -l de
+ALSA (Advanced Linux Sound Architecture) Sound-Treiber.
+
 %description sound-alsa -l pl
 Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture).
 
 %package sound-oss
 Summary:	OSS kernel modules
+Summary(de):	OSS Kernel Module
 Summary(pl):	Sterowniki d¼wiêku OSS
 Group:		Base/Kernel
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
@@ -292,12 +309,15 @@ Autoreqprov:	no
 %description sound-oss
 OSS (Open Sound System) drivers.
 
+%description sound-oss -l de
+OSS (Open Sound System) Treiber.
+
 %description sound-oss -l pl
 Sterowniki d¼wiêku OSS (Open Sound System).
 
 %package smp
 Summary:	Kernel version %{version} compiled for SMP machines
-Summary(de):	Kernel version %{version} für Multiprozessor-Maschinen
+Summary(de):	Kernel Version %{version} für Multiprozessor-Maschinen
 Summary(fr):	Kernel version %{version} compiler pour les machine Multi-Processeur
 Summary(pl):	J±dro Linuksa w wersji %{version} dla maszyn wieloprocesorowych
 Group:		Base/Kernel
@@ -336,9 +356,9 @@ is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
 %description smp -l de
-Dieses Paket enthält eine SMP (Multiprozessor)-Version von
+Dieses Packet enthält eine SMP (Multiprozessor)-Version vom
 Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
-Prozessoren gebraucht, sollte aber auch auf Computern mit nur einer
+Prozessoren gebraucht, sollte aber auch auf Komputern mit nur einer
 CPU laufen.
 
 %description smp -l fr
@@ -353,17 +373,22 @@ Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
 
 %package smp-vmlinux
 Summary:	vmlinux - uncompressed SMP kernel image
+Summary(de):	vmlinux - dekompressiertes SMP Kernel Bild
 Summary(pl):	vmlinux - rozpakowany obraz j±dra SMP
 Group:		Base/Kernel
 
 %description smp-vmlinux
 vmlinux - uncompressed SMP kernel image.
 
+%description smp-vmlinux -l de
+vmlinux - dekompressiertes SMP Kernel Bild.
+
 %description smp-vmlinux -l pl
 vmlinux - rozpakowany obraz j±dra SMP.
 
 %package smp-drm
 Summary:	DRM SMP kernel modules
+Summary(de):	DRM SMP Kernel Module
 Summary(pl):	Sterowniki DRM dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -374,11 +399,15 @@ Autoreqprov:	no
 %description smp-drm
 DRM SMP kernel modules (%{drm_xfree_version}).
 
+%description smp-drm -l de
+DRM SMP Kernel Module (%{drm_xfree_version}).
+
 %description smp-drm -l pl
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
 
 %package smp-pcmcia
 Summary:	PCMCIA modules for SMP kernel
+Summary(de):	PCMCIA Module für SMP Kernel
 Summary(pl):	Modu³y PCMCIA dla maszyn SMP
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -392,11 +421,15 @@ Autoreqprov:	no
 %description smp-pcmcia
 PCMCIA modules for SMP kernel (%{pcmcia_version}).
 
+%description smp-pcmcia -l de
+PCMCIA Module für SMP Kernel (%{pcmcia_version}).
+
 %description smp-pcmcia -l pl
 Modu³y PCMCIA dla maszyn SMP (%{pcmcia_version}).
 
 %package smp-sound-alsa
 Summary:	ALSA SMP kernel modules
+Summary(de):	ALSA SMP Kernel Module
 Summary(pl):	Sterowniki d¼wiêku ALSA dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -406,12 +439,16 @@ Autoreqprov:	no
 %description smp-sound-alsa
 ALSA (Advanced Linux Sound Architecture) SMP sound drivers.
 
+%description smp-sound-alsa -l de
+ALSA (Advanced Linux Sound Architecture) SMP Sound-Treiber.
+
 %description smp-sound-alsa -l pl
 Sterowniki d¼wiêku ALSA (Advanced Linux Sound Architecture) dla maszyn
 wieloprocesorowych.
 
 %package smp-sound-oss
 Summary:	OSS SMP kernel modules
+Summary(de):	OSS SMP Kernel Module
 Summary(pl):	Sterowniki d¼wiêku OSS dla maszyn wieloprocesorowych
 Group:		Base/Kernel
 Requires(postun):	%{name}-smp = %{epoch}:%{version}-%{release}
@@ -421,11 +458,15 @@ Autoreqprov:	no
 %description smp-sound-oss
 OSS (Open Sound System) SMP sound drivers.
 
+%description smp-sound-oss -l de
+OSS (Open Sound System) SMP Sound-Treiber.
+
 %description smp-sound-oss -l pl
 Sterowniki OSS (Open Sound System) dla maszyn wieloprocesorowych.
 
 %package headers
 Summary:	Header files for the Linux kernel
+Summary(de):	Header Dateien für den Linux-Kernel
 Summary(pl):	Pliki nag³ówkowe j±dra Linuksa
 Group:		Development/Building
 Provides:	kernel-headers = %{epoch}:%{version}-%{release}
@@ -441,12 +482,18 @@ These are the C header files for the Linux kernel, which define
 structures and constants that are needed when rebuilding the kernel or
 building kernel modules.
 
+%description headers -l de
+Dies sind die C Header Dateien für den Linux-Kernel, die definierte
+Strukturen und Konstante beinhalten die beim rekompilieren des Kernels
+oder bei Kernel Modul kompilationen gebraucht werden.
+
 %description headers -l pl
 Pakiet zawiera pliki nag³ówkowe j±dra, niezbêdne do rekompilacji j±dra
 oraz budowania modu³ów j±dra.
 
 %package module-build
 Summary:	Development files for building kernel modules
+Summary(de):	Development Dateien die beim Kernel Modul kompilationen gebraucht werden
 Summary(pl):	Pliki s³u¿±ce do budowania modu³ów j±dra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
@@ -457,12 +504,17 @@ Autoreqprov:	no
 Development files from kernel source tree needed to build Linux kernel
 modules from external packages.
 
+%description module-build -l de
+Development Dateien des Linux-Kernels die beim kompilieren externer
+Kernel Module gebraucht werden.
+
 %description module-build -l pl
 Pliki ze drzewa ¼róde³ j±dra potrzebne do budowania modu³ów j±dra
 Linuksa z zewnêtrznych pakietów.
 
 %package source
 Summary:	Kernel source tree
+Summary(de):	Der Kernel Quelltext
 Summary(pl):	Kod ¼ród³owy j±dra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
@@ -476,11 +528,11 @@ also build a custom kernel that is better tuned to your particular
 hardware.
 
 %description source -l de
-Das Kernel-Source-Paket enthält den source code (C/Assembler-Code) des
+Das Kernel-Source-Packet enthält den source code (C/Assembler-Code) des
 Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
-C-Programme zu compilieren, da sie auf Konstanten zurückgreifen, die
+C-Programme zu kompilieren, da sie auf Konstanten zurückgreifen, die
 im Kernel-Source definiert sind. Die Source-Dateien können auch
-benutzt werden, um einen Kernel zu compilieren, der besser auf Ihre
+benutzt werden, um einen Kernel zu kompilieren, der besser auf Ihre
 Hardware ausgerichtet ist.
 
 %description source -l fr
@@ -496,6 +548,7 @@ Pakiet zawiera kod ¼ród³owy j±dra systemu.
 
 %package doc
 Summary:	Kernel documentation
+Summary(de):	Kernel Dokumentation
 Summary(pl):	Dokumentacja do j±dra Linuksa
 Group:		Documentation
 Provides:	kernel-doc = %{version}
@@ -504,6 +557,10 @@ Autoreqprov:	no
 %description doc
 This is the documentation for the Linux kernel, as found in
 Documentation directory.
+
+%description doc -l de
+Dies ist die Kernel Dokumentation wie sie im 'Documentation' Verzeichniss
+vorgefunden werden kann.
 
 %description doc -l pl
 Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
