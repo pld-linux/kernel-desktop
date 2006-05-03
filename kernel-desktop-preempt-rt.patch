@@ -789,6 +789,44 @@ Index: linux/Documentation/RCU/proc.txt
 +	passes through a grace period.  The last entry should be zero,
 +	as it is only incremented if a torture structure's counter
 +	somehow gets incremented farther than it should.
+Index: linux/Documentation/RCU/whatisRCU.txt
+===================================================================
+--- linux.orig/Documentation/RCU/whatisRCU.txt
++++ linux/Documentation/RCU/whatisRCU.txt
+@@ -790,7 +790,6 @@ RCU pointer update:
+ 
+ RCU grace period:
+ 
+-	synchronize_kernel (deprecated)
+ 	synchronize_net
+ 	synchronize_sched
+ 	synchronize_rcu
+Index: linux/Documentation/feature-removal-schedule.txt
+===================================================================
+--- linux.orig/Documentation/feature-removal-schedule.txt
++++ linux/Documentation/feature-removal-schedule.txt
+@@ -32,21 +32,6 @@ Who:	Adrian Bunk <bunk@stusta.de>
+ 
+ ---------------------------
+ 
+-What:	RCU API moves to EXPORT_SYMBOL_GPL
+-When:	April 2006
+-Files:	include/linux/rcupdate.h, kernel/rcupdate.c
+-Why:	Outside of Linux, the only implementations of anything even
+-	vaguely resembling RCU that I am aware of are in DYNIX/ptx,
+-	VM/XA, Tornado, and K42.  I do not expect anyone to port binary
+-	drivers or kernel modules from any of these, since the first two
+-	are owned by IBM and the last two are open-source research OSes.
+-	So these will move to GPL after a grace period to allow
+-	people, who might be using implementations that I am not aware
+-	of, to adjust to this upcoming change.
+-Who:	Paul E. McKenney <paulmck@us.ibm.com>
+-
+----------------------------
+-
+ What:	raw1394: requests of type RAW1394_REQ_ISO_SEND, RAW1394_REQ_ISO_LISTEN
+ When:	November 2005
+ Why:	Deprecated in favour of the new ioctl-based rawiso interface, which is
 Index: linux/Documentation/kernel-parameters.txt
 ===================================================================
 --- linux.orig/Documentation/kernel-parameters.txt
@@ -18288,15 +18326,6 @@ Index: linux/fs/buffer.c
  	return;
  }
  
-@@ -1332,7 +1326,7 @@ struct bh_lru {
- 
- static DEFINE_PER_CPU(struct bh_lru, bh_lrus) = {{ NULL }};
- 
--#ifdef CONFIG_SMP
-+#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
- #define bh_lru_lock()	local_irq_disable()
- #define bh_lru_unlock()	local_irq_enable()
- #else
 @@ -3160,6 +3154,8 @@ EXPORT_SYMBOL(alloc_buffer_head);
  void free_buffer_head(struct buffer_head *bh)
  {
@@ -25196,7 +25225,7 @@ Index: linux/include/linux/futex.h
 + */
 +#define ROBUST_LIST_LIMIT	2048
 +
-+long do_futex(u32 __user *uaddr, int op, u32 val, unsigned long timeout,
++long do_futex(u32 __user *uaddr, int op, u32 val, struct timespec *timeout,
 +	      u32 __user *uaddr2, u32 val2, u32 val3);
 +
 +extern int handle_futex_death(u32 __user *uaddr, struct task_struct *curr);
@@ -25599,10 +25628,11 @@ Index: linux/include/linux/init_task.h
  	.policy		= SCHED_NORMAL,					\
  	.cpus_allowed	= CPU_MASK_ALL,					\
  	.mm		= NULL,						\
-@@ -121,6 +123,7 @@ extern struct group_info init_groups;
+@@ -121,6 +123,8 @@ extern struct group_info init_groups;
  	.journal_info	= NULL,						\
  	.cpu_timers	= INIT_CPU_TIMERS(tsk.cpu_timers),		\
  	.fs_excl	= ATOMIC_INIT(0),				\
++	.posix_timer_list = NULL,					\
 +	INIT_RT_MUTEXES(tsk)						\
  }
  
@@ -27003,6 +27033,17 @@ Index: linux/include/linux/plist.h
 +}
 +
 +#endif
+Index: linux/include/linux/posix-timers.h
+===================================================================
+--- linux.orig/include/linux/posix-timers.h
++++ linux/include/linux/posix-timers.h
+@@ -110,5 +110,5 @@ void posix_cpu_timers_exit_group(struct 
+ 
+ void set_process_cpu_timer(struct task_struct *task, unsigned int clock_idx,
+ 			   cputime_t *newval, cputime_t *oldval);
+-
++int posix_cpu_thread_init(void);
+ #endif
 Index: linux/include/linux/preempt.h
 ===================================================================
 --- linux.orig/include/linux/preempt.h
@@ -27261,7 +27302,14 @@ Index: linux/include/linux/rcupdate.h
  
  /**
   * rcu_dereference - fetch an RCU-protected pointer in an
-@@ -253,7 +274,13 @@ extern int rcu_pending(int cpu);
+@@ -247,13 +268,19 @@ extern int rcu_pending(int cpu);
+  * softirq handlers will have completed, since in some kernels, these
+  * handlers can run in process context, and can block.
+  *
+- * This primitive provides the guarantees made by the (deprecated)
++ * This primitive provides the guarantees made by the (now removed)
+  * synchronize_kernel() API.  In contrast, synchronize_rcu() only
+  * guarantees that rcu_read_lock() sections will have completed.
   * In "classic RCU", these two guarantees happen to be one and
   * the same, but can differ in realtime RCU implementations.
   */
@@ -27275,8 +27323,11 @@ Index: linux/include/linux/rcupdate.h
  
  extern void rcu_init(void);
  extern void rcu_check_callbacks(int cpu, int user);
-@@ -268,7 +295,6 @@ extern void FASTCALL(call_rcu_bh(struct 
- extern __deprecated_for_modules void synchronize_kernel(void);
+@@ -265,10 +292,8 @@ extern void FASTCALL(call_rcu(struct rcu
+ 				void (*func)(struct rcu_head *head)));
+ extern void FASTCALL(call_rcu_bh(struct rcu_head *head,
+ 				void (*func)(struct rcu_head *head)));
+-extern __deprecated_for_modules void synchronize_kernel(void);
  extern void synchronize_rcu(void);
  void synchronize_idle(void);
 -extern void rcu_barrier(void);
@@ -28175,7 +28226,16 @@ Index: linux/include/linux/sched.h
  #ifdef CONFIG_SCHEDSTATS
  	struct sched_info sched_info;
  #endif
-@@ -828,11 +977,51 @@ struct task_struct {
+@@ -773,6 +922,8 @@ struct task_struct {
+ 	unsigned long long it_sched_expires;
+ 	struct list_head cpu_timers[3];
+ 
++	struct task_struct* posix_timer_list;
++
+ /* process credentials */
+ 	uid_t uid,euid,suid,fsuid;
+ 	gid_t gid,egid,sgid,fsgid;
+@@ -828,11 +979,51 @@ struct task_struct {
  /* Protection of proc_dentry: nesting proc_lock, dcache_lock, write_lock_irq(&tasklist_lock); */
  	spinlock_t proc_lock;
  
@@ -28227,7 +28287,7 @@ Index: linux/include/linux/sched.h
  /* journalling filesystem info */
  	void *journal_info;
  
-@@ -869,6 +1058,13 @@ struct task_struct {
+@@ -869,6 +1060,13 @@ struct task_struct {
  	nodemask_t mems_allowed;
  	int cpuset_mems_generation;
  #endif
@@ -28241,7 +28301,7 @@ Index: linux/include/linux/sched.h
  	atomic_t fs_excl;	/* holding fs exclusive resources */
  	struct rcu_head rcu;
  };
-@@ -928,6 +1124,11 @@ static inline void put_task_struct(struc
+@@ -928,6 +1126,11 @@ static inline void put_task_struct(struc
  #define PF_BORROWED_MM	0x00400000	/* I am a kthread doing use_mm */
  #define PF_RANDOMIZE	0x00800000	/* randomize virtual address space */
  #define PF_SWAPWRITE	0x01000000	/* Allowed to write to swap */
@@ -28253,7 +28313,7 @@ Index: linux/include/linux/sched.h
  
  /*
   * Only the _current_ task can read/write to tsk->flags, but other
-@@ -982,6 +1183,17 @@ static inline void idle_task_exit(void) 
+@@ -982,6 +1185,17 @@ static inline void idle_task_exit(void) 
  #endif
  
  extern void sched_idle_next(void);
@@ -28271,7 +28331,7 @@ Index: linux/include/linux/sched.h
  extern void set_user_nice(task_t *p, long nice);
  extern int task_prio(const task_t *p);
  extern int task_nice(const task_t *p);
-@@ -989,11 +1201,13 @@ extern int can_nice(const task_t *p, con
+@@ -989,11 +1203,13 @@ extern int can_nice(const task_t *p, con
  extern int task_curr(const task_t *p);
  extern int idle_cpu(int cpu);
  extern int sched_setscheduler(struct task_struct *, int, struct sched_param *);
@@ -28285,7 +28345,7 @@ Index: linux/include/linux/sched.h
  
  /*
   * The default (Linux) execution domain.
-@@ -1041,6 +1255,9 @@ extern void do_timer(struct pt_regs *);
+@@ -1041,6 +1257,9 @@ extern void do_timer(struct pt_regs *);
  
  extern int FASTCALL(wake_up_state(struct task_struct * tsk, unsigned int state));
  extern int FASTCALL(wake_up_process(struct task_struct * tsk));
@@ -28295,7 +28355,7 @@ Index: linux/include/linux/sched.h
  extern void FASTCALL(wake_up_new_task(struct task_struct * tsk,
  						unsigned long clone_flags));
  #ifdef CONFIG_SMP
-@@ -1128,12 +1345,20 @@ extern struct mm_struct * mm_alloc(void)
+@@ -1128,12 +1347,20 @@ extern struct mm_struct * mm_alloc(void)
  
  /* mmdrop drops the mm and the page tables */
  extern void FASTCALL(__mmdrop(struct mm_struct *));
@@ -28316,7 +28376,7 @@ Index: linux/include/linux/sched.h
  /* mmput gets rid of the mappings and all user-space */
  extern void mmput(struct mm_struct *);
  /* Grab a reference to a task's mm, if it is not already going away */
-@@ -1297,43 +1522,97 @@ static inline int signal_pending(struct 
+@@ -1297,43 +1524,97 @@ static inline int signal_pending(struct 
  	return unlikely(test_tsk_thread_flag(p,TIF_SIGPENDING));
  }
    
@@ -28430,7 +28490,7 @@ Index: linux/include/linux/sched.h
  /* Reevaluate whether the task has signals pending delivery.
     This is required every time the blocked sigset_t changes.
     callers must hold sighand->siglock.  */
-@@ -1355,6 +1634,7 @@ static inline unsigned int task_cpu(cons
+@@ -1355,6 +1636,7 @@ static inline unsigned int task_cpu(cons
  
  static inline void set_task_cpu(struct task_struct *p, unsigned int cpu)
  {
@@ -29892,7 +29952,7 @@ Index: linux/include/linux/timeofday.h
 +extern int timeofday_is_continuous(void);
 +extern u32 timeofday_get_clockres(void);
 +extern void timeofday_init(void);
-+
++extern void timeofday_overflow_protection(void);
 +#ifndef CONFIG_IS_TICK_BASED
 +#define arch_getoffset() (0)
 +#else
@@ -30397,7 +30457,7 @@ Index: linux/init/main.c
  		if (msg) {
  			printk(KERN_WARNING "error in initcall at 0x%p: "
  				"returned with %s\n", *call, msg);
-@@ -618,6 +642,7 @@ static void __init do_basic_setup(void)
+@@ -618,13 +642,16 @@ static void __init do_basic_setup(void)
  static void do_pre_smp_initcalls(void)
  {
  	extern int spawn_ksoftirqd(void);
@@ -30405,15 +30465,16 @@ Index: linux/init/main.c
  #ifdef CONFIG_SMP
  	extern int migration_init(void);
  
-@@ -625,6 +650,7 @@ static void do_pre_smp_initcalls(void)
+ 	migration_init();
  #endif
++	posix_cpu_thread_init();
  	spawn_ksoftirqd();
  	spawn_softlockup_task();
 +	spawn_desched_task();
  }
  
  static void run_init_process(char *init_filename)
-@@ -670,6 +696,8 @@ static int init(void * unused)
+@@ -670,6 +697,8 @@ static int init(void * unused)
  
  	smp_prepare_cpus(max_cpus);
  
@@ -30422,12 +30483,12 @@ Index: linux/init/main.c
  	do_pre_smp_initcalls();
  
  	fixup_cpu_present_map();
-@@ -698,7 +726,51 @@ static int init(void * unused)
+@@ -698,7 +727,51 @@ static int init(void * unused)
  		ramdisk_execute_command = NULL;
  		prepare_namespace();
  	}
 +#ifdef CONFIG_PREEMPT_RT
-+	WARN_ON(irqs_disabled() || irqs_disabled());
++	WARN_ON(irqs_disabled());
 +#endif
  
 +#define DEBUG_COUNT (defined(CONFIG_DEBUG_RT_MUTEXES) + defined(CONFIG_DEBUG_PREEMPT) + defined(CONFIG_CRITICAL_PREEMPT_TIMING) + defined(CONFIG_CRITICAL_IRQSOFF_TIMING) + defined(CONFIG_LATENCY_TRACE) + defined(CONFIG_DEBUG_SLAB) + defined(CONFIG_DEBUG_PAGEALLOC))
@@ -30474,12 +30535,12 @@ Index: linux/init/main.c
  	/*
  	 * Ok, we have completed the initial bootup, and
  	 * we're essentially up and running. Get rid of the
-@@ -721,6 +793,9 @@ static int init(void * unused)
+@@ -721,6 +794,9 @@ static int init(void * unused)
  		printk(KERN_WARNING "Failed to execute %s\n",
  				ramdisk_execute_command);
  	}
 +#ifdef CONFIG_PREEMPT_RT
-+	WARN_ON(irqs_disabled() || irqs_disabled());
++	WARN_ON(irqs_disabled());
 +#endif
  
  	/*
@@ -31128,6 +31189,15 @@ Index: linux/kernel/fork.c
  /*
   * This creates a new process as a copy of the old one,
   * but does not actually start it yet.
+@@ -1005,7 +1061,7 @@ static task_t *copy_process(unsigned lon
+  	INIT_LIST_HEAD(&p->cpu_timers[0]);
+  	INIT_LIST_HEAD(&p->cpu_timers[1]);
+  	INIT_LIST_HEAD(&p->cpu_timers[2]);
+-
++	p->posix_timer_list = NULL;
+ 	p->lock_depth = -1;		/* -1 = no lock */
+ 	do_posix_clock_monotonic_gettime(&p->start_time);
+ 	p->security = NULL;
 @@ -1022,6 +1078,8 @@ static task_t *copy_process(unsigned lon
   	}
  #endif
@@ -31321,16 +31391,17 @@ Index: linux/kernel/futex.c
   *  Thanks to Ben LaHaise for yelling "hashed waitqueues" loudly
   *  enough at me, Linus for the original (flawed) idea, Matthew
   *  Kirkwood for proof-of-concept implementation.
-@@ -42,6 +50,8 @@
+@@ -41,6 +49,9 @@
+ #include <linux/syscalls.h>
  #include <linux/signal.h>
  #include <asm/futex.h>
- 
-+#include "rtmutex_common.h"
++#include <linux/hrtimer.h>
 +
++#include "rtmutex_common.h"
+ 
  #define FUTEX_HASHBITS (CONFIG_BASE_SMALL ? 4 : 8)
  
- /*
-@@ -59,7 +69,7 @@ union futex_key {
+@@ -59,7 +70,7 @@ union futex_key {
  		int offset;
  	} shared;
  	struct {
@@ -31339,7 +31410,7 @@ Index: linux/kernel/futex.c
  		struct mm_struct *mm;
  		int offset;
  	} private;
-@@ -71,6 +81,27 @@ union futex_key {
+@@ -71,6 +82,27 @@ union futex_key {
  };
  
  /*
@@ -31367,7 +31438,7 @@ Index: linux/kernel/futex.c
   * We use this hashed waitqueue instead of a normal wait_queue_t, so
   * we can wake only the relevant ones (hashed queues may be shared).
   *
-@@ -83,15 +114,19 @@ struct futex_q {
+@@ -83,15 +115,19 @@ struct futex_q {
  	struct list_head list;
  	wait_queue_head_t waiters;
  
@@ -31390,7 +31461,7 @@ Index: linux/kernel/futex.c
  };
  
  /*
-@@ -140,8 +175,9 @@ static inline int match_futex(union fute
+@@ -140,8 +176,9 @@ static inline int match_futex(union fute
   *
   * Should be called with &current->mm->mmap_sem but NOT any spinlocks.
   */
@@ -31401,7 +31472,7 @@ Index: linux/kernel/futex.c
  	struct mm_struct *mm = current->mm;
  	struct vm_area_struct *vma;
  	struct page *page;
-@@ -150,16 +186,16 @@ static int get_futex_key(unsigned long u
+@@ -150,16 +187,16 @@ static int get_futex_key(unsigned long u
  	/*
  	 * The futex address must be "naturally" aligned.
  	 */
@@ -31421,7 +31492,7 @@ Index: linux/kernel/futex.c
  	if (unlikely(!vma))
  		return -EFAULT;
  
-@@ -180,7 +216,7 @@ static int get_futex_key(unsigned long u
+@@ -180,7 +217,7 @@ static int get_futex_key(unsigned long u
  	 */
  	if (likely(!(vma->vm_flags & VM_MAYSHARE))) {
  		key->private.mm = mm;
@@ -31430,7 +31501,7 @@ Index: linux/kernel/futex.c
  		return 0;
  	}
  
-@@ -190,7 +226,7 @@ static int get_futex_key(unsigned long u
+@@ -190,7 +227,7 @@ static int get_futex_key(unsigned long u
  	key->shared.inode = vma->vm_file->f_dentry->d_inode;
  	key->both.offset++; /* Bit 0 of offset indicates inode-based key. */
  	if (likely(!(vma->vm_flags & VM_NONLINEAR))) {
@@ -31439,7 +31510,7 @@ Index: linux/kernel/futex.c
  				     + vma->vm_pgoff);
  		return 0;
  	}
-@@ -201,7 +237,7 @@ static int get_futex_key(unsigned long u
+@@ -201,7 +238,7 @@ static int get_futex_key(unsigned long u
  	 * from swap.  But that's a lot of code to duplicate here
  	 * for a rare case, so we simply fetch the page.
  	 */
@@ -31448,7 +31519,7 @@ Index: linux/kernel/futex.c
  	if (err >= 0) {
  		key->shared.pgoff =
  			page->index << (PAGE_CACHE_SHIFT - PAGE_SHIFT);
-@@ -242,18 +278,246 @@ static void drop_key_refs(union futex_ke
+@@ -242,18 +279,246 @@ static void drop_key_refs(union futex_ke
  	}
  }
  
@@ -31697,7 +31768,7 @@ Index: linux/kernel/futex.c
   * The hash bucket lock must be held when this is called.
   * Afterwards, the futex_q must not be accessed.
   */
-@@ -280,16 +544,85 @@ static void wake_futex(struct futex_q *q
+@@ -280,16 +545,85 @@ static void wake_futex(struct futex_q *q
  	q->lock_ptr = NULL;
  }
  
@@ -31787,7 +31858,7 @@ Index: linux/kernel/futex.c
  	int ret;
  
  	down_read(&current->mm->mmap_sem);
-@@ -298,19 +631,21 @@ static int futex_wake(unsigned long uadd
+@@ -298,19 +632,21 @@ static int futex_wake(unsigned long uadd
  	if (unlikely(ret != 0))
  		goto out;
  
@@ -31813,7 +31884,7 @@ Index: linux/kernel/futex.c
  out:
  	up_read(&current->mm->mmap_sem);
  	return ret;
-@@ -320,10 +655,12 @@ out:
+@@ -320,10 +656,12 @@ out:
   * Wake up all waiters hashed on the physical page that is mapped
   * to this virtual address:
   */
@@ -31828,7 +31899,7 @@ Index: linux/kernel/futex.c
  	struct list_head *head;
  	struct futex_q *this, *next;
  	int ret, op_ret, attempt = 0;
-@@ -338,27 +675,29 @@ retryfull:
+@@ -338,27 +676,29 @@ retryfull:
  	if (unlikely(ret != 0))
  		goto out;
  
@@ -31872,7 +31943,7 @@ Index: linux/kernel/futex.c
  		ret = op_ret;
  		goto out;
  #endif
-@@ -368,47 +707,34 @@ retry:
+@@ -368,47 +708,34 @@ retry:
  			goto out;
  		}
  
@@ -31894,9 +31965,7 @@ Index: linux/kernel/futex.c
 -			    !(vma = find_vma(mm, uaddr2)) ||
 -			    vma->vm_start > uaddr2 ||
 -			    !(vma->vm_flags & VM_WRITE))
-+			if (futex_handle_fault((unsigned long)uaddr2,
-+					       attempt))
- 				goto out;
+-				goto out;
 -
 -			switch (handle_mm_fault(mm, vma, uaddr2, 1)) {
 -			case VM_FAULT_MINOR:
@@ -31906,7 +31975,9 @@ Index: linux/kernel/futex.c
 -				current->maj_flt++;
 -				break;
 -			default:
--				goto out;
++			if (futex_handle_fault((unsigned long)uaddr2,
++					       attempt))
+ 				goto out;
 -			}
  			goto retry;
  		}
@@ -31932,7 +32003,7 @@ Index: linux/kernel/futex.c
  
  	list_for_each_entry_safe(this, next, head, list) {
  		if (match_futex (&this->key, &key1)) {
-@@ -419,7 +745,7 @@ retry:
+@@ -419,7 +746,7 @@ retry:
  	}
  
  	if (op_ret > 0) {
@@ -31941,7 +32012,7 @@ Index: linux/kernel/futex.c
  
  		op_ret = 0;
  		list_for_each_entry_safe(this, next, head, list) {
-@@ -432,9 +758,9 @@ retry:
+@@ -432,9 +759,9 @@ retry:
  		ret += op_ret;
  	}
  
@@ -31954,7 +32025,7 @@ Index: linux/kernel/futex.c
  out:
  	up_read(&current->mm->mmap_sem);
  	return ret;
-@@ -444,11 +770,11 @@ out:
+@@ -444,11 +771,11 @@ out:
   * Requeue all waiters hashed on one physical page to another
   * physical page.
   */
@@ -31969,7 +32040,7 @@ Index: linux/kernel/futex.c
  	struct list_head *head1;
  	struct futex_q *this, *next;
  	int ret, drop_count = 0;
-@@ -463,68 +789,69 @@ static int futex_requeue(unsigned long u
+@@ -463,68 +790,69 @@ static int futex_requeue(unsigned long u
  	if (unlikely(ret != 0))
  		goto out;
  
@@ -32063,7 +32134,7 @@ Index: linux/kernel/futex.c
  
  	/* drop_key_refs() must be called outside the spinlocks. */
  	while (--drop_count >= 0)
-@@ -539,7 +866,7 @@ out:
+@@ -539,7 +867,7 @@ out:
  static inline struct futex_hash_bucket *
  queue_lock(struct futex_q *q, int fd, struct file *filp)
  {
@@ -32072,7 +32143,7 @@ Index: linux/kernel/futex.c
  
  	q->fd = fd;
  	q->filp = filp;
-@@ -547,23 +874,24 @@ queue_lock(struct futex_q *q, int fd, st
+@@ -547,23 +875,24 @@ queue_lock(struct futex_q *q, int fd, st
  	init_waitqueue_head(&q->waiters);
  
  	get_key_refs(&q->key);
@@ -32106,7 +32177,7 @@ Index: linux/kernel/futex.c
  	drop_key_refs(&q->key);
  }
  
-@@ -575,16 +903,17 @@ queue_unlock(struct futex_q *q, struct f
+@@ -575,16 +904,17 @@ queue_unlock(struct futex_q *q, struct f
  /* The key must be already stored in q->key. */
  static void queue_me(struct futex_q *q, int fd, struct file *filp)
  {
@@ -32128,7 +32199,7 @@ Index: linux/kernel/futex.c
  
  	/* In the common case we don't take the spinlock, which is nice. */
   retry:
-@@ -610,6 +939,9 @@ static int unqueue_me(struct futex_q *q)
+@@ -610,6 +940,9 @@ static int unqueue_me(struct futex_q *q)
  		}
  		WARN_ON(list_empty(&q->list));
  		list_del(&q->list);
@@ -32138,7 +32209,7 @@ Index: linux/kernel/futex.c
  		spin_unlock(lock_ptr);
  		ret = 1;
  	}
-@@ -618,21 +950,42 @@ static int unqueue_me(struct futex_q *q)
+@@ -618,21 +951,44 @@ static int unqueue_me(struct futex_q *q)
  	return ret;
  }
  
@@ -32148,9 +32219,7 @@ Index: linux/kernel/futex.c
 + * hash bucket. The hash bucket lock is held on entry and dropped here.
 + */
 +static void unqueue_me_pi(struct futex_q *q, struct futex_hash_bucket *hb)
- {
--	DECLARE_WAITQUEUE(wait, current);
--	int ret, curval;
++{
 +	WARN_ON(list_empty(&q->list));
 +	list_del(&q->list);
 +
@@ -32163,8 +32232,10 @@ Index: linux/kernel/futex.c
 +	drop_key_refs(&q->key);
 +}
 +
-+static int futex_wait(u32 __user *uaddr, u32 val, unsigned long time)
-+{
++static int futex_wait(u32 __user *uaddr, u32 val, struct timespec *time)
+ {
+-	DECLARE_WAITQUEUE(wait, current);
+-	int ret, curval;
 +	struct task_struct *curr = current;
 +	DECLARE_WAITQUEUE(wait, curr);
 +	struct futex_hash_bucket *hb;
@@ -32172,6 +32243,8 @@ Index: linux/kernel/futex.c
 -	struct futex_hash_bucket *bh;
 +	u32 uval;
 +	int ret;
++	struct hrtimer_sleeper t;
++	int rem = 0;
  
 +	q.pi_state = NULL;
   retry:
@@ -32187,7 +32260,7 @@ Index: linux/kernel/futex.c
  
  	/*
  	 * Access the page AFTER the futex is queued.
-@@ -654,37 +1007,35 @@ static int futex_wait(unsigned long uadd
+@@ -654,37 +1010,35 @@ static int futex_wait(unsigned long uadd
  	 * We hold the mmap semaphore, so the mapping cannot have changed
  	 * since we looked it up in get_futex_key.
  	 */
@@ -32237,24 +32310,52 @@ Index: linux/kernel/futex.c
  
  	/*
  	 * There might have been scheduling since the queue_me(), as we
-@@ -702,8 +1053,13 @@ static int futex_wait(unsigned long uadd
+@@ -702,8 +1056,37 @@ static int futex_wait(unsigned long uadd
  	 * !list_empty() is safe here without any lock.
  	 * q.lock_ptr != 0 is not safe, because of ordering against wakeup.
  	 */
 -	if (likely(!list_empty(&q.list)))
+-		time = schedule_timeout(time);
 +	if (likely(!list_empty(&q.list))) {
 +		unsigned long nosched_flag = current->flags & PF_NOSCHED;
 +
 +		current->flags &= ~PF_NOSCHED;
- 		time = schedule_timeout(time);
++
++		if (time->tv_sec == 0 && time->tv_nsec == 0)
++			schedule();
++		else {
++
++			hrtimer_init(&t.timer, CLOCK_MONOTONIC, HRTIMER_REL);
++			hrtimer_init_sleeper(&t, current);
++			t.timer.expires = timespec_to_ktime(*time);
++
++			hrtimer_start(&t.timer, t.timer.expires, HRTIMER_REL);
++
++			/*
++			 * the timer could have already expired, in which
++			 * case current would be flagged for rescheduling.
++			 * Don't bother calling schedule.
++			 */
++			if (likely(t.task))
++				schedule();
++
++			hrtimer_cancel(&t.timer);
++
++			/* Flag if a timeout occured */
++			rem = (t.task == NULL);
++		}
++
 +		current->flags |= nosched_flag;
 +	}
  	__set_current_state(TASK_RUNNING);
  
  	/*
-@@ -716,12 +1072,363 @@ static int futex_wait(unsigned long uadd
+@@ -714,14 +1097,365 @@ static int futex_wait(unsigned long uadd
+ 	/* If we were woken (and unqueued), we succeeded, whatever. */
+ 	if (!unqueue_me(&q))
  		return 0;
- 	if (time == 0)
+-	if (time == 0)
++	if (rem)
  		return -ETIMEDOUT;
 -	/* We expect signal_pending(current), but another thread may
 -	 * have handled it for us already. */
@@ -32279,7 +32380,7 @@ Index: linux/kernel/futex.c
 + * races the kernel might see a 0 value of the futex too.)
 + */
 +static int futex_lock_pi(u32 __user *uaddr, int detect,
-+			 unsigned long sec, long nsec, int trylock)
++			 struct timespec *time, int trylock)
 +{
 +	struct task_struct *curr = current;
 +	struct futex_hash_bucket *hb;
@@ -32293,11 +32394,11 @@ Index: linux/kernel/futex.c
 +
 +	pr_debug("Futex lock pi: %d\n", current->pid);
 +
-+	if (sec != MAX_SCHEDULE_TIMEOUT) {
++	if (time->tv_sec || time->tv_nsec) {
 +		to = &timeout;
 +		hrtimer_init(&to->timer, CLOCK_REALTIME, HRTIMER_ABS);
 +		hrtimer_init_sleeper(to, current);
-+		to->timer.expires = ktime_set(sec, nsec);
++		to->timer.expires = timespec_to_ktime(*time);
 +	}
 +
 +	q.pi_state = NULL;
@@ -32588,7 +32689,7 @@ Index: linux/kernel/futex.c
 +out_unlock:
 +	spin_unlock(&hb->lock);
 +out:
- 	up_read(&current->mm->mmap_sem);
++	up_read(&current->mm->mmap_sem);
 +	pr_debug("unlock ret: %p, %d (%d): %d\n", uaddr, current->pid,
 +		 current->prio, ret);
 +
@@ -32609,7 +32710,7 @@ Index: linux/kernel/futex.c
 +	}
 +
 +	spin_unlock(&hb->lock);
-+	up_read(&current->mm->mmap_sem);
+ 	up_read(&current->mm->mmap_sem);
 +
 +	ret = get_user(uval, uaddr);
 +	if (!ret && (uval != -EFAULT))
@@ -32618,7 +32719,7 @@ Index: linux/kernel/futex.c
  	return ret;
  }
  
-@@ -731,6 +1438,7 @@ static int futex_close(struct inode *ino
+@@ -731,6 +1465,7 @@ static int futex_close(struct inode *ino
  
  	unqueue_me(q);
  	kfree(q);
@@ -32626,7 +32727,7 @@ Index: linux/kernel/futex.c
  	return 0;
  }
  
-@@ -762,7 +1470,7 @@ static struct file_operations futex_fops
+@@ -762,7 +1497,7 @@ static struct file_operations futex_fops
   * Signal allows caller to avoid the race which would occur if they
   * set the sigio stuff up afterwards.
   */
@@ -32635,7 +32736,7 @@ Index: linux/kernel/futex.c
  {
  	struct futex_q *q;
  	struct file *filp;
-@@ -799,6 +1507,7 @@ static int futex_fd(unsigned long uaddr,
+@@ -799,6 +1534,7 @@ static int futex_fd(unsigned long uaddr,
  		err = -ENOMEM;
  		goto error;
  	}
@@ -32643,7 +32744,7 @@ Index: linux/kernel/futex.c
  
  	down_read(&current->mm->mmap_sem);
  	err = get_futex_key(uaddr, &q->key);
-@@ -829,8 +1538,178 @@ error:
+@@ -829,8 +1565,178 @@ error:
  	goto out;
  }
  
@@ -32819,28 +32920,28 @@ Index: linux/kernel/futex.c
 +	}
 +}
 +
-+long do_futex(u32 __user *uaddr, int op, u32 val, unsigned long timeout,
++long do_futex(u32 __user *uaddr, int op, u32 val, struct timespec *timeout,
 +		u32 __user *uaddr2, u32 val2, u32 val3)
  {
  	int ret;
  
-@@ -854,6 +1733,15 @@ long do_futex(unsigned long uaddr, int o
+@@ -854,6 +1760,15 @@ long do_futex(unsigned long uaddr, int o
  	case FUTEX_WAKE_OP:
  		ret = futex_wake_op(uaddr, uaddr2, val, val2, val3);
  		break;
 +	case FUTEX_LOCK_PI:
-+		ret = futex_lock_pi(uaddr, val, timeout, val2, 0);
++		ret = futex_lock_pi(uaddr, val, timeout, 0);
 +		break;
 +	case FUTEX_UNLOCK_PI:
 +		ret = futex_unlock_pi(uaddr);
 +		break;
 +	case FUTEX_TRYLOCK_PI:
-+		ret = futex_lock_pi(uaddr, 0, timeout, val2, 1);
++		ret = futex_lock_pi(uaddr, 0, timeout, 1);
 +		break;
  	default:
  		ret = -ENOSYS;
  	}
-@@ -861,27 +1749,33 @@ long do_futex(unsigned long uaddr, int o
+@@ -861,27 +1776,26 @@ long do_futex(unsigned long uaddr, int o
  }
  
  
@@ -32850,9 +32951,10 @@ Index: linux/kernel/futex.c
 -			  int val3)
 +			  u32 val3)
  {
- 	struct timespec t;
- 	unsigned long timeout = MAX_SCHEDULE_TIMEOUT;
+-	struct timespec t;
+-	unsigned long timeout = MAX_SCHEDULE_TIMEOUT;
 -	int val2 = 0;
++	struct timespec t = {.tv_sec=0, .tv_nsec=0};
 +	u32 val2 = 0;
  
 -	if ((op == FUTEX_WAIT) && utime) {
@@ -32862,12 +32964,6 @@ Index: linux/kernel/futex.c
 -		timeout = timespec_to_jiffies(&t) + 1;
 +		if (!timespec_valid(&t))
 +			return -EINVAL;
-+		if (op == FUTEX_WAIT)
-+			timeout = timespec_to_jiffies(&t) + 1;
-+		else {
-+			timeout = t.tv_sec;
-+			val2 = t.tv_nsec;
-+		}
  	}
  	/*
  	 * requeue parameter in 'utime' if op == FUTEX_REQUEUE.
@@ -32879,7 +32975,7 @@ Index: linux/kernel/futex.c
  
 -	return do_futex((unsigned long)uaddr, op, val, timeout,
 -			(unsigned long)uaddr2, val2, val3);
-+	return do_futex(uaddr, op, val, timeout, uaddr2, val2, val3);
++	return do_futex(uaddr, op, val, &t, uaddr2, val2, val3);
  }
  
  static struct super_block *
@@ -32887,7 +32983,7 @@ Index: linux/kernel/futex_compat.c
 ===================================================================
 --- /dev/null
 +++ linux/kernel/futex_compat.c
-@@ -0,0 +1,148 @@
+@@ -0,0 +1,141 @@
 +/*
 + * linux/kernel/futex_compat.c
 + *
@@ -33015,8 +33111,7 @@ Index: linux/kernel/futex_compat.c
 +		struct compat_timespec __user *utime, u32 __user *uaddr2,
 +		u32 val3)
 +{
-+	struct timespec t;
-+	unsigned long timeout = MAX_SCHEDULE_TIMEOUT;
++	struct timespec t = {.tv_sec=0, .tv_nsec=0};
 +	int val2 = 0;
 +
 +	if (utime && (op == FUTEX_WAIT || op == FUTEX_LOCK_PI)) {
@@ -33024,12 +33119,6 @@ Index: linux/kernel/futex_compat.c
 +			return -EFAULT;
 +		if (!timespec_valid(&t))
 +			return -EINVAL;
-+		if (op == FUTEX_WAIT)
-+			timeout = timespec_to_jiffies(&t) + 1;
-+		else {
-+			timeout = t.tv_sec;
-+			val2 = t.tv_nsec;
-+		}
 +	}
 +	if (op == FUTEX_REQUEUE || op == FUTEX_CMP_REQUEUE)
 +		val2 = (int) (unsigned long) utime;
@@ -38593,6 +38682,212 @@ Index: linux/kernel/posix-cpu-timers.c
  	}
  
  	if (error)
+@@ -1196,7 +1198,7 @@ static void check_process_timers(struct 
+ 
+ 			do {
+ 				t = next_thread(t);
+-			} while (unlikely(t->flags & PF_EXITING));
++			} while ((t != tsk) && unlikely(t->flags & PF_EXITING));
+ 		} while (t != tsk);
+ 	}
+ }
+@@ -1271,12 +1273,11 @@ out:
+  * already updated our counts.  We need to check if any timers fire now.
+  * Interrupts are disabled.
+  */
+-void run_posix_cpu_timers(struct task_struct *tsk)
++void __run_posix_cpu_timers(struct task_struct *tsk)
+ {
+ 	LIST_HEAD(firing);
+ 	struct k_itimer *timer, *next;
+ 
+-	BUG_ON(!irqs_disabled());
+ 
+ #define UNEXPIRED(clock) \
+ 		(cputime_eq(tsk->it_##clock##_expires, cputime_zero) || \
+@@ -1339,6 +1340,169 @@ void run_posix_cpu_timers(struct task_st
+ 	}
+ }
+ 
++#include <linux/kthread.h>
++#include <linux/cpu.h>
++DEFINE_PER_CPU(struct task_struct *, posix_timer_task);
++DEFINE_PER_CPU(struct task_struct *, posix_timer_tasklist);
++
++static int posix_cpu_timers_thread(void *data)
++{
++	int cpu = (long)data;
++
++	BUG_ON(per_cpu(posix_timer_task,cpu) != current);
++
++
++	while (!kthread_should_stop()) {
++		struct task_struct *tsk = NULL;
++		struct task_struct *next = NULL;
++
++		if (cpu_is_offline(cpu)) {
++			goto wait_to_die;
++		}
++
++		/* grab task list */
++		raw_local_irq_disable();
++		tsk = per_cpu(posix_timer_tasklist, cpu);
++		per_cpu(posix_timer_tasklist, cpu) = NULL;
++		raw_local_irq_enable();
++
++
++		/* its possible the list is empty, just return */
++		if (!tsk) {
++			set_current_state(TASK_INTERRUPTIBLE);
++			schedule();
++			__set_current_state(TASK_RUNNING);
++			continue;
++		}
++
++		/* Process task list */
++		while (1) {
++			/* save next */
++			next = tsk->posix_timer_list;
++
++			/* run the task timers, clear its ptr and
++			 * unreference it
++			 */
++			__run_posix_cpu_timers(tsk);
++			tsk->posix_timer_list = NULL;
++			put_task_struct(tsk);
++
++			/* check if this is the last on the list */
++			if (next == tsk)
++				break;
++			tsk = next;
++		}
++	}
++	return 0;
++
++wait_to_die:
++	/* Wait for kthread_stop */
++	set_current_state(TASK_INTERRUPTIBLE);
++	while (!kthread_should_stop()) {
++		schedule();
++		set_current_state(TASK_INTERRUPTIBLE);
++	}
++	__set_current_state(TASK_RUNNING);
++	return 0;
++}
++
++void run_posix_cpu_timers(struct task_struct *tsk)
++{
++	unsigned long cpu = smp_processor_id();
++	struct task_struct *tasklist;
++
++	BUG_ON(!irqs_disabled());
++	if(!per_cpu(posix_timer_task, cpu))
++		return;
++	/* get per-cpu references */
++	tasklist = per_cpu(posix_timer_tasklist, cpu);
++
++	/* check to see if we're already queued */
++	if (!tsk->posix_timer_list) {
++		get_task_struct(tsk);
++		if (tasklist) {
++			tsk->posix_timer_list = tasklist;
++		} else {
++			/*
++			 * The list is terminated by a self-pointing
++			 * task_struct
++			 */
++			tsk->posix_timer_list = tsk;
++		}
++		per_cpu(posix_timer_tasklist, cpu) = tsk;
++	}
++	/* XXX signal the thread somehow */
++	wake_up_process(per_cpu(posix_timer_task,cpu));
++}
++
++
++
++
++/*
++ * posix_cpu_thread_call - callback that gets triggered when a CPU is added.
++ * Here we can start up the necessary migration thread for the new CPU.
++ */
++static int posix_cpu_thread_call(struct notifier_block *nfb, unsigned long action,
++			  void *hcpu)
++{
++	int cpu = (long)hcpu;
++	struct task_struct *p;
++	struct sched_param param;
++
++	switch (action) {
++	case CPU_UP_PREPARE:
++		p = kthread_create(posix_cpu_timers_thread, hcpu,
++					"posix_cpu_timers/%d",cpu);
++		if (IS_ERR(p))
++			return NOTIFY_BAD;
++		p->flags |= PF_NOFREEZE;
++		kthread_bind(p, cpu);
++		/* Must be high prio to avoid getting starved */
++		param.sched_priority = MAX_RT_PRIO-1;
++		sched_setscheduler(p, SCHED_FIFO, &param);
++		per_cpu(posix_timer_task,cpu) = p;
++		break;
++	case CPU_ONLINE:
++		/* Strictly unneccessary, as first user will wake it. */
++		wake_up_process(per_cpu(posix_timer_task,cpu));
++		break;
++#ifdef CONFIG_HOTPLUG_CPU
++	case CPU_UP_CANCELED:
++		/* Unbind it from offline cpu so it can run.  Fall thru. */
++		kthread_bind(per_cpu(posix_timer_task,cpu),
++			     any_online_cpu(cpu_online_map));
++		kthread_stop(per_cpu(posix_timer_task,cpu));
++		per_cpu(posix_timer_task,cpu) = NULL;
++		break;
++	case CPU_DEAD:
++		kthread_stop(per_cpu(posix_timer_task,cpu));
++		per_cpu(posix_timer_task,cpu) = NULL;
++		break;
++#endif
++	}
++	return NOTIFY_OK;
++}
++
++/* Register at highest priority so that task migration (migrate_all_tasks)
++ * happens before everything else.
++ */
++static struct notifier_block __devinitdata posix_cpu_thread_notifier = {
++	.notifier_call = posix_cpu_thread_call,
++	.priority = 10
++};
++
++int __init posix_cpu_thread_init(void)
++{
++	void *cpu = (void *)(long)smp_processor_id();
++	/* Start one for boot CPU. */
++	posix_cpu_thread_call(&posix_cpu_thread_notifier, CPU_UP_PREPARE, cpu);
++	posix_cpu_thread_call(&posix_cpu_thread_notifier, CPU_ONLINE, cpu);
++	register_cpu_notifier(&posix_cpu_thread_notifier);
++	return 0;
++}
++
++
++
+ /*
+  * Set one of the process-wide special case CPU timers.
+  * The tasklist_lock and tsk->sighand->siglock must be held by the caller.
+@@ -1565,6 +1729,12 @@ static __init int init_posix_cpu_timers(
+ 		.timer_create = thread_cpu_timer_create,
+ 		.nsleep = thread_cpu_nsleep,
+ 	};
++	unsigned long cpu;
++
++	/* init the per-cpu posix_timer_tasklets */
++	for_each_cpu(cpu) {
++		per_cpu(posix_timer_tasklist, cpu) = NULL;
++	}
+ 
+ 	register_posix_clock(CLOCK_PROCESS_CPUTIME_ID, &process);
+ 	register_posix_clock(CLOCK_THREAD_CPUTIME_ID, &thread);
 Index: linux/kernel/posix-timers.c
 ===================================================================
 --- linux.orig/kernel/posix-timers.c
@@ -38865,7 +39160,7 @@ Index: linux/kernel/printk.c
 +	 * case only.
 +	 */
 +#ifdef CONFIG_PREEMPT_RT
-+	if (!in_atomic() && !irqs_disabled() && !irqs_disabled())
++	if (!in_atomic() && !irqs_disabled())
 +#endif
  	if (wake_klogd && !oops_in_progress && waitqueue_active(&log_wait))
  		wake_up_interruptible(&log_wait);
@@ -39036,7 +39331,7 @@ Index: linux/kernel/rcupdate.c
  
  /* Definition for rcupdate control block. */
  struct rcu_ctrlblk rcu_ctrlblk = {
-@@ -556,44 +560,6 @@ void __init rcu_init(void)
+@@ -556,60 +560,12 @@ void __init rcu_init(void)
  	register_cpu_notifier(&rcu_nb);
  }
  
@@ -39078,22 +39373,32 @@ Index: linux/kernel/rcupdate.c
 -	wait_for_completion(&rcu.completion);
 -}
 -
- /*
-  * Deprecated, use synchronize_rcu() or synchronize_sched() instead.
-  */
-@@ -608,7 +574,6 @@ module_param(qlowmark, int, 0);
+-/*
+- * Deprecated, use synchronize_rcu() or synchronize_sched() instead.
+- */
+-void synchronize_kernel(void)
+-{
+-	synchronize_rcu();
+-}
+-
+ module_param(blimit, int, 0);
+ module_param(qhimark, int, 0);
+ module_param(qlowmark, int, 0);
  #ifdef CONFIG_SMP
  module_param(rsinterval, int, 0);
  #endif
 -EXPORT_SYMBOL_GPL(rcu_batches_completed);
- EXPORT_SYMBOL(call_rcu);  /* WARNING: GPL-only in April 2006. */
- EXPORT_SYMBOL(call_rcu_bh);  /* WARNING: GPL-only in April 2006. */
+-EXPORT_SYMBOL(call_rcu);  /* WARNING: GPL-only in April 2006. */
+-EXPORT_SYMBOL(call_rcu_bh);  /* WARNING: GPL-only in April 2006. */
++EXPORT_SYMBOL_GPL(call_rcu);
++EXPORT_SYMBOL_GPL(call_rcu_bh);
  EXPORT_SYMBOL_GPL(synchronize_rcu);
+-EXPORT_SYMBOL(synchronize_kernel);  /* WARNING: GPL-only in April 2006. */
 Index: linux/kernel/rcupreempt.c
 ===================================================================
 --- /dev/null
 +++ linux/kernel/rcupreempt.c
-@@ -0,0 +1,472 @@
+@@ -0,0 +1,463 @@
 +/*
 + * Read-Copy Update mechanism for mutual exclusion, realtime implementation
 + *
@@ -39484,14 +39789,6 @@ Index: linux/kernel/rcupreempt.c
 +	tasklet_init(&rcu_data.rcu_tasklet, rcu_process_callbacks, 0UL);
 +}
 +
-+/*
-+ * Deprecated, use synchronize_rcu() or synchronize_sched() instead.
-+ */
-+void synchronize_kernel(void)
-+{
-+	synchronize_rcu();
-+}
-+
 +#ifdef CONFIG_RCU_STATS
 +int rcu_read_proc_data(char *page)
 +{
@@ -39559,13 +39856,12 @@ Index: linux/kernel/rcupreempt.c
 +
 +#endif /* #ifdef CONFIG_RCU_STATS */
 +
-+EXPORT_SYMBOL(call_rcu); /* WARNING: GPL-only in April 2006. */
++EXPORT_SYMBOL_GPL(call_rcu);
 +EXPORT_SYMBOL_GPL(rcu_batches_completed);
 +EXPORT_SYMBOL_GPL(synchronize_rcu);
 +EXPORT_SYMBOL_GPL(synchronize_sched);
-+EXPORT_SYMBOL(rcu_read_lock);  /* WARNING: GPL-only in April 2006. */
-+EXPORT_SYMBOL(rcu_read_unlock);  /* WARNING: GPL-only in April 2006. */
-+EXPORT_SYMBOL(synchronize_kernel);  /* WARNING: Removal in April 2006. */
++EXPORT_SYMBOL_GPL(rcu_read_lock);
++EXPORT_SYMBOL_GPL(rcu_read_unlock);
 Index: linux/kernel/rcutorture.c
 ===================================================================
 --- linux.orig/kernel/rcutorture.c
@@ -43478,7 +43774,7 @@ Index: linux/kernel/sched.c
  	sched_info_switch(prev, next);
  	if (likely(prev != next)) {
  		next->timestamp = now;
-@@ -3023,26 +3483,82 @@ switch_tasks:
+@@ -3023,26 +3483,80 @@ switch_tasks:
  		prepare_task_switch(rq, next);
  		prev = context_switch(rq, prev, next);
  		barrier();
@@ -43516,12 +43812,10 @@ Index: linux/kernel/sched.c
 +	/*
 +	 * Test if we have interrupts disabled.
 +	 */
-+	if (unlikely(irqs_disabled() || irqs_disabled())) {
++	if (unlikely(irqs_disabled())) {
 +		stop_trace();
-+		printk(KERN_ERR "BUG: scheduling with %s irqs disabled: "
-+			"%s/0x%08x/%d\n",
-+				(irqs_disabled()) ? "" : "raw ", current->comm,
-+				preempt_count(), current->pid);
++		printk(KERN_ERR "BUG: scheduling with irqs disabled: "
++			"%s/0x%08x/%d\n", current->comm, preempt_count(), current->pid);
 +		print_symbol("caller is %s\n",
 +			(long)__builtin_return_address(0));
 +		dump_stack();
@@ -43569,7 +43863,7 @@ Index: linux/kernel/sched.c
  /*
   * this is is the entry point to schedule() from in-kernel preemption
   * off of preempt_enable.  Kernel preemptions off return from interrupt
-@@ -3055,14 +3571,17 @@ asmlinkage void __sched preempt_schedule
+@@ -3055,6 +3569,8 @@ asmlinkage void __sched preempt_schedule
  	struct task_struct *task = current;
  	int saved_lock_depth;
  #endif
@@ -43578,9 +43872,7 @@ Index: linux/kernel/sched.c
  	/*
  	 * If there is a non-zero preempt_count or interrupts are disabled,
  	 * we do not want to preempt the current task.  Just return..
- 	 */
--	if (unlikely(ti->preempt_count || irqs_disabled()))
-+	if (unlikely(ti->preempt_count || irqs_disabled() || irqs_disabled()))
+@@ -3063,6 +3579,7 @@ asmlinkage void __sched preempt_schedule
  		return;
  
  need_resched:
@@ -43588,7 +43880,7 @@ Index: linux/kernel/sched.c
  	add_preempt_count(PREEMPT_ACTIVE);
  	/*
  	 * We keep the big kernel semaphore locked, but we
-@@ -3073,25 +3592,25 @@ need_resched:
+@@ -3073,25 +3590,25 @@ need_resched:
  	saved_lock_depth = task->lock_depth;
  	task->lock_depth = -1;
  #endif
@@ -43622,7 +43914,7 @@ Index: linux/kernel/sched.c
   */
  asmlinkage void __sched preempt_schedule_irq(void)
  {
-@@ -3100,10 +3619,17 @@ asmlinkage void __sched preempt_schedule
+@@ -3100,10 +3617,17 @@ asmlinkage void __sched preempt_schedule
  	struct task_struct *task = current;
  	int saved_lock_depth;
  #endif
@@ -43642,7 +43934,7 @@ Index: linux/kernel/sched.c
  	add_preempt_count(PREEMPT_ACTIVE);
  	/*
  	 * We keep the big kernel semaphore locked, but we
-@@ -3114,17 +3640,17 @@ need_resched:
+@@ -3114,17 +3638,17 @@ need_resched:
  	saved_lock_depth = task->lock_depth;
  	task->lock_depth = -1;
  #endif
@@ -43665,7 +43957,7 @@ Index: linux/kernel/sched.c
  		goto need_resched;
  }
  
-@@ -3134,7 +3660,7 @@ int default_wake_function(wait_queue_t *
+@@ -3134,7 +3658,7 @@ int default_wake_function(wait_queue_t *
  			  void *key)
  {
  	task_t *p = curr->private;
@@ -43674,7 +43966,7 @@ Index: linux/kernel/sched.c
  }
  
  EXPORT_SYMBOL(default_wake_function);
-@@ -3178,8 +3704,9 @@ void fastcall __wake_up(wait_queue_head_
+@@ -3178,8 +3702,9 @@ void fastcall __wake_up(wait_queue_head_
  	unsigned long flags;
  
  	spin_lock_irqsave(&q->lock, flags);
@@ -43685,7 +43977,7 @@ Index: linux/kernel/sched.c
  }
  
  EXPORT_SYMBOL(__wake_up);
-@@ -3230,8 +3757,9 @@ void fastcall complete(struct completion
+@@ -3230,8 +3755,9 @@ void fastcall complete(struct completion
  	spin_lock_irqsave(&x->wait.lock, flags);
  	x->done++;
  	__wake_up_common(&x->wait, TASK_UNINTERRUPTIBLE | TASK_INTERRUPTIBLE,
@@ -43696,7 +43988,7 @@ Index: linux/kernel/sched.c
  }
  EXPORT_SYMBOL(complete);
  
-@@ -3242,11 +3770,18 @@ void fastcall complete_all(struct comple
+@@ -3242,11 +3768,18 @@ void fastcall complete_all(struct comple
  	spin_lock_irqsave(&x->wait.lock, flags);
  	x->done += UINT_MAX/2;
  	__wake_up_common(&x->wait, TASK_UNINTERRUPTIBLE | TASK_INTERRUPTIBLE,
@@ -43716,7 +44008,7 @@ Index: linux/kernel/sched.c
  void fastcall __sched wait_for_completion(struct completion *x)
  {
  	might_sleep();
-@@ -3441,6 +3976,63 @@ long fastcall __sched sleep_on_timeout(w
+@@ -3441,6 +3974,63 @@ long fastcall __sched sleep_on_timeout(w
  
  EXPORT_SYMBOL(sleep_on_timeout);
  
@@ -43780,7 +44072,7 @@ Index: linux/kernel/sched.c
  void set_user_nice(task_t *p, long nice)
  {
  	unsigned long flags;
-@@ -3473,7 +4065,7 @@ void set_user_nice(task_t *p, long nice)
+@@ -3473,7 +4063,7 @@ void set_user_nice(task_t *p, long nice)
  	new_prio = NICE_TO_PRIO(nice);
  	delta = new_prio - old_prio;
  	p->static_prio = NICE_TO_PRIO(nice);
@@ -43789,7 +44081,7 @@ Index: linux/kernel/sched.c
  
  	if (array) {
  		enqueue_task(p, array);
-@@ -3602,16 +4194,61 @@ static void __setscheduler(struct task_s
+@@ -3602,16 +4192,61 @@ static void __setscheduler(struct task_s
  	BUG_ON(p->array);
  	p->policy = policy;
  	p->rt_priority = prio;
@@ -43858,7 +44150,7 @@ Index: linux/kernel/sched.c
  }
  
  /**
-@@ -3625,10 +4262,7 @@ int sched_setscheduler(struct task_struc
+@@ -3625,10 +4260,7 @@ int sched_setscheduler(struct task_struc
  		       struct sched_param *param)
  {
  	int retval;
@@ -43870,7 +44162,7 @@ Index: linux/kernel/sched.c
  
  recheck:
  	/* double check policy once rq lock held */
-@@ -3677,36 +4311,12 @@ recheck:
+@@ -3677,36 +4309,12 @@ recheck:
  	retval = security_task_setscheduler(p, policy, param);
  	if (retval)
  		return retval;
@@ -43910,7 +44202,7 @@ Index: linux/kernel/sched.c
  	return 0;
  }
  EXPORT_SYMBOL_GPL(sched_setscheduler);
-@@ -4004,10 +4614,11 @@ asmlinkage long sys_sched_yield(void)
+@@ -4004,10 +4612,11 @@ asmlinkage long sys_sched_yield(void)
  	 * no need to preempt or enable interrupts:
  	 */
  	__release(rq->lock);
@@ -43925,7 +44217,7 @@ Index: linux/kernel/sched.c
  
  	return 0;
  }
-@@ -4024,10 +4635,11 @@ static inline void __cond_resched(void)
+@@ -4024,10 +4633,11 @@ static inline void __cond_resched(void)
  	if (unlikely(system_state != SYSTEM_RUNNING))
  		return;
  	do {
@@ -43939,7 +44231,7 @@ Index: linux/kernel/sched.c
  }
  
  int __sched cond_resched(void)
-@@ -4049,43 +4661,121 @@ EXPORT_SYMBOL(cond_resched);
+@@ -4049,43 +4659,121 @@ EXPORT_SYMBOL(cond_resched);
   * operations here to prevent schedule() from being called twice (once via
   * spin_unlock(), once by hand).
   */
@@ -44069,7 +44361,7 @@ Index: linux/kernel/sched.c
  
  /**
   * yield - yield the current processor to other threads.
-@@ -4093,12 +4783,31 @@ EXPORT_SYMBOL(cond_resched_softirq);
+@@ -4093,12 +4781,31 @@ EXPORT_SYMBOL(cond_resched_softirq);
   * this is a shortcut for kernel-space yielding - it marks the
   * thread runnable and calls sys_sched_yield().
   */
@@ -44102,7 +44394,7 @@ Index: linux/kernel/sched.c
  EXPORT_SYMBOL(yield);
  
  /*
-@@ -4239,25 +4948,29 @@ static void show_task(task_t *p)
+@@ -4239,25 +4946,29 @@ static void show_task(task_t *p)
  	task_t *relative;
  	unsigned state;
  	unsigned long free = 0;
@@ -44136,7 +44428,7 @@ Index: linux/kernel/sched.c
  #ifdef CONFIG_DEBUG_STACK_USAGE
  	{
  		unsigned long *n = end_of_stack(p);
-@@ -4284,13 +4997,14 @@ static void show_task(task_t *p)
+@@ -4284,13 +4995,14 @@ static void show_task(task_t *p)
  	else
  		printk(" (NOTLB)\n");
  
@@ -44152,7 +44444,7 @@ Index: linux/kernel/sched.c
  
  #if (BITS_PER_LONG == 32)
  	printk("\n"
-@@ -4301,7 +5015,16 @@ void show_state(void)
+@@ -4301,7 +5013,16 @@ void show_state(void)
  	       "                                                       sibling\n");
  	printk("  task                 PC          pid father child younger older\n");
  #endif
@@ -44169,7 +44461,7 @@ Index: linux/kernel/sched.c
  	do_each_thread(g, p) {
  		/*
  		 * reset the NMI-timeout, listing all files on a slow
-@@ -4311,8 +5034,10 @@ void show_state(void)
+@@ -4311,8 +5032,10 @@ void show_state(void)
  		show_task(p);
  	} while_each_thread(g, p);
  
@@ -44181,7 +44473,7 @@ Index: linux/kernel/sched.c
  }
  
  /**
-@@ -4331,7 +5056,7 @@ void __devinit init_idle(task_t *idle, i
+@@ -4331,7 +5054,7 @@ void __devinit init_idle(task_t *idle, i
  	idle->timestamp = sched_clock();
  	idle->sleep_avg = 0;
  	idle->array = NULL;
@@ -44190,7 +44482,7 @@ Index: linux/kernel/sched.c
  	idle->state = TASK_RUNNING;
  	idle->cpus_allowed = cpumask_of_cpu(cpu);
  	set_task_cpu(idle, cpu);
-@@ -4344,7 +5069,9 @@ void __devinit init_idle(task_t *idle, i
+@@ -4344,7 +5067,9 @@ void __devinit init_idle(task_t *idle, i
  	spin_unlock_irqrestore(&rq->lock, flags);
  
  	/* Set the preempt count _outside_ the spinlocks! */
@@ -44201,7 +44493,7 @@ Index: linux/kernel/sched.c
  	task_thread_info(idle)->preempt_count = (idle->lock_depth >= 0);
  #else
  	task_thread_info(idle)->preempt_count = 0;
-@@ -4428,12 +5155,13 @@ EXPORT_SYMBOL_GPL(set_cpus_allowed);
+@@ -4428,12 +5153,13 @@ EXPORT_SYMBOL_GPL(set_cpus_allowed);
   * So we race with normal scheduler movements, but that's OK, as long
   * as the task is no longer on this CPU.
   */
@@ -44217,7 +44509,7 @@ Index: linux/kernel/sched.c
  
  	rq_src = cpu_rq(src_cpu);
  	rq_dest = cpu_rq(dest_cpu);
-@@ -4446,7 +5174,9 @@ static void __migrate_task(struct task_s
+@@ -4446,7 +5172,9 @@ static void __migrate_task(struct task_s
  	if (!cpu_isset(dest_cpu, p->cpus_allowed))
  		goto out;
  
@@ -44227,7 +44519,7 @@ Index: linux/kernel/sched.c
  	if (p->array) {
  		/*
  		 * Sync timestamp with rq_dest's before activating.
-@@ -4460,10 +5190,13 @@ static void __migrate_task(struct task_s
+@@ -4460,10 +5188,13 @@ static void __migrate_task(struct task_s
  		activate_task(p, rq_dest, 0);
  		if (TASK_PREEMPTS_CURR(p, rq_dest))
  			resched_task(rq_dest->curr);
@@ -44241,7 +44533,7 @@ Index: linux/kernel/sched.c
  }
  
  /*
-@@ -4658,9 +5391,9 @@ static void migrate_dead(unsigned int de
+@@ -4658,9 +5389,9 @@ static void migrate_dead(unsigned int de
  	 * that's OK.  No task can be added to this CPU, so iteration is
  	 * fine.
  	 */
@@ -44253,7 +44545,7 @@ Index: linux/kernel/sched.c
  
  	put_task_struct(tsk);
  }
-@@ -6040,6 +6773,7 @@ void __init sched_init(void)
+@@ -6040,6 +6771,7 @@ void __init sched_init(void)
  
  		for (j = 0; j < 2; j++) {
  			array = rq->arrays + j;
@@ -44261,7 +44553,7 @@ Index: linux/kernel/sched.c
  			for (k = 0; k < MAX_PRIO; k++) {
  				INIT_LIST_HEAD(array->queue + k);
  				__clear_bit(k, array->bitmap);
-@@ -6055,6 +6789,9 @@ void __init sched_init(void)
+@@ -6055,6 +6787,9 @@ void __init sched_init(void)
  	atomic_inc(&init_mm.mm_count);
  	enter_lazy_tlb(&init_mm, current);
  
@@ -44271,7 +44563,7 @@ Index: linux/kernel/sched.c
  	/*
  	 * Make us the idle thread. Technically, schedule() should not be
  	 * called from this thread, however somewhere below it might be,
-@@ -6064,21 +6801,25 @@ void __init sched_init(void)
+@@ -6064,7 +6799,7 @@ void __init sched_init(void)
  	init_idle(current, smp_processor_id());
  }
  
@@ -44280,10 +44572,9 @@ Index: linux/kernel/sched.c
  void __might_sleep(char *file, int line)
  {
  #if defined(in_atomic)
- 	static unsigned long prev_jiffy;	/* ratelimiting */
+@@ -6072,13 +6807,17 @@ void __might_sleep(char *file, int line)
  
--	if ((in_atomic() || irqs_disabled()) &&
-+	if ((in_atomic() || irqs_disabled() || irqs_disabled()) &&
+ 	if ((in_atomic() || irqs_disabled()) &&
  	    system_state == SYSTEM_RUNNING && !oops_in_progress) {
 +		if (debug_direct_keyboard && hardirq_count())
 +			return;
@@ -44303,7 +44594,7 @@ Index: linux/kernel/sched.c
  		dump_stack();
  	}
  #endif
-@@ -6091,7 +6832,7 @@ void normalize_rt_tasks(void)
+@@ -6091,7 +6830,7 @@ void normalize_rt_tasks(void)
  {
  	struct task_struct *p;
  	prio_array_t *array;
@@ -44312,7 +44603,7 @@ Index: linux/kernel/sched.c
  	runqueue_t *rq;
  
  	read_lock_irq(&tasklist_lock);
-@@ -6099,6 +6840,7 @@ void normalize_rt_tasks(void)
+@@ -6099,6 +6838,7 @@ void normalize_rt_tasks(void)
  		if (!rt_task(p))
  			continue;
  
@@ -44320,7 +44611,7 @@ Index: linux/kernel/sched.c
  		rq = task_rq_lock(p, &flags);
  
  		array = p->array;
-@@ -6111,6 +6853,7 @@ void normalize_rt_tasks(void)
+@@ -6111,6 +6851,7 @@ void normalize_rt_tasks(void)
  		}
  
  		task_rq_unlock(rq, &flags);
@@ -44328,7 +44619,7 @@ Index: linux/kernel/sched.c
  	}
  	read_unlock_irq(&tasklist_lock);
  }
-@@ -6160,3 +6903,23 @@ void set_curr_task(int cpu, task_t *p)
+@@ -6160,3 +6901,23 @@ void set_curr_task(int cpu, task_t *p)
  }
  
  #endif
@@ -46218,7 +46509,7 @@ Index: linux/kernel/time/clockevents.c
 ===================================================================
 --- /dev/null
 +++ linux/kernel/time/clockevents.c
-@@ -0,0 +1,618 @@
+@@ -0,0 +1,619 @@
 +/*
 + * linux/kernel/time/clockevents.c
 + *
@@ -46320,6 +46611,7 @@ Index: linux/kernel/time/clockevents.c
 +	write_seqlock(&xtime_lock);
 +	do_timer(regs);
 +	write_sequnlock(&xtime_lock);
++	timeofday_overflow_protection();
 +}
 +
 +/*
@@ -47278,7 +47570,7 @@ Index: linux/kernel/time/timeofday.c
 ===================================================================
 --- /dev/null
 +++ linux/kernel/time/timeofday.c
-@@ -0,0 +1,837 @@
+@@ -0,0 +1,854 @@
 +/*
 + * linux/kernel/time/timeofday.c
 + *
@@ -47352,6 +47644,8 @@ Index: linux/kernel/time/timeofday.c
 + *	(adjusted only minorly to account for rounded off cycles)
 + */
 +static cycle_t cycle_last;
++static cycle_t cycle_wrap_bucket;
++
 +
 +/* [clocksource_interval variables]
 + * ts_interval:
@@ -47553,7 +47847,7 @@ Index: linux/kernel/time/timeofday.c
 +
 +	/* calculate the delta since the last timeofday_periodic_hook: */
 +	cycle_delta = (cycle_now - cycle_last) & clock->mask;
-+
++	cycle_delta += cycle_wrap_bucket;
 +	/* convert to nanoseconds: */
 +	ns_offset = cyc2ns(clock, ntp_adj, cycle_delta);
 +
@@ -47857,6 +48151,7 @@ Index: linux/kernel/time/timeofday.c
 +	 */
 +	suspend_end = read_persistent_clock();
 +	cycle_last = read_clocksource(clock);
++	cycle_wrap_bucket = 0;
 +
 +	/* calculate suspend time and add it to system time: */
 +	suspend_time = suspend_end - suspend_start;
@@ -47934,9 +48229,10 @@ Index: linux/kernel/time/timeofday.c
 +	cycle_now = read_clocksource(clock);
 +	check_periodic_interval(cycle_now);
 +	cycle_delta = (cycle_now - cycle_last) & clock->mask;
-+
++	cycle_delta += cycle_wrap_bucket;
 +	delta_nsec = cyc2ns_fixed_rem(ts_interval, &cycle_delta, &remainder);
 +	cycle_last = (cycle_now - cycle_delta)&clock->mask;
++	cycle_wrap_bucket = 0;
 +
 +	/* update system_time:  */
 +	__increment_system_time(delta_nsec);
@@ -48041,6 +48337,19 @@ Index: linux/kernel/time/timeofday.c
 +	mod_timer(&timeofday_timer,
 +		jiffies + 1 + msecs_to_jiffies(PERIODIC_INTERVAL_MS));
 +}
++
++void timeofday_overflow_protection(void)
++{
++	unsigned long flags;
++	cycle_t cycle_now, cycle_delta;
++
++	write_seqlock_irqsave(&system_time_lock, flags);
++	cycle_now = read_clocksource(clock);
++	cycle_wrap_bucket += (cycle_now - cycle_last) & clock->mask;
++	cycle_last = cycle_now;
++	write_sequnlock_irqrestore(&system_time_lock, flags);
++}
++
 +
 +/**
 + * timeofday_is_continuous - check to see if timekeeping is free running
@@ -48643,17 +48952,7 @@ Index: linux/kernel/timer.c
  
  	/* Note: this timer irq context must be accounted for as well. */
  	if (user_tick)
-@@ -841,7 +1015,9 @@ void update_process_times(int user_tick)
- 	if (rcu_pending(cpu))
- 		rcu_check_callbacks(cpu, user_tick);
- 	scheduler_tick();
-+#ifndef CONFIG_PREEMPT_RT
-  	run_posix_cpu_timers(p);
-+#endif
- }
- 
- /*
-@@ -849,7 +1025,15 @@ void update_process_times(int user_tick)
+@@ -849,7 +1023,15 @@ void update_process_times(int user_tick)
   */
  static unsigned long count_active_tasks(void)
  {
@@ -48669,7 +48968,7 @@ Index: linux/kernel/timer.c
  }
  
  /*
-@@ -891,48 +1075,64 @@ unsigned long wall_jiffies = INITIAL_JIF
+@@ -891,48 +1073,64 @@ unsigned long wall_jiffies = INITIAL_JIF
   * playing with xtime and avenrun.
   */
  #ifndef ARCH_HAVE_XTIME_LOCK
@@ -48755,7 +49054,7 @@ Index: linux/kernel/timer.c
   * The 64-bit jiffies value is not atomic - you MUST NOT read it
   * without sampling the sequence number in xtime_lock.
   * jiffies is defined in the linker script...
-@@ -943,8 +1143,6 @@ void do_timer(struct pt_regs *regs)
+@@ -943,8 +1141,6 @@ void do_timer(struct pt_regs *regs)
  	jiffies_64++;
  	/* prevent loading jiffies before storing new jiffies_64 value. */
  	barrier();
@@ -48764,7 +49063,7 @@ Index: linux/kernel/timer.c
  }
  
  #ifdef __ARCH_WANT_SYS_ALARM
-@@ -955,19 +1153,7 @@ void do_timer(struct pt_regs *regs)
+@@ -955,19 +1151,7 @@ void do_timer(struct pt_regs *regs)
   */
  asmlinkage unsigned long sys_alarm(unsigned int seconds)
  {
@@ -48785,7 +49084,7 @@ Index: linux/kernel/timer.c
  }
  
  #endif
-@@ -1263,6 +1449,7 @@ static void __devinit init_timers_cpu(in
+@@ -1263,6 +1447,7 @@ static void __devinit init_timers_cpu(in
  
  	base = &per_cpu(tvec_bases, cpu);
  	spin_lock_init(&base->t_base.lock);
@@ -48793,7 +49092,7 @@ Index: linux/kernel/timer.c
  	for (j = 0; j < TVN_SIZE; j++) {
  		INIT_LIST_HEAD(base->tv5.vec + j);
  		INIT_LIST_HEAD(base->tv4.vec + j);
-@@ -1298,8 +1485,7 @@ static void __devinit migrate_timers(int
+@@ -1298,8 +1483,7 @@ static void __devinit migrate_timers(int
  	old_base = &per_cpu(tvec_bases, cpu);
  	new_base = &get_cpu_var(tvec_bases);
  
@@ -48803,7 +49102,7 @@ Index: linux/kernel/timer.c
  	spin_lock(&old_base->t_base.lock);
  
  	if (old_base->t_base.running_timer)
-@@ -1314,8 +1500,7 @@ static void __devinit migrate_timers(int
+@@ -1314,8 +1498,7 @@ static void __devinit migrate_timers(int
  	}
  
  	spin_unlock(&old_base->t_base.lock);
@@ -48813,7 +49112,7 @@ Index: linux/kernel/timer.c
  	put_cpu_var(tvec_bases);
  }
  #endif /* CONFIG_HOTPLUG_CPU */
-@@ -1346,6 +1531,7 @@ static struct notifier_block __devinitda
+@@ -1346,6 +1529,7 @@ static struct notifier_block __devinitda
  
  void __init init_timers(void)
  {
@@ -49824,15 +50123,6 @@ Index: linux/lib/smp_processor_id.c
  {
  	unsigned long preempt_count = preempt_count();
  	int this_cpu = raw_smp_processor_id();
-@@ -16,7 +16,7 @@ unsigned int debug_smp_processor_id(void
- 	if (likely(preempt_count))
- 		goto out;
- 
--	if (irqs_disabled())
-+	if (irqs_disabled() || irqs_disabled())
- 		goto out;
- 
- 	/*
 @@ -42,7 +42,7 @@ unsigned int debug_smp_processor_id(void
  	if (!printk_ratelimit())
  		goto out_enable;
