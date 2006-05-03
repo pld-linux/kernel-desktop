@@ -33123,7 +33123,7 @@ Index: linux/kernel/futex_compat.c
 +	if (op == FUTEX_REQUEUE || op == FUTEX_CMP_REQUEUE)
 +		val2 = (int) (unsigned long) utime;
 +
-+	return do_futex(uaddr, op, val, timeout, uaddr2, val2, val3);
++	return do_futex(uaddr, op, val, /* timeout */ MAX_SCHEDULE_TIMEOUT, uaddr2, val2, val3);
 +}
 Index: linux/kernel/hrtimer.c
 ===================================================================
