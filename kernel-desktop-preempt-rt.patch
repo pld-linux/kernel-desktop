@@ -2000,6 +2000,19 @@ Index: linux/arch/arm/common/time-acorn.c
  	.handler	= ioc_timer_interrupt
  };
  
+Index: linux/arch/arm/kernel/calls.S
+===================================================================
+--- linux.orig/arch/arm/kernel/calls.S
++++ linux/arch/arm/kernel/calls.S
+@@ -332,7 +332,7 @@
+ /* 320 */	CALL(sys_get_mempolicy)
+ 		CALL(sys_set_mempolicy)
+ #ifndef syscalls_counted
+-.equ syscalls_padding, ((NR_syscalls + 3) & ~3) - NR_syscalls
++.equ syscalls_padding, ((__NR_syscalls + 3) & ~3) - __NR_syscalls
+ #define syscalls_counted
+ #endif
+ .rept syscalls_padding
 Index: linux/arch/arm/kernel/dma.c
 ===================================================================
 --- linux.orig/arch/arm/kernel/dma.c
@@ -2103,10 +2116,50 @@ Index: linux/arch/arm/kernel/entry-common.S
  /*
   * "slow" syscall return path.  "why" tells us if this was a real syscall.
   */
-@@ -389,5 +392,112 @@ ENTRY(sys_oabi_call_table)
+@@ -87,8 +90,8 @@ ENTRY(ret_from_fork)
+ 	b	ret_slow_syscall
+ 	
+ 
+-	.equ NR_syscalls,0
+-#define CALL(x) .equ NR_syscalls,NR_syscalls+1
++	.equ __NR_syscalls,0			@ Used to determine syscall table padding.
++#define CALL(x) .equ __NR_syscalls,__NR_syscalls+1
+ #include "calls.S"
+ #undef CALL
+ #define CALL(x) .long x
+@@ -202,7 +205,7 @@ ENTRY(vector_swi)
+ 	tst	ip, #_TIF_SYSCALL_TRACE		@ are we tracing syscalls?
+ 	bne	__sys_trace
+ 
+-	cmp	scno, #NR_syscalls		@ check upper syscall limit
++	cmp	scno, #__NR_syscalls		@ check upper syscall limit
+ 	adr	lr, ret_fast_syscall		@ return address
+ 	ldrcc	pc, [tbl, scno, lsl #2]		@ call sys_* routine
+ 
+@@ -226,7 +229,7 @@ __sys_trace:
+ 	adr	lr, __sys_trace_return		@ return address
+ 	mov	scno, r0			@ syscall number (possibly new)
+ 	add	r1, sp, #S_R0 + S_OFF		@ pointer to regs
+-	cmp	scno, #NR_syscalls		@ check upper syscall limit
++	cmp	scno, #__NR_syscalls		@ check upper syscall limit
+ 	ldmccia	r1, {r0 - r3}			@ have to reload r0 - r3
+ 	ldrcc	pc, [tbl, scno, lsl #2]		@ call sys_* routine
+ 	b	2b
+@@ -273,7 +276,7 @@ ENTRY(sys_call_table)
+ sys_syscall:
+ 		eor	scno, r0, #__NR_OABI_SYSCALL_BASE
+ 		cmp	scno, #__NR_syscall - __NR_SYSCALL_BASE
+-		cmpne	scno, #NR_syscalls	@ check range
++		cmpne	scno, #__NR_syscalls	@ check range
+ 		stmloia	sp, {r5, r6}		@ shuffle args
+ 		movlo	r0, r1
+ 		movlo	r1, r2
+@@ -388,6 +391,112 @@ ENTRY(sys_oabi_call_table)
+ #include "calls.S"
  #undef ABI
  #undef OBSOLETE
- 
++#endif
++
 +#ifdef CONFIG_FRAME_POINTER
 +
 +#ifdef CONFIG_MCOUNT
@@ -2211,9 +2264,7 @@ Index: linux/arch/arm/kernel/entry-common.S
 +	ldr	r0, [r0, #-4]   @ get target return address
 +1:
 +	mov	pc, lr
-+
-+#endif
-+
+ 
  #endif
  
 Index: linux/arch/arm/kernel/fiq.c
@@ -13923,10 +13974,10 @@ Index: linux/arch/x86_64/kernel/process.c
  	clear_thread_flag(TIF_POLLING_NRFLAG);
  	smp_mb__after_clear_bit();
 -	while (!need_resched()) {
-+	while (!need_resched() || !need_resched_delayed()) {
++	while (!need_resched() && !need_resched_delayed()) {
  		local_irq_disable();
 -		if (!need_resched())
-+		if (!need_resched() || !need_resched_delayed())
++		if (!need_resched() && !need_resched_delayed())
  			safe_halt();
  		else
  			local_irq_enable();
@@ -15344,7 +15395,7 @@ Index: linux/drivers/char/Kconfig
 ===================================================================
 --- linux.orig/drivers/char/Kconfig
 +++ linux/drivers/char/Kconfig
-@@ -719,6 +719,45 @@ config RTC
+@@ -719,6 +719,46 @@ config RTC
  	  To compile this driver as a module, choose M here: the
  	  module will be called rtc.
  
@@ -15359,6 +15410,7 @@ Index: linux/drivers/char/Kconfig
 +
 +config BLOCKER
 +	tristate "Priority Inheritance Debugging (Blocker) Device Support"
++	depends on X86
 +	default y
 +	---help---
 +	  If you say Y here then a device will be created that the userspace
@@ -17517,7 +17569,49 @@ Index: linux/drivers/net/3c59x.c
  } 
  #endif
  
-@@ -2039,13 +2039,17 @@ static void vortex_tx_timeout(struct net
+@@ -1888,6 +1888,7 @@ vortex_timer(unsigned long data)
+ 	int next_tick = 60*HZ;
+ 	int ok = 0;
+ 	int media_status, mii_status, old_window;
++	unsigned long flags;
+ 
+ 	if (vortex_debug > 2) {
+ 		printk(KERN_DEBUG "%s: Media selection timer tick happened, %s.\n",
+@@ -1897,7 +1898,7 @@ vortex_timer(unsigned long data)
+ 
+ 	if (vp->medialock)
+ 		goto leave_media_alone;
+-	disable_irq(dev->irq);
++	spin_lock_irqsave(&vp->lock, flags);
+ 	old_window = ioread16(ioaddr + EL3_CMD) >> 13;
+ 	EL3WINDOW(4);
+ 	media_status = ioread16(ioaddr + Wn4_Media);
+@@ -1919,7 +1920,6 @@ vortex_timer(unsigned long data)
+ 		break;
+ 	case XCVR_MII: case XCVR_NWAY:
+ 		{
+-			spin_lock_bh(&vp->lock);
+ 			mii_status = mdio_read(dev, vp->phys[0], MII_BMSR);
+ 			if (!(mii_status & BMSR_LSTATUS)) {
+ 				/* Re-read to get actual link status */
+@@ -1957,7 +1957,6 @@ vortex_timer(unsigned long data)
+ 			} else {
+ 				netif_carrier_off(dev);
+ 			}
+-			spin_unlock_bh(&vp->lock);
+ 		}
+ 		break;
+ 	  default:					/* Other media types handled by Tx timeouts. */
+@@ -2000,7 +1999,7 @@ vortex_timer(unsigned long data)
+ 		/* AKPM: FIXME: Should reset Rx & Tx here.  P60 of 3c90xc.pdf */
+ 	}
+ 	EL3WINDOW(old_window);
+-	enable_irq(dev->irq);
++	spin_unlock_irqrestore(&vp->lock, flags);
+ 
+ leave_media_alone:
+ 	if (vortex_debug > 2)
+@@ -2039,13 +2038,17 @@ static void vortex_tx_timeout(struct net
  			/*
  			 * Block interrupts because vortex_interrupt does a bare spin_lock()
  			 */
@@ -18418,6 +18512,29 @@ Index: linux/fs/exec.c
  
  		spin_lock(&leader->proc_lock);
  		spin_lock(&current->proc_lock);
+Index: linux/fs/file.c
+===================================================================
+--- linux.orig/fs/file.c
++++ linux/fs/file.c
+@@ -137,7 +137,9 @@ static void free_fdtable_rcu(struct rcu_
+ 		kfree(fdt->fd);
+ 		kfree(fdt);
+ 	} else {
+-		fddef = &get_cpu_var(fdtable_defer_list);
++
++		fddef = &per_cpu(fdtable_defer_list, raw_smp_processor_id());
++
+ 		spin_lock(&fddef->lock);
+ 		fdt->next = fddef->next;
+ 		fddef->next = fdt;
+@@ -149,7 +151,6 @@ static void free_fdtable_rcu(struct rcu_
+ 		if (!schedule_work(&fddef->wq))
+ 			mod_timer(&fddef->timer, 5);
+ 		spin_unlock(&fddef->lock);
+-		put_cpu_var(fdtable_defer_list);
+ 	}
+ }
+ 
 Index: linux/fs/jbd/transaction.c
 ===================================================================
 --- linux.orig/fs/jbd/transaction.c
@@ -19055,6 +19172,19 @@ Index: linux/include/acpi/acpiosxf.h
  #define ACPI_MUTEX_SEM              1
  
  /* Functions for acpi_os_signal */
+Index: linux/include/asm-arm/arch-omap/clock.h
+===================================================================
+--- linux.orig/include/asm-arm/arch-omap/clock.h
++++ linux/include/asm-arm/arch-omap/clock.h
+@@ -48,7 +48,7 @@ struct clk_functions {
+ 
+ extern unsigned int mpurate;
+ extern struct list_head clocks;
+-extern spinlock_t clockfw_lock;
++extern raw_spinlock_t clockfw_lock;
+ 
+ extern int clk_init(struct clk_functions * custom_clocks);
+ extern int clk_register(struct clk *clk);
 Index: linux/include/asm-arm/arch-pxa/timex.h
 ===================================================================
 --- linux.orig/include/asm-arm/arch-pxa/timex.h
@@ -19510,7 +19640,7 @@ Index: linux/include/asm-arm/semaphore.h
 ===================================================================
 --- linux.orig/include/asm-arm/semaphore.h
 +++ linux/include/asm-arm/semaphore.h
-@@ -5,46 +5,67 @@
+@@ -5,46 +5,66 @@
  #define __ASM_ARM_SEMAPHORE_H
  
  #include <linux/linkage.h>
@@ -19528,7 +19658,6 @@ Index: linux/include/asm-arm/semaphore.h
 + */
 +#ifndef CONFIG_PREEMPT_RT
 +# define semaphore compat_semaphore
-+#define __MUTEX_INITIALIZER(name) __COMPAT_MUTEX_INITIALIZER(name)
 +#endif
 +
  #include <asm/atomic.h>
@@ -19589,7 +19718,7 @@ Index: linux/include/asm-arm/semaphore.h
  }
  
  /*
-@@ -55,16 +76,18 @@ asmlinkage int  __down_interruptible_fai
+@@ -55,16 +75,18 @@ asmlinkage int  __down_interruptible_fai
  asmlinkage int  __down_trylock_failed(void);
  asmlinkage void __up_wakeup(void);
  
@@ -19613,7 +19742,7 @@ Index: linux/include/asm-arm/semaphore.h
  {
  	might_sleep();
  	__down_op(sem, __down_failed);
-@@ -74,13 +97,13 @@ static inline void down(struct semaphore
+@@ -74,13 +96,13 @@ static inline void down(struct semaphore
   * This is ugly, but we want the default case to fall through.
   * "__down_interruptible" is the actual routine that waits...
   */
@@ -19629,7 +19758,7 @@ Index: linux/include/asm-arm/semaphore.h
  {
  	return __down_op_ret(sem, __down_trylock_failed);
  }
-@@ -91,9 +114,10 @@ static inline int down_trylock(struct se
+@@ -91,9 +113,10 @@ static inline int down_trylock(struct se
   * The default case (no contention) will result in NO
   * jumps for both down() and up().
   */
@@ -19666,104 +19795,115 @@ Index: linux/include/asm-arm/system.h
  
  #define CPU_ARCH_UNKNOWN	0
  #define CPU_ARCH_ARMv3		1
-@@ -186,7 +187,7 @@ static inline void sched_cacheflush(void
-  */
+@@ -181,72 +182,10 @@ static inline void sched_cacheflush(void
+ {
+ }
+ 
+-/*
+- * CPU interrupt mask handling.
+- */
  #if __LINUX_ARM_ARCH__ >= 6
- 
+-
 -#define local_irq_save(x)					\
-+#define raw_local_irq_save(x)					\
- 	({							\
- 	__asm__ __volatile__(					\
- 	"mrs	%0, cpsr		@ local_irq_save\n"	\
-@@ -194,17 +195,17 @@ static inline void sched_cacheflush(void
- 	: "=r" (x) : : "memory", "cc");				\
- 	})
- 
+-	({							\
+-	__asm__ __volatile__(					\
+-	"mrs	%0, cpsr		@ local_irq_save\n"	\
+-	"cpsid	i"						\
+-	: "=r" (x) : : "memory", "cc");				\
+-	})
+-
 -#define local_irq_enable()  __asm__("cpsie i	@ __sti" : : : "memory", "cc")
 -#define local_irq_disable() __asm__("cpsid i	@ __cli" : : : "memory", "cc")
 -#define local_fiq_enable()  __asm__("cpsie f	@ __stf" : : : "memory", "cc")
 -#define local_fiq_disable() __asm__("cpsid f	@ __clf" : : : "memory", "cc")
-+#define raw_local_irq_enable()  __asm__("cpsie i	@ __sti" : : : "memory", "cc")
-+#define raw_local_irq_disable() __asm__("cpsid i	@ __cli" : : : "memory", "cc")
+-
 +#define raw_local_fiq_enable()  __asm__("cpsie f	@ __stf" : : : "memory", "cc")
 +#define raw_local_fiq_disable() __asm__("cpsid f	@ __clf" : : : "memory", "cc")
- 
  #else
- 
- /*
-  * Save the current interrupt enable state & disable IRQs
-  */
+-
+-/*
+- * Save the current interrupt enable state & disable IRQs
+- */
 -#define local_irq_save(x)					\
-+#define raw_local_irq_save(x)					\
- 	({							\
- 		unsigned long temp;				\
- 		(void) (&temp == &x);				\
-@@ -216,11 +217,11 @@ static inline void sched_cacheflush(void
- 	:							\
- 	: "memory", "cc");					\
- 	})
+-	({							\
+-		unsigned long temp;				\
+-		(void) (&temp == &x);				\
+-	__asm__ __volatile__(					\
+-	"mrs	%0, cpsr		@ local_irq_save\n"	\
+-"	orr	%1, %0, #128\n"					\
+-"	msr	cpsr_c, %1"					\
+-	: "=r" (x), "=r" (temp)					\
+-	:							\
+-	: "memory", "cc");					\
+-	})
 -	
-+
- /*
-  * Enable IRQs
-  */
+-/*
+- * Enable IRQs
+- */
 -#define local_irq_enable()					\
-+#define raw_local_irq_enable()				\
- 	({							\
- 		unsigned long temp;				\
- 	__asm__ __volatile__(					\
-@@ -235,7 +236,7 @@ static inline void sched_cacheflush(void
- /*
-  * Disable IRQs
-  */
+-	({							\
+-		unsigned long temp;				\
+-	__asm__ __volatile__(					\
+-	"mrs	%0, cpsr		@ local_irq_enable\n"	\
+-"	bic	%0, %0, #128\n"					\
+-"	msr	cpsr_c, %0"					\
+-	: "=r" (temp)						\
+-	:							\
+-	: "memory", "cc");					\
+-	})
+-
+-/*
+- * Disable IRQs
+- */
 -#define local_irq_disable()					\
-+#define raw_local_irq_disable()				\
- 	({							\
- 		unsigned long temp;				\
- 	__asm__ __volatile__(					\
-@@ -282,7 +283,7 @@ static inline void sched_cacheflush(void
+-	({							\
+-		unsigned long temp;				\
+-	__asm__ __volatile__(					\
+-	"mrs	%0, cpsr		@ local_irq_disable\n"	\
+-"	orr	%0, %0, #128\n"					\
+-"	msr	cpsr_c, %0"					\
+-	: "=r" (temp)						\
+-	:							\
+-	: "memory", "cc");					\
+-	})
+-
  /*
-  * Save the current interrupt enable state.
+  * Enable FIQs
   */
--#define local_save_flags(x)					\
-+#define raw_local_save_flags(x)				\
- 	({							\
- 	__asm__ __volatile__(					\
- 	"mrs	%0, cpsr		@ local_save_flags"	\
-@@ -292,20 +293,27 @@ static inline void sched_cacheflush(void
- /*
-  * restore saved IRQ & FIQ state
-  */
--#define local_irq_restore(x)					\
-+#define raw_local_irq_restore(x)				\
- 	__asm__ __volatile__(					\
- 	"msr	cpsr_c, %0		@ local_irq_restore\n"	\
- 	:							\
- 	: "r" (x)						\
- 	: "memory", "cc")
+@@ -279,32 +218,7 @@ static inline void sched_cacheflush(void
  
+ #endif
+ 
+-/*
+- * Save the current interrupt enable state.
+- */
+-#define local_save_flags(x)					\
+-	({							\
+-	__asm__ __volatile__(					\
+-	"mrs	%0, cpsr		@ local_save_flags"	\
+-	: "=r" (x) : : "memory", "cc");				\
+-	})
+-
+-/*
+- * restore saved IRQ & FIQ state
+- */
+-#define local_irq_restore(x)					\
+-	__asm__ __volatile__(					\
+-	"msr	cpsr_c, %0		@ local_irq_restore\n"	\
+-	:							\
+-	: "r" (x)						\
+-	: "memory", "cc")
+-
 -#define irqs_disabled()			\
 -({					\
 -	unsigned long flags;		\
 -	local_save_flags(flags);	\
 -	(int)(flags & PSR_I_BIT);	\
-+#define raw_irqs_disabled_flags(flags)	\
-+({						\
-+	(int)(flags & PSR_I_BIT);		\
-+})
-+
-+#define raw_irqs_disabled()			\
-+({						\
-+	unsigned long flags;			\
-+	raw_local_save_flags(flags);		\
-+	raw_irqs_disabled_flags(flags);	\
- })
- 
+-})
 +#include <linux/trace_irqflags.h>
-+
+ 
  #ifdef CONFIG_SMP
  
- #define smp_mb()		mb()
 Index: linux/include/asm-arm/thread_info.h
 ===================================================================
 --- linux.orig/include/asm-arm/thread_info.h
@@ -19939,13 +20079,20 @@ Index: linux/include/asm-arm/unistd.h
 ===================================================================
 --- linux.orig/include/asm-arm/unistd.h
 +++ linux/include/asm-arm/unistd.h
-@@ -533,6 +533,10 @@ type name(type1 arg1, type2 arg2, type3 
+@@ -361,6 +361,9 @@
+ #define __NR_get_mempolicy		(__NR_SYSCALL_BASE+320)
+ #define __NR_set_mempolicy		(__NR_SYSCALL_BASE+321)
+ 
++// FIXME: check this number ...
++#define NR_syscalls			322
++
+ /*
+  * The following SWIs are ARM private.
+  */
+@@ -533,6 +536,7 @@ type name(type1 arg1, type2 arg2, type3 
  #define __ARCH_WANT_OLD_READDIR
  #define __ARCH_WANT_SYS_SOCKETCALL
  #endif
-+
-+// FIXME: check this number ...
-+#define NR_syscalls	328
 +
  #endif
  
@@ -26785,7 +26932,7 @@ Index: linux/include/linux/plist.h
 ===================================================================
 --- /dev/null
 +++ linux/include/linux/plist.h
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,248 @@
 +/*
 + * Descending-priority-sorted double-linked list
 + *
@@ -26861,6 +27008,7 @@ Index: linux/include/linux/plist.h
 +#ifndef _LINUX_PLIST_H_
 +#define _LINUX_PLIST_H_
 +
++#include <linux/kernel.h>
 +#include <linux/list.h>
 +#include <linux/spinlock_types.h>
 +
@@ -31519,7 +31667,7 @@ Index: linux/kernel/futex.c
  	if (err >= 0) {
  		key->shared.pgoff =
  			page->index << (PAGE_CACHE_SHIFT - PAGE_SHIFT);
-@@ -242,18 +279,246 @@ static void drop_key_refs(union futex_ke
+@@ -242,18 +279,254 @@ static void drop_key_refs(union futex_ke
  	}
  }
  
@@ -31718,11 +31866,19 @@ Index: linux/kernel/futex.c
 +
 +	list_for_each_entry_safe(this, next, head, list) {
 +		if (match_futex (&this->key, &me->key)) {
-+			/*
-+			 * Another waiter already exists - bump up
-+			 * the refcount and return its pi_state:
-+			 */
++			/* Another waiter already exists */
 +			pi_state = this->pi_state;
++
++			/* make sure its a PI waiter: */
++			if (unlikely(!pi_state)) {
++#ifdef CONFIG_DEBUG_RT_MUTEXES
++				if (printk_ratelimit())
++					printk("BUG: %s/%d: Mixing PI and non-PI futexes!\n",
++						current->comm, current->pid);
++#endif
++				return -EINVAL;
++			}
++			/* bump up the refcount and return its pi_state: */
 +			atomic_inc(&pi_state->refcount);
 +			me->pi_state = pi_state;
 +			pr_debug("Waiter found: %d\n",
@@ -31768,7 +31924,7 @@ Index: linux/kernel/futex.c
   * The hash bucket lock must be held when this is called.
   * Afterwards, the futex_q must not be accessed.
   */
-@@ -280,16 +545,85 @@ static void wake_futex(struct futex_q *q
+@@ -280,16 +553,85 @@ static void wake_futex(struct futex_q *q
  	q->lock_ptr = NULL;
  }
  
@@ -31858,7 +32014,7 @@ Index: linux/kernel/futex.c
  	int ret;
  
  	down_read(&current->mm->mmap_sem);
-@@ -298,19 +632,21 @@ static int futex_wake(unsigned long uadd
+@@ -298,19 +640,27 @@ static int futex_wake(unsigned long uadd
  	if (unlikely(ret != 0))
  		goto out;
  
@@ -31871,8 +32027,14 @@ Index: linux/kernel/futex.c
  
  	list_for_each_entry_safe(this, next, head, list) {
  		if (match_futex (&this->key, &key)) {
-+			if (this->pi_state)
-+				return -EINVAL;
++			/*
++			 * Mixing of PI-aware and PI-unaware
++			 * waiters is invalid:
++			 */
++			if (unlikely(this->pi_state)) {
++				ret = -EINVAL;
++				break;
++			}
  			wake_futex(this);
  			if (++ret >= nr_wake)
  				break;
@@ -31884,7 +32046,7 @@ Index: linux/kernel/futex.c
  out:
  	up_read(&current->mm->mmap_sem);
  	return ret;
-@@ -320,10 +656,12 @@ out:
+@@ -320,10 +670,12 @@ out:
   * Wake up all waiters hashed on the physical page that is mapped
   * to this virtual address:
   */
@@ -31899,7 +32061,7 @@ Index: linux/kernel/futex.c
  	struct list_head *head;
  	struct futex_q *this, *next;
  	int ret, op_ret, attempt = 0;
-@@ -338,27 +676,29 @@ retryfull:
+@@ -338,27 +690,29 @@ retryfull:
  	if (unlikely(ret != 0))
  		goto out;
  
@@ -31943,7 +32105,7 @@ Index: linux/kernel/futex.c
  		ret = op_ret;
  		goto out;
  #endif
-@@ -368,47 +708,34 @@ retry:
+@@ -368,47 +722,34 @@ retry:
  			goto out;
  		}
  
@@ -31965,7 +32127,9 @@ Index: linux/kernel/futex.c
 -			    !(vma = find_vma(mm, uaddr2)) ||
 -			    vma->vm_start > uaddr2 ||
 -			    !(vma->vm_flags & VM_WRITE))
--				goto out;
++			if (futex_handle_fault((unsigned long)uaddr2,
++					       attempt))
+ 				goto out;
 -
 -			switch (handle_mm_fault(mm, vma, uaddr2, 1)) {
 -			case VM_FAULT_MINOR:
@@ -31975,9 +32139,7 @@ Index: linux/kernel/futex.c
 -				current->maj_flt++;
 -				break;
 -			default:
-+			if (futex_handle_fault((unsigned long)uaddr2,
-+					       attempt))
- 				goto out;
+-				goto out;
 -			}
  			goto retry;
  		}
@@ -32003,7 +32165,7 @@ Index: linux/kernel/futex.c
  
  	list_for_each_entry_safe(this, next, head, list) {
  		if (match_futex (&this->key, &key1)) {
-@@ -419,7 +746,7 @@ retry:
+@@ -419,7 +760,7 @@ retry:
  	}
  
  	if (op_ret > 0) {
@@ -32012,7 +32174,7 @@ Index: linux/kernel/futex.c
  
  		op_ret = 0;
  		list_for_each_entry_safe(this, next, head, list) {
-@@ -432,9 +759,9 @@ retry:
+@@ -432,9 +773,9 @@ retry:
  		ret += op_ret;
  	}
  
@@ -32025,7 +32187,7 @@ Index: linux/kernel/futex.c
  out:
  	up_read(&current->mm->mmap_sem);
  	return ret;
-@@ -444,11 +771,11 @@ out:
+@@ -444,11 +785,11 @@ out:
   * Requeue all waiters hashed on one physical page to another
   * physical page.
   */
@@ -32040,7 +32202,7 @@ Index: linux/kernel/futex.c
  	struct list_head *head1;
  	struct futex_q *this, *next;
  	int ret, drop_count = 0;
-@@ -463,68 +790,69 @@ static int futex_requeue(unsigned long u
+@@ -463,68 +804,69 @@ static int futex_requeue(unsigned long u
  	if (unlikely(ret != 0))
  		goto out;
  
@@ -32134,7 +32296,7 @@ Index: linux/kernel/futex.c
  
  	/* drop_key_refs() must be called outside the spinlocks. */
  	while (--drop_count >= 0)
-@@ -539,7 +867,7 @@ out:
+@@ -539,7 +881,7 @@ out:
  static inline struct futex_hash_bucket *
  queue_lock(struct futex_q *q, int fd, struct file *filp)
  {
@@ -32143,7 +32305,7 @@ Index: linux/kernel/futex.c
  
  	q->fd = fd;
  	q->filp = filp;
-@@ -547,23 +875,24 @@ queue_lock(struct futex_q *q, int fd, st
+@@ -547,23 +889,24 @@ queue_lock(struct futex_q *q, int fd, st
  	init_waitqueue_head(&q->waiters);
  
  	get_key_refs(&q->key);
@@ -32177,7 +32339,7 @@ Index: linux/kernel/futex.c
  	drop_key_refs(&q->key);
  }
  
-@@ -575,16 +904,17 @@ queue_unlock(struct futex_q *q, struct f
+@@ -575,16 +918,17 @@ queue_unlock(struct futex_q *q, struct f
  /* The key must be already stored in q->key. */
  static void queue_me(struct futex_q *q, int fd, struct file *filp)
  {
@@ -32199,7 +32361,7 @@ Index: linux/kernel/futex.c
  
  	/* In the common case we don't take the spinlock, which is nice. */
   retry:
-@@ -610,6 +940,9 @@ static int unqueue_me(struct futex_q *q)
+@@ -610,6 +954,9 @@ static int unqueue_me(struct futex_q *q)
  		}
  		WARN_ON(list_empty(&q->list));
  		list_del(&q->list);
@@ -32209,7 +32371,7 @@ Index: linux/kernel/futex.c
  		spin_unlock(lock_ptr);
  		ret = 1;
  	}
-@@ -618,21 +951,44 @@ static int unqueue_me(struct futex_q *q)
+@@ -618,21 +965,44 @@ static int unqueue_me(struct futex_q *q)
  	return ret;
  }
  
@@ -32219,7 +32381,9 @@ Index: linux/kernel/futex.c
 + * hash bucket. The hash bucket lock is held on entry and dropped here.
 + */
 +static void unqueue_me_pi(struct futex_q *q, struct futex_hash_bucket *hb)
-+{
+ {
+-	DECLARE_WAITQUEUE(wait, current);
+-	int ret, curval;
 +	WARN_ON(list_empty(&q->list));
 +	list_del(&q->list);
 +
@@ -32233,9 +32397,7 @@ Index: linux/kernel/futex.c
 +}
 +
 +static int futex_wait(u32 __user *uaddr, u32 val, struct timespec *time)
- {
--	DECLARE_WAITQUEUE(wait, current);
--	int ret, curval;
++{
 +	struct task_struct *curr = current;
 +	DECLARE_WAITQUEUE(wait, curr);
 +	struct futex_hash_bucket *hb;
@@ -32260,7 +32422,7 @@ Index: linux/kernel/futex.c
  
  	/*
  	 * Access the page AFTER the futex is queued.
-@@ -654,37 +1010,35 @@ static int futex_wait(unsigned long uadd
+@@ -654,37 +1024,35 @@ static int futex_wait(unsigned long uadd
  	 * We hold the mmap semaphore, so the mapping cannot have changed
  	 * since we looked it up in get_futex_key.
  	 */
@@ -32310,7 +32472,7 @@ Index: linux/kernel/futex.c
  
  	/*
  	 * There might have been scheduling since the queue_me(), as we
-@@ -702,8 +1056,37 @@ static int futex_wait(unsigned long uadd
+@@ -702,8 +1070,37 @@ static int futex_wait(unsigned long uadd
  	 * !list_empty() is safe here without any lock.
  	 * q.lock_ptr != 0 is not safe, because of ordering against wakeup.
  	 */
@@ -32350,7 +32512,7 @@ Index: linux/kernel/futex.c
  	__set_current_state(TASK_RUNNING);
  
  	/*
-@@ -714,14 +1097,365 @@ static int futex_wait(unsigned long uadd
+@@ -714,14 +1111,368 @@ static int futex_wait(unsigned long uadd
  	/* If we were woken (and unqueued), we succeeded, whatever. */
  	if (!unqueue_me(&q))
  		return 0;
@@ -32460,6 +32622,9 @@ Index: linux/kernel/futex.c
 +	ret = lookup_pi_state(uval, hb, &q);
 +
 +	if (unlikely(ret)) {
++		/* Handle pi/non-pi mixups: */
++		if (ret == -EINVAL)
++			goto out_unlock_release_sem;
 +		/*
 +		 * There were no waiters and the owner task lookup
 +		 * failed. When the OWNER_DIED bit is set, then we
@@ -32689,7 +32854,7 @@ Index: linux/kernel/futex.c
 +out_unlock:
 +	spin_unlock(&hb->lock);
 +out:
-+	up_read(&current->mm->mmap_sem);
+ 	up_read(&current->mm->mmap_sem);
 +	pr_debug("unlock ret: %p, %d (%d): %d\n", uaddr, current->pid,
 +		 current->prio, ret);
 +
@@ -32710,7 +32875,7 @@ Index: linux/kernel/futex.c
 +	}
 +
 +	spin_unlock(&hb->lock);
- 	up_read(&current->mm->mmap_sem);
++	up_read(&current->mm->mmap_sem);
 +
 +	ret = get_user(uval, uaddr);
 +	if (!ret && (uval != -EFAULT))
@@ -32719,7 +32884,7 @@ Index: linux/kernel/futex.c
  	return ret;
  }
  
-@@ -731,6 +1465,7 @@ static int futex_close(struct inode *ino
+@@ -731,6 +1482,7 @@ static int futex_close(struct inode *ino
  
  	unqueue_me(q);
  	kfree(q);
@@ -32727,7 +32892,7 @@ Index: linux/kernel/futex.c
  	return 0;
  }
  
-@@ -762,7 +1497,7 @@ static struct file_operations futex_fops
+@@ -762,7 +1514,7 @@ static struct file_operations futex_fops
   * Signal allows caller to avoid the race which would occur if they
   * set the sigio stuff up afterwards.
   */
@@ -32736,7 +32901,7 @@ Index: linux/kernel/futex.c
  {
  	struct futex_q *q;
  	struct file *filp;
-@@ -799,6 +1534,7 @@ static int futex_fd(unsigned long uaddr,
+@@ -799,6 +1551,7 @@ static int futex_fd(unsigned long uaddr,
  		err = -ENOMEM;
  		goto error;
  	}
@@ -32744,7 +32909,7 @@ Index: linux/kernel/futex.c
  
  	down_read(&current->mm->mmap_sem);
  	err = get_futex_key(uaddr, &q->key);
-@@ -829,8 +1565,178 @@ error:
+@@ -829,8 +1582,178 @@ error:
  	goto out;
  }
  
@@ -32925,7 +33090,7 @@ Index: linux/kernel/futex.c
  {
  	int ret;
  
-@@ -854,6 +1760,15 @@ long do_futex(unsigned long uaddr, int o
+@@ -854,6 +1777,15 @@ long do_futex(unsigned long uaddr, int o
  	case FUTEX_WAKE_OP:
  		ret = futex_wake_op(uaddr, uaddr2, val, val2, val3);
  		break;
@@ -32941,7 +33106,7 @@ Index: linux/kernel/futex.c
  	default:
  		ret = -ENOSYS;
  	}
-@@ -861,27 +1776,26 @@ long do_futex(unsigned long uaddr, int o
+@@ -861,27 +1793,26 @@ long do_futex(unsigned long uaddr, int o
  }
  
  
@@ -33123,7 +33288,7 @@ Index: linux/kernel/futex_compat.c
 +	if (op == FUTEX_REQUEUE || op == FUTEX_CMP_REQUEUE)
 +		val2 = (int) (unsigned long) utime;
 +
-+	return do_futex(uaddr, op, val, /* timeout */ MAX_SCHEDULE_TIMEOUT, uaddr2, val2, val3);
++	return do_futex(uaddr, op, val, &t, uaddr2, val2, val3);
 +}
 Index: linux/kernel/hrtimer.c
 ===================================================================
@@ -35131,7 +35296,7 @@ Index: linux/kernel/irq/manage.c
  	if (!handler)
  		return -EINVAL;
  
-@@ -377,3 +430,368 @@ int request_irq(unsigned int irq,
+@@ -377,3 +430,365 @@ int request_irq(unsigned int irq,
  
  EXPORT_SYMBOL(request_irq);
  
@@ -35422,24 +35587,21 @@ Index: linux/kernel/irq/manage.c
 +	if (param.sched_priority > 25)
 +		curr_irq_prio = param.sched_priority - 1;
 +
-+//	param.sched_priority = 1;
 +	sys_sched_setscheduler(current->pid, SCHED_FIFO, &param);
 +
 +	while (!kthread_should_stop()) {
 +		set_current_state(TASK_INTERRUPTIBLE);
 +		do_hardirq(desc);
 +		cond_resched_all();
++		local_irq_disable();
 +		__do_softirq();
-+//		do_softirq_from_hardirq();
 +		local_irq_enable();
 +#ifdef CONFIG_SMP
 +		/*
 +		 * Did IRQ affinities change?
 +		 */
-+		if (!cpu_isset(smp_processor_id(), irq_affinity[irq])) {
-+			mask = cpumask_of_cpu(any_online_cpu(irq_affinity[irq]));
-+			set_cpus_allowed(current, mask);
-+		}
++		if (!cpus_equal(current->cpus_allowed, irq_affinity[irq]))
++			set_cpus_allowed(current, irq_affinity[irq]);
 +#endif
 +		schedule();
 +	}
@@ -47133,7 +47295,7 @@ Index: linux/kernel/time/clocksource.c
 ===================================================================
 --- /dev/null
 +++ linux/kernel/time/clocksource.c
-@@ -0,0 +1,354 @@
+@@ -0,0 +1,355 @@
 +/*
 + * linux/kernel/time/clocksource.c
 + *
@@ -47459,10 +47621,11 @@ Index: linux/kernel/time/clocksource.c
 + */
 +static int __init boot_override_clocksource(char* str)
 +{
-+	spin_lock_irq(&clocksource_lock);
++	unsigned long flags;
++	spin_lock_irqsave(&clocksource_lock, flags);
 +	if (str)
 +		strlcpy(override_name, str, sizeof(override_name));
-+	spin_unlock_irq(&clocksource_lock);
++	spin_unlock_irqrestore(&clocksource_lock, flags);
 +	return 1;
 +}
 +
@@ -50276,7 +50439,7 @@ Index: linux/mm/memory.c
 ===================================================================
 --- linux.orig/mm/memory.c
 +++ linux/mm/memory.c
-@@ -264,18 +264,48 @@ void free_pgd_range(struct mmu_gather **
+@@ -264,18 +264,52 @@ void free_pgd_range(struct mmu_gather **
  		flush_tlb_pgtables((*tlb)->mm, start, end);
  }
  
@@ -50297,7 +50460,9 @@ Index: linux/mm/memory.c
 +
 +	if (!vma)	/* Sometimes when exiting after an oops */
 +		return;
++#ifndef CONFIG_PREEMPT_RT
 +	if (vma->vm_next)
++#endif
 +		tlb_finish_mmu(*tlb, tlb_start_addr(*tlb), tlb_end_addr(*tlb));
 +	/*
 +	 * Hide vma from rmap and vmtruncate before freeeing pgtables,
@@ -50308,7 +50473,9 @@ Index: linux/mm/memory.c
 +		unlink_file_vma(unlink);
 +		unlink = unlink->vm_next;
 +	}
++#ifndef CONFIG_PREEMPT_RT
 +	if (vma->vm_next)
++#endif
 +		*tlb = tlb_gather_mmu(vma->vm_mm, fullmm);
 +#endif
  	while (vma) {
@@ -50325,7 +50492,7 @@ Index: linux/mm/memory.c
  
  		if (is_hugepage_only_range(vma->vm_mm, addr, HPAGE_SIZE)) {
  			hugetlb_free_pgd_range(tlb, addr, vma->vm_end,
-@@ -289,8 +319,10 @@ void free_pgtables(struct mmu_gather **t
+@@ -289,8 +323,10 @@ void free_pgtables(struct mmu_gather **t
  							HPAGE_SIZE)) {
  				vma = next;
  				next = vma->vm_next;
@@ -50336,7 +50503,7 @@ Index: linux/mm/memory.c
  			}
  			free_pgd_range(tlb, addr, vma->vm_end,
  				floor, next? next->vm_start: ceiling);
-@@ -760,10 +792,13 @@ static unsigned long unmap_page_range(st
+@@ -760,10 +796,13 @@ static unsigned long unmap_page_range(st
  	return addr;
  }
  
