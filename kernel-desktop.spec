@@ -104,7 +104,7 @@ Patch0:		kernel-desktop-preempt-rt.patch
 
 Patch1:		kernel-desktop-suspend2.patch
 
-#Patch2:		kernel-desktop-reiser4.patch
+Patch2:		kernel-desktop-reiser4.patch
 
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch3:		tahoe9xx-2.6.11.5.patch
@@ -634,8 +634,7 @@ Documentation.
 %patch1 -p1
 %endif
 
-# reiserfs4
-#%%patch2 -p1
+%patch2 -p1
 
 %patch3 -p1
 
