@@ -21959,27 +21959,6 @@ Index: linux/drivers/video/console/fbcon.c
 ===================================================================
 --- linux.orig/drivers/video/console/fbcon.c
 +++ linux/drivers/video/console/fbcon.c
-@@ -1184,7 +1184,6 @@ static void fbcon_clear(struct vc_data *
- {
- 	struct fb_info *info = registered_fb[con2fb_map[vc->vc_num]];
- 	struct fbcon_ops *ops = info->fbcon_par;
--
- 	struct display *p = &fb_display[vc->vc_num];
- 	u_int y_break;
- 
-@@ -1213,10 +1212,11 @@ static void fbcon_putcs(struct vc_data *
- 	struct display *p = &fb_display[vc->vc_num];
- 	struct fbcon_ops *ops = info->fbcon_par;
- 
--	if (!fbcon_is_inactive(vc, info))
-+	if (!fbcon_is_inactive(vc, info)) {
- 		ops->putcs(vc, info, s, count, real_y(p, ypos), xpos,
- 			   get_color(vc, info, scr_readw(s), 1),
- 			   get_color(vc, info, scr_readw(s), 0));
-+	}
- }
- 
- static void fbcon_putc(struct vc_data *vc, int c, int ypos, int xpos)
 @@ -2986,6 +2986,7 @@ static const struct consw fb_con = {
  	.con_screen_pos 	= fbcon_screen_pos,
  	.con_getxy 		= fbcon_getxy,
@@ -33745,7 +33724,7 @@ Index: linux/include/linux/sysctl.h
  	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
  	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
  	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
-+	KERN_MAX_LOCK_DEPTH=73
++	KERN_MAX_LOCK_DEPTH=80,
  };
  
  
