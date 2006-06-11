@@ -65,23 +65,20 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel-%{_alt_kernel}
-%define		_postver	.13
-#define		_postver	%{nil}
-Version:	2.6.16%{_postver}
+#define		_postver	.18
+%define		_postver	%{nil}
+Version:	2.6.17%{_postver}
 Release:	%{_rel}
 Epoch:		0
 License:	GPL v2
 Group:		Base/Kernel
-%define		_rc	%{nil}
-#define		_rc	-rc5
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	3101894807968d4651b54d9f61d9e5a4
+#define		_rc	%{nil}
+%define		_rc	-rc6
+Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+# Source0-md5:	0113d3639b88dc2095df331c57dfaa9c
+#Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
-
-Source12:	ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.16/reiser4-for-2.6.16-1.patch.gz
-# Source12-md5:	f51303b5e445432b974a729b76036c40
 
 Source20:	kernel-i386.config
 Source21:	kernel-i386-smp.config
@@ -107,11 +104,13 @@ Patch0:		kernel-desktop-preempt-rt.patch
 
 Patch1:		kernel-desktop-suspend2.patch
 
+#Patch2:		kernel-desktop-reiser4.patch
+
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
-Patch2:		tahoe9xx-2.6.11.5.patch
+Patch3:		tahoe9xx-2.6.11.5.patch
 
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
-Patch4:		kernel-desktop-fbsplash.patch
+#Patch4:		kernel-desktop-fbsplash.patch
 Patch5:		linux-2.6-vesafb-tng.patch
 
 # directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz
@@ -123,28 +122,28 @@ Patch9:		linux-static-dev.patch
 
 ########	netfilter snap
 ## base
-Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
-Patch11:	pom-ng-connlimit-%{_netfilter_snap}.patch
-Patch12:	pom-ng-expire-%{_netfilter_snap}.patch
-Patch13:	pom-ng-fuzzy-%{_netfilter_snap}.patch
-Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
-Patch15:	pom-ng-nth-%{_netfilter_snap}.patch
-Patch16:	pom-ng-osf-%{_netfilter_snap}.patch
-Patch17:	pom-ng-psd-%{_netfilter_snap}.patch
-Patch18:	pom-ng-quota-%{_netfilter_snap}.patch
-Patch19:	pom-ng-random-%{_netfilter_snap}.patch
-Patch20:	pom-ng-set-%{_netfilter_snap}.patch
-Patch21:	pom-ng-time-%{_netfilter_snap}.patch
-Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
+#Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
+#Patch11:	pom-ng-connlimit-%{_netfilter_snap}.patch
+#Patch12:	pom-ng-expire-%{_netfilter_snap}.patch
+#Patch13:	pom-ng-fuzzy-%{_netfilter_snap}.patch
+#Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
+#Patch15:	pom-ng-nth-%{_netfilter_snap}.patch
+#Patch16:	pom-ng-osf-%{_netfilter_snap}.patch
+#Patch17:	pom-ng-psd-%{_netfilter_snap}.patch
+#Patch18:	pom-ng-quota-%{_netfilter_snap}.patch
+#Patch19:	pom-ng-random-%{_netfilter_snap}.patch
+#Patch20:	pom-ng-set-%{_netfilter_snap}.patch
+#Patch21:	pom-ng-time-%{_netfilter_snap}.patch
+#Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
 
 ## extra
-Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
-Patch31:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-Patch34:	pom-ng-account-%{_netfilter_snap}.patch
-Patch35:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
+#Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
+#Patch31:	pom-ng-IPMARK-%{_netfilter_snap}.patch
+#Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
+#Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
+#Patch34:	pom-ng-account-%{_netfilter_snap}.patch
+#Patch35:	pom-ng-ipp2p-%{_netfilter_snap}.patch
+#Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
 ########	End netfilter
 
 # from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
@@ -636,11 +635,11 @@ Documentation.
 %endif
 
 # reiserfs4
-%{__gzip} -dc %{SOURCE12} | %{__patch} -s -p1
+#%%patch2 -p1
 
-%patch2 -p1
+%patch3 -p1
 
-%patch4 -p1
+#%%patch4 -p1
 
 #%%ifarch %{ix86}
 # broken on amd64 ?
@@ -654,35 +653,35 @@ Documentation.
 
 ### netfilter
 # base
-%patch10 -p1
-%patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
-%patch20 -p1
-%patch21 -p1
-%patch22 -p1
+#patch10 -p1
+#patch11 -p1
+#patch12 -p1
+#patch13 -p1
+#patch14 -p1
+#patch15 -p1
+#patch16 -p1
+#patch17 -p1
+#patch18 -p1
+#patch19 -p1
+#patch20 -p1
+#patch21 -p1
+#patch22 -p1
 
 ## extra
-%patch30 -p1
-%patch31 -p1
-%patch32 -p1
-%patch33 -p1
-%patch34 -p1
-%patch35 -p1
-%patch36 -p1
+#patch30 -p1
+#patch31 -p1
+#patch32 -p1
+#patch33 -p1
+#patch34 -p1
+#patch35 -p1
+#patch36 -p1
 ### end of netfilter
 
 %patch50 -p1
 
 %patch51 -p1
 
-%patch52 -p1
+#%%patch52 -p1
 
 %patch53 -p1
 
@@ -691,11 +690,11 @@ Documentation.
 %patch55 -p1
 %patch56 -p1
 
-%patch57 -p1
+#%%patch57 -p1
 
-%patch60 -p1
+#%%patch60 -p1
 
-%patch300 -p1
+#%%patch300 -p1
 
 %if %{with grsec_minimal}
 %patch1000 -p1
