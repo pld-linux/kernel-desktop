@@ -110,7 +110,7 @@ Patch1:		kernel-desktop-suspend2.patch
 Patch3:		tahoe9xx-2.6.11.5.patch
 
 #	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
-#Patch4:		kernel-desktop-fbsplash.patch
+Patch4:		kernel-desktop-fbsplash.patch
 Patch5:		linux-2.6-vesafb-tng.patch
 
 # directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz
@@ -639,7 +639,7 @@ Documentation.
 
 %patch3 -p1
 
-#%%patch4 -p1
+%patch4 -p1
 
 #%%ifarch %{ix86}
 # broken on amd64 ?
