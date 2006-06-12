@@ -80,21 +80,21 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 
-Source20:	kernel-i386.config
-Source21:	kernel-i386-smp.config
-Source22:	kernel-x86_64.config
-Source23:	kernel-x86_64-smp.config
-Source30:	kernel-ppc.config
-Source31:	kernel-ppc-smp.config
+Source20:	kernel-desktop-common.config
+Source21:	kernel-desktop-i386.config
+Source22:	kernel-desktop-i386-smp.config
+Source23:	kernel-desktop-x86_64.config
+Source24:	kernel-desktop-x86_64-smp.config
+Source25:	kernel-desktop-ppc.config
+Source26:	kernel-desktop-ppc-smp.config
 
 Source40:	kernel-desktop-preempt-common.config
 Source41:	kernel-desktop-preempt-rt.config
 Source42:	kernel-desktop-preempt-nopreempt.config
 Source43:	kernel-suspend2.config
-Source44:	kernel-vesafb-tng.config
-Source45:	kernel-squashfs.config
-Source46:	kernel-netfilter.config
-Source47:	kernel-grsec.config
+Source44:	kernel-desktop-patches.config
+Source45:	kernel-desktop-netfilter.config
+Source46:	kernel-grsec.config
 
 ###
 #	Patches
@@ -764,12 +764,12 @@ BuildConfig() {
 	KernelVer=%{ver_rel}$1
 
 	echo "Building config file [using $Config.conf] for KERNEL $1..."
-	cat $RPM_SOURCE_DIR/kernel-$Config.config > arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE20} > arch/%{_target_base_arch}/defconfig
+	cat $RPM_SOURCE_DIR/kernel-desktop-$Config.config >> arch/%{_target_base_arch}/defconfig
 
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
 	# preempt
-	sed -i '/CONFIG_PREEMPT/d' arch/%{_target_base_arch}/defconfig
 	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
 %if %{with preemptrt}	
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
@@ -781,20 +781,14 @@ BuildConfig() {
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
 %endif
 
-	# fbsplash
-	echo "CONFIG_FB_SPLASH=y" >> arch/%{_target_base_arch}/defconfig
-
-	# vesafb-tng
+	# fbsplash, vesafb-tng, squashfs, imq, tahoe, atm, reiser4
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
 
-	# squashfs
+	# netfilter
 	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
 
-	# netfilter
-	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
-
 %if %{with grsec_minimal}
-	cat %{SOURCE47} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
