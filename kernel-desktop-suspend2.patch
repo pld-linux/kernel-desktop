@@ -1,7 +1,7 @@
-diff -Nur linux-2.6.16.11/Documentation/kernel-parameters.txt linux-2.6.16.11.suspend2/Documentation/kernel-parameters.txt
---- linux-2.6.16.11/Documentation/kernel-parameters.txt	2006-05-01 00:10:59.000000000 +0000
-+++ linux-2.6.16.11.suspend2/Documentation/kernel-parameters.txt	2006-05-01 00:12:25.000000000 +0000
-@@ -72,6 +72,7 @@
+diff -Nur linux-2.6.17-rc6/Documentation/kernel-parameters.txt linux-2.6.17-rc6.suspend2/Documentation/kernel-parameters.txt
+--- linux-2.6.17-rc6/Documentation/kernel-parameters.txt	2006-06-12 16:22:31.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/Documentation/kernel-parameters.txt	2006-06-12 16:42:02.000000000 +0000
+@@ -81,6 +81,7 @@
  	SERIAL	Serial support is enabled.
  	SMP	The kernel is an SMP kernel.
  	SPARC	Sparc architecture is enabled.
@@ -9,7 +9,7 @@ diff -Nur linux-2.6.16.11/Documentation/kernel-parameters.txt linux-2.6.16.11.su
  	SWSUSP	Software suspend is enabled.
  	TS	Appropriate touchscreen support is enabled.
  	USB	USB support is enabled.
-@@ -1049,6 +1050,8 @@
+@@ -1070,6 +1071,8 @@
  	noresume	[SWSUSP] Disables resume and restores original swap
  			space.
  
@@ -18,7 +18,7 @@ diff -Nur linux-2.6.16.11/Documentation/kernel-parameters.txt linux-2.6.16.11.su
  	no-scroll	[VGA] Disables scrollback.
  			This is required for the Braillex ib80-piezo Braille
  			reader made by F.H. Papenmeier (Germany).
-@@ -1319,6 +1322,11 @@
+@@ -1350,6 +1353,11 @@
  	resume=		[SWSUSP]
  			Specify the partition device for software suspend
  
@@ -30,9 +30,9 @@ diff -Nur linux-2.6.16.11/Documentation/kernel-parameters.txt linux-2.6.16.11.su
  	rhash_entries=	[KNL,NET]
  			Set number of hash buckets for route cache
  
-diff -Nur linux-2.6.16.11/Documentation/power/internals.txt linux-2.6.16.11.suspend2/Documentation/power/internals.txt
---- linux-2.6.16.11/Documentation/power/internals.txt	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/Documentation/power/internals.txt	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/Documentation/power/internals.txt linux-2.6.17-rc6.suspend2/Documentation/power/internals.txt
+--- linux-2.6.17-rc6/Documentation/power/internals.txt	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/Documentation/power/internals.txt	2006-06-12 16:42:02.000000000 +0000
 @@ -0,0 +1,362 @@
 +		Software Suspend 2.2 Internal Documentation.
 +				Version 1
@@ -396,9 +396,9 @@ diff -Nur linux-2.6.16.11/Documentation/power/internals.txt linux-2.6.16.11.susp
 +	transformer_list links together page transformers, in the order in
 +	which they register, which is in turn determined by order in the
 +	Makefile.
-diff -Nur linux-2.6.16.11/Documentation/power/suspend2.txt linux-2.6.16.11.suspend2/Documentation/power/suspend2.txt
---- linux-2.6.16.11/Documentation/power/suspend2.txt	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/Documentation/power/suspend2.txt	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/Documentation/power/suspend2.txt linux-2.6.17-rc6.suspend2/Documentation/power/suspend2.txt
+--- linux-2.6.17-rc6/Documentation/power/suspend2.txt	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/Documentation/power/suspend2.txt	2006-06-12 16:42:02.000000000 +0000
 @@ -0,0 +1,663 @@
 +	--- Suspend2, version 2.2 ---
 +
@@ -1063,9 +1063,9 @@ diff -Nur linux-2.6.16.11/Documentation/power/suspend2.txt linux-2.6.16.11.suspe
 +   scripts to stress the system and test Suspend2 far beyond the point
 +   most of us (Nigel included!) would consider testing. His efforts have
 +   contributed as much to Suspend2 as any of the names above.
-diff -Nur linux-2.6.16.11/arch/arm/mm/init.c linux-2.6.16.11.suspend2/arch/arm/mm/init.c
---- linux-2.6.16.11/arch/arm/mm/init.c	2006-05-01 00:10:59.000000000 +0000
-+++ linux-2.6.16.11.suspend2/arch/arm/mm/init.c	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/arch/arm/mm/init.c linux-2.6.17-rc6.suspend2/arch/arm/mm/init.c
+--- linux-2.6.17-rc6/arch/arm/mm/init.c	2006-06-12 16:22:31.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/arch/arm/mm/init.c	2006-06-12 16:42:01.000000000 +0000
 @@ -17,6 +17,7 @@
  #include <linux/mman.h>
  #include <linux/nodemask.h>
@@ -1073,7 +1073,7 @@ diff -Nur linux-2.6.16.11/arch/arm/mm/init.c linux-2.6.16.11.suspend2/arch/arm/m
 +#include <linux/suspend.h>
  
  #include <asm/mach-types.h>
- #include <asm/hardware.h>
+ #include <asm/setup.h>
 @@ -86,6 +87,11 @@
  	printk("%d pages swap cached\n", cached);
  }
@@ -1102,9 +1102,9 @@ diff -Nur linux-2.6.16.11/arch/arm/mm/init.c linux-2.6.16.11.suspend2/arch/arm/m
  }
  
  void free_initmem(void)
-diff -Nur linux-2.6.16.11/arch/i386/mm/init.c linux-2.6.16.11.suspend2/arch/i386/mm/init.c
---- linux-2.6.16.11/arch/i386/mm/init.c	2006-05-01 00:11:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/arch/i386/mm/init.c	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/arch/i386/mm/init.c linux-2.6.17-rc6.suspend2/arch/i386/mm/init.c
+--- linux-2.6.17-rc6/arch/i386/mm/init.c	2006-06-12 16:22:31.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/arch/i386/mm/init.c	2006-06-12 16:42:01.000000000 +0000
 @@ -29,6 +29,7 @@
  #include <linux/efi.h>
  #include <linux/memory_hotplug.h>
@@ -1191,44 +1191,36 @@ diff -Nur linux-2.6.16.11/arch/i386/mm/init.c linux-2.6.16.11.suspend2/arch/i386
  
  	set_highmem_pages_init(bad_ppro);
  
-@@ -727,6 +744,7 @@
- 	addr = (unsigned long)(&__init_begin);
- 	for (; addr < (unsigned long)(&__init_end); addr += PAGE_SIZE) {
+@@ -751,6 +768,7 @@
+ 
+ 	for (addr = begin; addr < end; addr += PAGE_SIZE) {
  		ClearPageReserved(virt_to_page(addr));
 +		ClearPageNosave(virt_to_page(addr));
- 		set_page_count(virt_to_page(addr), 1);
+ 		init_page_count(virt_to_page(addr));
  		memset((void *)addr, 0xcc, PAGE_SIZE);
  		free_page(addr);
-@@ -766,6 +784,7 @@
- 		printk (KERN_INFO "Freeing initrd memory: %ldk freed\n", (end - start) >> 10);
- 	for (; start < end; start += PAGE_SIZE) {
- 		ClearPageReserved(virt_to_page(start));
-+		ClearPageNosave(virt_to_page(start));
- 		set_page_count(virt_to_page(start), 1);
- 		free_page(start);
- 		totalram_pages++;
-diff -Nur linux-2.6.16.11/arch/i386/power/Makefile linux-2.6.16.11.suspend2/arch/i386/power/Makefile
---- linux-2.6.16.11/arch/i386/power/Makefile	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/arch/i386/power/Makefile	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/arch/i386/power/Makefile linux-2.6.17-rc6.suspend2/arch/i386/power/Makefile
+--- linux-2.6.17-rc6/arch/i386/power/Makefile	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/arch/i386/power/Makefile	2006-06-12 16:42:01.000000000 +0000
 @@ -1,2 +1,2 @@
  obj-$(CONFIG_PM)		+= cpu.o
 -obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o
 +obj-$(CONFIG_SUSPEND_SHARED)	+= swsusp.o
-diff -Nur linux-2.6.16.11/arch/ppc/kernel/Makefile linux-2.6.16.11.suspend2/arch/ppc/kernel/Makefile
---- linux-2.6.16.11/arch/ppc/kernel/Makefile	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/arch/ppc/kernel/Makefile	2006-05-01 00:12:25.000000000 +0000
-@@ -15,7 +15,7 @@
- 					setup.o \
- 					ppc_htab.o
- obj-$(CONFIG_6xx)		+= l2cr.o cpu_setup_6xx.o
--obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o
-+obj-$(CONFIG_SUSPEND_SHARED)	+= swsusp.o
- obj-$(CONFIG_MODULES)		+= module.o ppc_ksyms.o
- obj-$(CONFIG_NOT_COHERENT_CACHE)	+= dma-mapping.o
- obj-$(CONFIG_PCI)		+= pci.o
-diff -Nur linux-2.6.16.11/arch/ppc/mm/init.c linux-2.6.16.11.suspend2/arch/ppc/mm/init.c
---- linux-2.6.16.11/arch/ppc/mm/init.c	2006-05-01 00:11:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/arch/ppc/mm/init.c	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/arch/powerpc/kernel/Makefile linux-2.6.17-rc6.suspend2/arch/powerpc/kernel/Makefile
+--- linux-2.6.17-rc6/arch/powerpc/kernel/Makefile	2006-06-12 16:22:31.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/arch/powerpc/kernel/Makefile	2006-06-12 16:42:01.000000000 +0000
+@@ -37,7 +37,7 @@
+ obj-$(CONFIG_CRASH_DUMP)	+= crash_dump.o
+ obj-$(CONFIG_6xx)		+= idle_6xx.o l2cr_6xx.o cpu_setup_6xx.o
+ obj-$(CONFIG_TAU)		+= tau_6xx.o
+-obj32-$(CONFIG_SOFTWARE_SUSPEND) += swsusp_32.o
++obj32-$(CONFIG_SUSPEND_SHARED)	+= swsusp_32.o
+ obj32-$(CONFIG_MODULES)		+= module_32.o
+ obj-$(CONFIG_E500)		+= perfmon_fsl_booke.o
+ 
+diff -Nur linux-2.6.17-rc6/arch/ppc/mm/init.c linux-2.6.17-rc6.suspend2/arch/ppc/mm/init.c
+--- linux-2.6.17-rc6/arch/ppc/mm/init.c	2006-06-12 16:22:31.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/arch/ppc/mm/init.c	2006-06-12 16:42:02.000000000 +0000
 @@ -32,6 +32,7 @@
  #include <linux/highmem.h>
  #include <linux/initrd.h>
@@ -1242,7 +1234,7 @@ diff -Nur linux-2.6.16.11/arch/ppc/mm/init.c linux-2.6.16.11.suspend2/arch/ppc/m
  	while (start < end) {
  		ClearPageReserved(virt_to_page(start));
 +		ClearPageNosave(virt_to_page(start));
- 		set_page_count(virt_to_page(start), 1);
+ 		init_page_count(virt_to_page(start));
  		free_page(start);
  		cnt++;
 @@ -172,6 +174,7 @@
@@ -1250,7 +1242,7 @@ diff -Nur linux-2.6.16.11/arch/ppc/mm/init.c linux-2.6.16.11.suspend2/arch/ppc/m
  	for (; start < end; start += PAGE_SIZE) {
  		ClearPageReserved(virt_to_page(start));
 +		ClearPageNosave(virt_to_page(start));
- 		set_page_count(virt_to_page(start), 1);
+ 		init_page_count(virt_to_page(start));
  		free_page(start);
  		totalram_pages++;
 @@ -407,8 +410,10 @@
@@ -1265,17 +1257,7 @@ diff -Nur linux-2.6.16.11/arch/ppc/mm/init.c linux-2.6.16.11.suspend2/arch/ppc/m
  	}
  #endif /* CONFIG_BLK_DEV_INITRD */
  
-@@ -417,13 +422,22 @@
- 	if ( rtas_data )
- 		for (addr = (ulong)__va(rtas_data);
- 		     addr < PAGE_ALIGN((ulong)__va(rtas_data)+rtas_size) ;
--		     addr += PAGE_SIZE)
-+		     addr += PAGE_SIZE) {
- 			SetPageReserved(virt_to_page(addr));
-+			SetPageNosave(virt_to_page(addr));
-+		}
- #endif
- 	for (addr = PAGE_OFFSET; addr < (unsigned long)high_memory;
+@@ -416,6 +421,13 @@
  	     addr += PAGE_SIZE) {
  		if (!PageReserved(virt_to_page(addr)))
  			continue;
@@ -1289,17 +1271,17 @@ diff -Nur linux-2.6.16.11/arch/ppc/mm/init.c linux-2.6.16.11.suspend2/arch/ppc/m
  		if (addr < (ulong) etext)
  			codepages++;
  		else if (addr >= (unsigned long)&__init_begin
-@@ -441,6 +455,7 @@
+@@ -433,6 +445,7 @@
  			struct page *page = mem_map + pfn;
  
  			ClearPageReserved(page);
 +			ClearPageNosave(page);
- 			set_page_count(page, 1);
+ 			init_page_count(page);
  			__free_page(page);
  			totalhigh_pages++;
-diff -Nur linux-2.6.16.11/arch/x86_64/kernel/Makefile linux-2.6.16.11.suspend2/arch/x86_64/kernel/Makefile
---- linux-2.6.16.11/arch/x86_64/kernel/Makefile	2006-05-01 00:11:07.000000000 +0000
-+++ linux-2.6.16.11.suspend2/arch/x86_64/kernel/Makefile	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/arch/x86_64/kernel/Makefile linux-2.6.17-rc6.suspend2/arch/x86_64/kernel/Makefile
+--- linux-2.6.17-rc6/arch/x86_64/kernel/Makefile	2006-06-12 16:22:31.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/arch/x86_64/kernel/Makefile	2006-06-12 16:42:02.000000000 +0000
 @@ -25,7 +25,7 @@
  obj-$(CONFIG_KEXEC)		+= machine_kexec.o relocate_kernel.o crash.o
  obj-$(CONFIG_CRASH_DUMP)	+= crash_dump.o
@@ -1309,22 +1291,22 @@ diff -Nur linux-2.6.16.11/arch/x86_64/kernel/Makefile linux-2.6.16.11.suspend2/a
  obj-$(CONFIG_CPU_FREQ)		+= cpufreq/
  obj-$(CONFIG_EARLY_PRINTK)	+= early_printk.o
  obj-$(CONFIG_GART_IOMMU)	+= pci-gart.o aperture.o
-diff -Nur linux-2.6.16.11/arch/x86_64/kernel/e820.c linux-2.6.16.11.suspend2/arch/x86_64/kernel/e820.c
---- linux-2.6.16.11/arch/x86_64/kernel/e820.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/arch/x86_64/kernel/e820.c	2006-05-01 00:12:25.000000000 +0000
-@@ -186,6 +186,23 @@
+diff -Nur linux-2.6.17-rc6/arch/x86_64/kernel/e820.c linux-2.6.17-rc6.suspend2/arch/x86_64/kernel/e820.c
+--- linux-2.6.17-rc6/arch/x86_64/kernel/e820.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/arch/x86_64/kernel/e820.c	2006-06-12 16:42:02.000000000 +0000
+@@ -226,6 +226,23 @@
  	return end_pfn;	
  }
  
 +int page_is_ram(unsigned long pagenr)
 +{
-+	unsigned long start = pagenr << PAGE_SHIFT;
 +	int i;
 +	for (i = 0; i < e820.nr_map; i++) {
 +		struct e820entry *ei = &e820.map[i];
++		unsigned long start = (ei->addr+PAGE_SIZE-1) >> PAGE_SHIFT;
++		unsigned long end = (ei->addr+ei->size) >> PAGE_SHIFT;
 +
-+		if (ei->addr+ei->size <= start || 
-+		    ei->addr >= (start + PAGE_SIZE))
++		if (pagenr < start || pagenr >= end)
 +			continue;
 +
 +		return (ei->type == E820_RAM);
@@ -1336,9 +1318,9 @@ diff -Nur linux-2.6.16.11/arch/x86_64/kernel/e820.c linux-2.6.16.11.suspend2/arc
  /* 
   * Compute how much memory is missing in a range.
   * Unlike the other functions in this file the arguments are in page numbers.
-diff -Nur linux-2.6.16.11/arch/x86_64/kernel/suspend.c linux-2.6.16.11.suspend2/arch/x86_64/kernel/suspend.c
---- linux-2.6.16.11/arch/x86_64/kernel/suspend.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/arch/x86_64/kernel/suspend.c	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/arch/x86_64/kernel/suspend.c linux-2.6.17-rc6.suspend2/arch/x86_64/kernel/suspend.c
+--- linux-2.6.17-rc6/arch/x86_64/kernel/suspend.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/arch/x86_64/kernel/suspend.c	2006-06-12 16:42:02.000000000 +0000
 @@ -141,7 +141,7 @@
  
  }
@@ -1354,34 +1336,34 @@ diff -Nur linux-2.6.16.11/arch/x86_64/kernel/suspend.c linux-2.6.16.11.suspend2/
  }
 -#endif /* CONFIG_SOFTWARE_SUSPEND */
 +#endif /* CONFIG_SUSPEND_SHARED */
-diff -Nur linux-2.6.16.11/arch/x86_64/mm/init.c linux-2.6.16.11.suspend2/arch/x86_64/mm/init.c
---- linux-2.6.16.11/arch/x86_64/mm/init.c	2006-05-01 00:11:07.000000000 +0000
-+++ linux-2.6.16.11.suspend2/arch/x86_64/mm/init.c	2006-05-01 00:12:25.000000000 +0000
-@@ -486,6 +486,7 @@
+diff -Nur linux-2.6.17-rc6/arch/x86_64/mm/init.c linux-2.6.17-rc6.suspend2/arch/x86_64/mm/init.c
+--- linux-2.6.17-rc6/arch/x86_64/mm/init.c	2006-06-12 16:22:31.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/arch/x86_64/mm/init.c	2006-06-12 16:42:02.000000000 +0000
+@@ -513,6 +513,7 @@
  void online_page(struct page *page)
  {
  	ClearPageReserved(page);
 +	ClearPageNosave(page);
- 	set_page_count(page, 1);
+ 	init_page_count(page);
  	__free_page(page);
  	totalram_pages++;
-@@ -592,6 +593,7 @@
+@@ -651,6 +652,7 @@
  	addr = (unsigned long)(&__init_begin);
  	for (; addr < (unsigned long)(&__init_end); addr += PAGE_SIZE) {
  		ClearPageReserved(virt_to_page(addr));
 +		ClearPageNosave(virt_to_page(addr));
- 		set_page_count(virt_to_page(addr), 1);
+ 		init_page_count(virt_to_page(addr));
  		memset((void *)(addr & ~(PAGE_SIZE-1)), 0xcc, PAGE_SIZE); 
  		free_page(addr);
-@@ -632,6 +634,7 @@
+@@ -691,6 +693,7 @@
  	printk ("Freeing initrd memory: %ldk freed\n", (end - start) >> 10);
  	for (; start < end; start += PAGE_SIZE) {
  		ClearPageReserved(virt_to_page(start));
 +		ClearPageNosave(virt_to_page(start));
- 		set_page_count(virt_to_page(start), 1);
+ 		init_page_count(virt_to_page(start));
  		free_page(start);
  		totalram_pages++;
-@@ -743,3 +746,22 @@
+@@ -802,3 +805,22 @@
  {
  	return (addr >= VSYSCALL_START) && (addr < VSYSCALL_END);
  }
@@ -1404,20 +1386,20 @@ diff -Nur linux-2.6.16.11/arch/x86_64/mm/init.c linux-2.6.16.11.suspend2/arch/x8
 +}       
 +#endif
 +
-diff -Nur linux-2.6.16.11/block/ll_rw_blk.c linux-2.6.16.11.suspend2/block/ll_rw_blk.c
---- linux-2.6.16.11/block/ll_rw_blk.c	2006-05-01 00:11:07.000000000 +0000
-+++ linux-2.6.16.11.suspend2/block/ll_rw_blk.c	2006-05-01 00:12:25.000000000 +0000
-@@ -28,6 +28,9 @@
- #include <linux/writeback.h>
+diff -Nur linux-2.6.17-rc6/block/ll_rw_blk.c linux-2.6.17-rc6.suspend2/block/ll_rw_blk.c
+--- linux-2.6.17-rc6/block/ll_rw_blk.c	2006-06-12 16:22:31.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/block/ll_rw_blk.c	2006-06-12 16:42:02.000000000 +0000
+@@ -29,6 +29,9 @@
  #include <linux/interrupt.h>
  #include <linux/cpu.h>
+ #include <linux/blktrace_api.h>
 +#include <linux/freezer.h>
 +#include <linux/mount.h>
 +#include <linux/suspend2.h>
  
  /*
   * for max sense size
-@@ -3042,12 +3045,26 @@
+@@ -3115,12 +3118,26 @@
  	else
  		mod_page_state(pgpgin, count);
  
@@ -1445,7 +1427,7 @@ diff -Nur linux-2.6.16.11/block/ll_rw_blk.c linux-2.6.16.11.suspend2/block/ll_rw
  			bdevname(bio->bi_bdev,b));
  	}
  
-@@ -3439,7 +3456,7 @@
+@@ -3519,7 +3536,7 @@
  {
  	int i;
  
@@ -1454,9 +1436,9 @@ diff -Nur linux-2.6.16.11/block/ll_rw_blk.c linux-2.6.16.11.suspend2/block/ll_rw
  	if (!kblockd_workqueue)
  		panic("Failed to create kblockd\n");
  
-diff -Nur linux-2.6.16.11/crypto/Kconfig linux-2.6.16.11.suspend2/crypto/Kconfig
---- linux-2.6.16.11/crypto/Kconfig	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/crypto/Kconfig	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/crypto/Kconfig linux-2.6.17-rc6.suspend2/crypto/Kconfig
+--- linux-2.6.17-rc6/crypto/Kconfig	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/crypto/Kconfig	2006-06-12 16:41:19.000000000 +0000
 @@ -316,6 +316,13 @@
  	  
  	  You will most probably want this if using IPSec.
@@ -1471,9 +1453,9 @@ diff -Nur linux-2.6.16.11/crypto/Kconfig linux-2.6.16.11.suspend2/crypto/Kconfig
  config CRYPTO_MICHAEL_MIC
  	tristate "Michael MIC keyed digest algorithm"
  	depends on CRYPTO
-diff -Nur linux-2.6.16.11/crypto/Makefile linux-2.6.16.11.suspend2/crypto/Makefile
---- linux-2.6.16.11/crypto/Makefile	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/crypto/Makefile	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/crypto/Makefile linux-2.6.17-rc6.suspend2/crypto/Makefile
+--- linux-2.6.17-rc6/crypto/Makefile	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/crypto/Makefile	2006-06-12 16:41:19.000000000 +0000
 @@ -30,5 +30,6 @@
  obj-$(CONFIG_CRYPTO_DEFLATE) += deflate.o
  obj-$(CONFIG_CRYPTO_MICHAEL_MIC) += michael_mic.o
@@ -1481,10 +1463,10 @@ diff -Nur linux-2.6.16.11/crypto/Makefile linux-2.6.16.11.suspend2/crypto/Makefi
 +obj-$(CONFIG_CRYPTO_LZF) += lzf.o
  
  obj-$(CONFIG_CRYPTO_TEST) += tcrypt.o
-diff -Nur linux-2.6.16.11/crypto/deflate.c linux-2.6.16.11.suspend2/crypto/deflate.c
---- linux-2.6.16.11/crypto/deflate.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/crypto/deflate.c	2006-05-01 00:12:25.000000000 +0000
-@@ -143,8 +143,15 @@
+diff -Nur linux-2.6.17-rc6/crypto/deflate.c linux-2.6.17-rc6.suspend2/crypto/deflate.c
+--- linux-2.6.17-rc6/crypto/deflate.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/crypto/deflate.c	2006-06-12 16:41:26.000000000 +0000
+@@ -142,8 +142,15 @@
  
  	ret = zlib_deflate(stream, Z_FINISH);
  	if (ret != Z_STREAM_END) {
@@ -1502,9 +1484,9 @@ diff -Nur linux-2.6.16.11/crypto/deflate.c linux-2.6.16.11.suspend2/crypto/defla
  	}
  	ret = 0;
  	*dlen = stream->total_out;
-diff -Nur linux-2.6.16.11/crypto/lzf.c linux-2.6.16.11.suspend2/crypto/lzf.c
---- linux-2.6.16.11/crypto/lzf.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/crypto/lzf.c	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/crypto/lzf.c linux-2.6.17-rc6.suspend2/crypto/lzf.c
+--- linux-2.6.17-rc6/crypto/lzf.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/crypto/lzf.c	2006-06-12 16:41:19.000000000 +0000
 @@ -0,0 +1,335 @@
 +/* 
 + * Cryptoapi LZF compression module.
@@ -1841,9 +1823,9 @@ diff -Nur linux-2.6.16.11/crypto/lzf.c linux-2.6.16.11.suspend2/crypto/lzf.c
 +MODULE_LICENSE("GPL");
 +MODULE_DESCRIPTION("LZF Compression Algorithm");
 +MODULE_AUTHOR("Marc Alexander Lehmann & Nigel Cunningham");
-diff -Nur linux-2.6.16.11/drivers/acpi/osl.c linux-2.6.16.11.suspend2/drivers/acpi/osl.c
---- linux-2.6.16.11/drivers/acpi/osl.c	2006-05-01 00:11:07.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/acpi/osl.c	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/drivers/acpi/osl.c linux-2.6.17-rc6.suspend2/drivers/acpi/osl.c
+--- linux-2.6.17-rc6/drivers/acpi/osl.c	2006-06-12 16:22:31.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/acpi/osl.c	2006-06-12 16:34:46.000000000 +0000
 @@ -91,7 +91,7 @@
  		       "Access to PCI configuration space unavailable\n");
  		return AE_NULL_ENTRY;
@@ -1853,9 +1835,9 @@ diff -Nur linux-2.6.16.11/drivers/acpi/osl.c linux-2.6.16.11.suspend2/drivers/ac
  	BUG_ON(!kacpid_wq);
  
  	return AE_OK;
-diff -Nur linux-2.6.16.11/drivers/acpi/sleep/proc.c linux-2.6.16.11.suspend2/drivers/acpi/sleep/proc.c
---- linux-2.6.16.11/drivers/acpi/sleep/proc.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/acpi/sleep/proc.c	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/drivers/acpi/sleep/proc.c linux-2.6.17-rc6.suspend2/drivers/acpi/sleep/proc.c
+--- linux-2.6.17-rc6/drivers/acpi/sleep/proc.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/acpi/sleep/proc.c	2006-06-12 16:41:35.000000000 +0000
 @@ -58,6 +58,15 @@
  		goto Done;
  	}
@@ -1872,10 +1854,10 @@ diff -Nur linux-2.6.16.11/drivers/acpi/sleep/proc.c linux-2.6.16.11.suspend2/dri
  #ifdef CONFIG_SOFTWARE_SUSPEND
  	if (state == 4) {
  		error = software_suspend();
-diff -Nur linux-2.6.16.11/drivers/char/hvc_console.c linux-2.6.16.11.suspend2/drivers/char/hvc_console.c
---- linux-2.6.16.11/drivers/char/hvc_console.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/char/hvc_console.c	2006-05-01 00:12:25.000000000 +0000
-@@ -841,7 +841,7 @@
+diff -Nur linux-2.6.17-rc6/drivers/char/hvc_console.c linux-2.6.17-rc6.suspend2/drivers/char/hvc_console.c
+--- linux-2.6.17-rc6/drivers/char/hvc_console.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/char/hvc_console.c	2006-06-12 16:34:46.000000000 +0000
+@@ -832,7 +832,7 @@
  
  	/* Always start the kthread because there can be hotplug vty adapters
  	 * added later. */
@@ -1883,10 +1865,10 @@ diff -Nur linux-2.6.16.11/drivers/char/hvc_console.c linux-2.6.16.11.suspend2/dr
 +	hvc_task = kthread_nofreeze_run(khvcd, NULL, "khvcd");
  	if (IS_ERR(hvc_task)) {
  		panic("Couldn't create kthread for console.\n");
- 		put_tty_driver(hvc_driver);
-diff -Nur linux-2.6.16.11/drivers/char/hvcs.c linux-2.6.16.11.suspend2/drivers/char/hvcs.c
---- linux-2.6.16.11/drivers/char/hvcs.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/char/hvcs.c	2006-05-01 00:12:25.000000000 +0000
+ 		put_tty_driver(drv);
+diff -Nur linux-2.6.17-rc6/drivers/char/hvcs.c linux-2.6.17-rc6.suspend2/drivers/char/hvcs.c
+--- linux-2.6.17-rc6/drivers/char/hvcs.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/char/hvcs.c	2006-06-12 16:34:46.000000000 +0000
 @@ -1404,7 +1404,7 @@
  		return -ENOMEM;
  	}
@@ -1896,10 +1878,10 @@ diff -Nur linux-2.6.16.11/drivers/char/hvcs.c linux-2.6.16.11.suspend2/drivers/c
  	if (IS_ERR(hvcs_task)) {
  		printk(KERN_ERR "HVCS: khvcsd creation failed.  Driver not loaded.\n");
  		kfree(hvcs_pi_buff);
-diff -Nur linux-2.6.16.11/drivers/input/serio/serio.c linux-2.6.16.11.suspend2/drivers/input/serio/serio.c
---- linux-2.6.16.11/drivers/input/serio/serio.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/input/serio/serio.c	2006-05-01 00:12:25.000000000 +0000
-@@ -901,7 +901,7 @@
+diff -Nur linux-2.6.17-rc6/drivers/input/serio/serio.c linux-2.6.17-rc6.suspend2/drivers/input/serio/serio.c
+--- linux-2.6.17-rc6/drivers/input/serio/serio.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/input/serio/serio.c	2006-06-12 16:34:46.000000000 +0000
+@@ -903,7 +903,7 @@
  
  static int __init serio_init(void)
  {
@@ -1908,9 +1890,9 @@ diff -Nur linux-2.6.16.11/drivers/input/serio/serio.c linux-2.6.16.11.suspend2/d
  	if (IS_ERR(serio_task)) {
  		printk(KERN_ERR "serio: Failed to start kseriod\n");
  		return PTR_ERR(serio_task);
-diff -Nur linux-2.6.16.11/drivers/macintosh/Kconfig linux-2.6.16.11.suspend2/drivers/macintosh/Kconfig
---- linux-2.6.16.11/drivers/macintosh/Kconfig	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/macintosh/Kconfig	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/drivers/macintosh/Kconfig linux-2.6.17-rc6.suspend2/drivers/macintosh/Kconfig
+--- linux-2.6.17-rc6/drivers/macintosh/Kconfig	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/macintosh/Kconfig	2006-06-12 16:42:02.000000000 +0000
 @@ -200,4 +200,8 @@
  	tristate "Support for ANS LCD display"
  	depends on ADB_CUDA && PPC_PMAC
@@ -1920,10 +1902,10 @@ diff -Nur linux-2.6.16.11/drivers/macintosh/Kconfig linux-2.6.16.11.suspend2/dri
 +	depends on SUSPEND2
 +
  endmenu
-diff -Nur linux-2.6.16.11/drivers/macintosh/via-pmu.c linux-2.6.16.11.suspend2/drivers/macintosh/via-pmu.c
---- linux-2.6.16.11/drivers/macintosh/via-pmu.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/macintosh/via-pmu.c	2006-05-01 00:12:25.000000000 +0000
-@@ -2653,6 +2653,13 @@
+diff -Nur linux-2.6.17-rc6/drivers/macintosh/via-pmu.c linux-2.6.17-rc6.suspend2/drivers/macintosh/via-pmu.c
+--- linux-2.6.17-rc6/drivers/macintosh/via-pmu.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/macintosh/via-pmu.c	2006-06-12 16:42:02.000000000 +0000
+@@ -2654,6 +2654,13 @@
  			return -EACCES;
  		if (sleep_in_progress)
  			return -EBUSY;
@@ -1937,10 +1919,10 @@ diff -Nur linux-2.6.16.11/drivers/macintosh/via-pmu.c linux-2.6.16.11.suspend2/d
  		sleep_in_progress = 1;
  		switch (pmu_kind) {
  		case PMU_OHARE_BASED:
-diff -Nur linux-2.6.16.11/drivers/md/dm-crypt.c linux-2.6.16.11.suspend2/drivers/md/dm-crypt.c
---- linux-2.6.16.11/drivers/md/dm-crypt.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/md/dm-crypt.c	2006-05-01 00:12:25.000000000 +0000
-@@ -928,7 +928,7 @@
+diff -Nur linux-2.6.17-rc6/drivers/md/dm-crypt.c linux-2.6.17-rc6.suspend2/drivers/md/dm-crypt.c
+--- linux-2.6.17-rc6/drivers/md/dm-crypt.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/md/dm-crypt.c	2006-06-12 16:34:46.000000000 +0000
+@@ -915,7 +915,7 @@
  	if (!_crypt_io_pool)
  		return -ENOMEM;
  
@@ -1949,18 +1931,18 @@ diff -Nur linux-2.6.16.11/drivers/md/dm-crypt.c linux-2.6.16.11.suspend2/drivers
  	if (!_kcryptd_workqueue) {
  		r = -ENOMEM;
  		DMERR(PFX "couldn't create kcryptd");
-diff -Nur linux-2.6.16.11/drivers/md/md.c linux-2.6.16.11.suspend2/drivers/md/md.c
---- linux-2.6.16.11/drivers/md/md.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/md/md.c	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/drivers/md/md.c linux-2.6.17-rc6.suspend2/drivers/md/md.c
+--- linux-2.6.17-rc6/drivers/md/md.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/md/md.c	2006-06-12 16:34:46.000000000 +0000
 @@ -41,7 +41,6 @@
  #include <linux/sysctl.h>
  #include <linux/devfs_fs_kernel.h>
  #include <linux/buffer_head.h> /* for invalidate_bdev */
 -#include <linux/suspend.h>
  #include <linux/poll.h>
+ #include <linux/mutex.h>
  
- #include <linux/init.h>
-@@ -3972,7 +3971,8 @@
+@@ -4120,7 +4119,8 @@
  	thread->run = run;
  	thread->mddev = mddev;
  	thread->timeout = MAX_SCHEDULE_TIMEOUT;
@@ -1970,9 +1952,9 @@ diff -Nur linux-2.6.16.11/drivers/md/md.c linux-2.6.16.11.suspend2/drivers/md/md
  	if (IS_ERR(thread->tsk)) {
  		kfree(thread);
  		return NULL;
-diff -Nur linux-2.6.16.11/drivers/scsi/hosts.c linux-2.6.16.11.suspend2/drivers/scsi/hosts.c
---- linux-2.6.16.11/drivers/scsi/hosts.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/scsi/hosts.c	2006-05-01 00:12:25.000000000 +0000
+diff -Nur linux-2.6.17-rc6/drivers/scsi/hosts.c linux-2.6.17-rc6.suspend2/drivers/scsi/hosts.c
+--- linux-2.6.17-rc6/drivers/scsi/hosts.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/scsi/hosts.c	2006-06-12 16:34:46.000000000 +0000
 @@ -227,7 +227,7 @@
  	if (shost->transportt->create_work_queue) {
  		snprintf(shost->work_q_name, KOBJ_NAME_LEN, "scsi_wq_%d",
@@ -1982,10 +1964,10 @@ diff -Nur linux-2.6.16.11/drivers/scsi/hosts.c linux-2.6.16.11.suspend2/drivers/
  					shost->work_q_name);
  		if (!shost->work_q)
  			goto out_free_shost_data;
-diff -Nur linux-2.6.16.11/drivers/scsi/lpfc/lpfc_init.c linux-2.6.16.11.suspend2/drivers/scsi/lpfc/lpfc_init.c
---- linux-2.6.16.11/drivers/scsi/lpfc/lpfc_init.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/scsi/lpfc/lpfc_init.c	2006-05-01 00:12:25.000000000 +0000
-@@ -1521,7 +1521,7 @@
+diff -Nur linux-2.6.17-rc6/drivers/scsi/lpfc/lpfc_init.c linux-2.6.17-rc6.suspend2/drivers/scsi/lpfc/lpfc_init.c
+--- linux-2.6.17-rc6/drivers/scsi/lpfc/lpfc_init.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/scsi/lpfc/lpfc_init.c	2006-06-12 16:34:46.000000000 +0000
+@@ -1593,7 +1593,7 @@
  	phba->work_ha_mask |= (HA_RXMASK << (LPFC_ELS_RING * 4));
  
  	/* Startup the kernel thread for this host adapter. */
@@ -1994,10 +1976,10 @@ diff -Nur linux-2.6.16.11/drivers/scsi/lpfc/lpfc_init.c linux-2.6.16.11.suspend2
  				       "lpfc_worker_%d", phba->brd_no);
  	if (IS_ERR(phba->worker_thread)) {
  		error = PTR_ERR(phba->worker_thread);
-diff -Nur linux-2.6.16.11/drivers/usb/net/pegasus.c linux-2.6.16.11.suspend2/drivers/usb/net/pegasus.c
---- linux-2.6.16.11/drivers/usb/net/pegasus.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/drivers/usb/net/pegasus.c	2006-05-01 00:12:25.000000000 +0000
-@@ -1451,7 +1451,7 @@
+diff -Nur linux-2.6.17-rc6/drivers/usb/net/pegasus.c linux-2.6.17-rc6.suspend2/drivers/usb/net/pegasus.c
+--- linux-2.6.17-rc6/drivers/usb/net/pegasus.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/drivers/usb/net/pegasus.c	2006-06-12 16:34:46.000000000 +0000
+@@ -1462,7 +1462,7 @@
  	pr_info("%s: %s, " DRIVER_DESC "\n", driver_name, DRIVER_VERSION);
  	if (devid)
  		parse_id(devid);
@@ -2006,9 +1988,9 @@ diff -Nur linux-2.6.16.11/drivers/usb/net/pegasus.c linux-2.6.16.11.suspend2/dri
  	if (!pegasus_workqueue)
  		return -ENOMEM;
  	return usb_register(&pegasus_driver);
-diff -Nur linux-2.6.16.11/include/asm-arm/hw_irq.h linux-2.6.16.11.suspend2/include/asm-arm/hw_irq.h
---- linux-2.6.16.11/include/asm-arm/hw_irq.h	2006-05-01 00:11:08.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/asm-arm/hw_irq.h	2006-05-01 00:13:27.000000000 +0000
+diff -Nur linux-2.6.17-rc6/include/asm-arm/hw_irq.h linux-2.6.17-rc6.suspend2/include/asm-arm/hw_irq.h
+--- linux-2.6.17-rc6/include/asm-arm/hw_irq.h	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/asm-arm/hw_irq.h	2006-06-12 16:43:34.000000000 +0000
 @@ -5,5 +5,6 @@
  #define _ARCH_ARM_HW_IRQ_H
  
@@ -2016,9 +1998,9 @@ diff -Nur linux-2.6.16.11/include/asm-arm/hw_irq.h linux-2.6.16.11.suspend2/incl
 +#include <asm/hardirq.h>
  
  #endif
-diff -Nur linux-2.6.16.11/include/asm-arm/suspend2.h linux-2.6.16.11.suspend2/include/asm-arm/suspend2.h
---- linux-2.6.16.11/include/asm-arm/suspend2.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/asm-arm/suspend2.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/include/asm-arm/suspend2.h linux-2.6.17-rc6.suspend2/include/asm-arm/suspend2.h
+--- linux-2.6.17-rc6/include/asm-arm/suspend2.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/asm-arm/suspend2.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,136 @@
 +#ifndef _ASMARM_SUSPEND_H
 +#define _ASMARM_SUSPEND_H
@@ -2156,9 +2138,9 @@ diff -Nur linux-2.6.16.11/include/asm-arm/suspend2.h linux-2.6.16.11.suspend2/in
 +{
 +}
 +#endif
-diff -Nur linux-2.6.16.11/include/asm-ppc/cpu_context.h linux-2.6.16.11.suspend2/include/asm-ppc/cpu_context.h
---- linux-2.6.16.11/include/asm-ppc/cpu_context.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/asm-ppc/cpu_context.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/include/asm-ppc/cpu_context.h linux-2.6.17-rc6.suspend2/include/asm-ppc/cpu_context.h
+--- linux-2.6.17-rc6/include/asm-ppc/cpu_context.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/asm-ppc/cpu_context.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,110 @@
 +/*
 + * Written by Hu Gang (hugang@soulinfo.com)
@@ -2270,9 +2252,9 @@ diff -Nur linux-2.6.16.11/include/asm-ppc/cpu_context.h linux-2.6.16.11.suspend2
 +	printk("enable fp\n");
 +	enable_kernel_fp();
 +}
-diff -Nur linux-2.6.16.11/include/asm-x86_64/page.h linux-2.6.16.11.suspend2/include/asm-x86_64/page.h
---- linux-2.6.16.11/include/asm-x86_64/page.h	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/asm-x86_64/page.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/include/asm-x86_64/page.h linux-2.6.17-rc6.suspend2/include/asm-x86_64/page.h
+--- linux-2.6.17-rc6/include/asm-x86_64/page.h	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/asm-x86_64/page.h	2006-06-12 16:42:12.000000000 +0000
 @@ -105,6 +105,8 @@
  
  #include <asm/bug.h>
@@ -2282,9 +2264,9 @@ diff -Nur linux-2.6.16.11/include/asm-x86_64/page.h linux-2.6.16.11.suspend2/inc
  #endif /* __ASSEMBLY__ */
  
  #define PAGE_OFFSET		((unsigned long)__PAGE_OFFSET)
-diff -Nur linux-2.6.16.11/include/linux/bio.h linux-2.6.16.11.suspend2/include/linux/bio.h
---- linux-2.6.16.11/include/linux/bio.h	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/bio.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/include/linux/bio.h linux-2.6.17-rc6.suspend2/include/linux/bio.h
+--- linux-2.6.17-rc6/include/linux/bio.h	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/bio.h	2006-06-12 16:42:12.000000000 +0000
 @@ -124,6 +124,7 @@
  #define BIO_BOUNCED	5	/* bio is a bounce bio */
  #define BIO_USER_MAPPED 6	/* contains user pages */
@@ -2293,9 +2275,9 @@ diff -Nur linux-2.6.16.11/include/linux/bio.h linux-2.6.16.11.suspend2/include/l
  #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
  
  /*
-diff -Nur linux-2.6.16.11/include/linux/dyn_pageflags.h linux-2.6.16.11.suspend2/include/linux/dyn_pageflags.h
---- linux-2.6.16.11/include/linux/dyn_pageflags.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/dyn_pageflags.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/include/linux/dyn_pageflags.h linux-2.6.17-rc6.suspend2/include/linux/dyn_pageflags.h
+--- linux-2.6.17-rc6/include/linux/dyn_pageflags.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/dyn_pageflags.h	2006-06-12 16:41:48.000000000 +0000
 @@ -0,0 +1,66 @@
 +/*
 + * include/linux/dyn_pageflags.h
@@ -2363,14 +2345,15 @@ diff -Nur linux-2.6.16.11/include/linux/dyn_pageflags.h linux-2.6.16.11.suspend2
 +extern void set_dynpageflag(dyn_pageflags_t *bitmap, struct page *page);
 +extern void clear_dynpageflag(dyn_pageflags_t *bitmap, struct page *page);
 +#endif
-diff -Nur linux-2.6.16.11/include/linux/freezer.h linux-2.6.16.11.suspend2/include/linux/freezer.h
---- linux-2.6.16.11/include/linux/freezer.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/freezer.h	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,28 @@
+diff -Nur linux-2.6.17-rc6/include/linux/freezer.h linux-2.6.17-rc6.suspend2/include/linux/freezer.h
+--- linux-2.6.17-rc6/include/linux/freezer.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/freezer.h	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,29 @@
 +/* Freezer declarations */
 +
 +#define FREEZER_ON 0
 +#define ABORT_FREEZING 1
++#define FREEZING_COMPLETE 2
 +
 +#define FREEZER_KERNEL_THREADS 0
 +#define FREEZER_ALL_THREADS 1
@@ -2395,10 +2378,10 @@ diff -Nur linux-2.6.16.11/include/linux/freezer.h linux-2.6.16.11.suspend2/inclu
 +#define freezer_is_on() (0)
 +
 +#endif
-diff -Nur linux-2.6.16.11/include/linux/kernel.h linux-2.6.16.11.suspend2/include/linux/kernel.h
---- linux-2.6.16.11/include/linux/kernel.h	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/kernel.h	2006-05-01 00:12:31.000000000 +0000
-@@ -105,6 +105,8 @@
+diff -Nur linux-2.6.17-rc6/include/linux/kernel.h linux-2.6.17-rc6.suspend2/include/linux/kernel.h
+--- linux-2.6.17-rc6/include/linux/kernel.h	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/kernel.h	2006-06-12 16:42:12.000000000 +0000
+@@ -108,6 +108,8 @@
  	__attribute__ ((format (printf, 2, 0)));
  extern int snprintf(char * buf, size_t size, const char * fmt, ...)
  	__attribute__ ((format (printf, 3, 4)));
@@ -2407,9 +2390,9 @@ diff -Nur linux-2.6.16.11/include/linux/kernel.h linux-2.6.16.11.suspend2/includ
  extern int vsnprintf(char *buf, size_t size, const char *fmt, va_list args)
  	__attribute__ ((format (printf, 3, 0)));
  extern int scnprintf(char * buf, size_t size, const char * fmt, ...)
-diff -Nur linux-2.6.16.11/include/linux/kthread.h linux-2.6.16.11.suspend2/include/linux/kthread.h
---- linux-2.6.16.11/include/linux/kthread.h	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/kthread.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/include/linux/kthread.h linux-2.6.17-rc6.suspend2/include/linux/kthread.h
+--- linux-2.6.17-rc6/include/linux/kthread.h	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/kthread.h	2006-06-12 16:34:46.000000000 +0000
 @@ -23,10 +23,20 @@
   *
   * Returns a task_struct or ERR_PTR(-ENOMEM).
@@ -2455,9 +2438,9 @@ diff -Nur linux-2.6.16.11/include/linux/kthread.h linux-2.6.16.11.suspend2/inclu
  
  /**
   * kthread_bind: bind a just-created kthread to a cpu.
-diff -Nur linux-2.6.16.11/include/linux/netlink.h linux-2.6.16.11.suspend2/include/linux/netlink.h
---- linux-2.6.16.11/include/linux/netlink.h	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/netlink.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/include/linux/netlink.h linux-2.6.17-rc6.suspend2/include/linux/netlink.h
+--- linux-2.6.17-rc6/include/linux/netlink.h	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/netlink.h	2006-06-12 16:42:12.000000000 +0000
 @@ -21,6 +21,8 @@
  #define NETLINK_DNRTMSG		14	/* DECnet routing messages */
  #define NETLINK_KOBJECT_UEVENT	15	/* Kernel messages to userspace */
@@ -2467,10 +2450,10 @@ diff -Nur linux-2.6.16.11/include/linux/netlink.h linux-2.6.16.11.suspend2/inclu
  
  #define MAX_LINKS 32		
  
-diff -Nur linux-2.6.16.11/include/linux/sched.h linux-2.6.16.11.suspend2/include/linux/sched.h
---- linux-2.6.16.11/include/linux/sched.h	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/sched.h	2006-05-01 00:12:31.000000000 +0000
-@@ -1716,7 +1716,7 @@
+diff -Nur linux-2.6.17-rc6/include/linux/sched.h linux-2.6.17-rc6.suspend2/include/linux/sched.h
+--- linux-2.6.17-rc6/include/linux/sched.h	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/sched.h	2006-06-12 16:42:12.000000000 +0000
+@@ -1741,7 +1741,7 @@
  
  extern void refrigerator(void);
  extern int freeze_processes(void);
@@ -2479,7 +2462,7 @@ diff -Nur linux-2.6.16.11/include/linux/sched.h linux-2.6.16.11.suspend2/include
  
  static inline int try_to_freeze(void)
  {
-@@ -1735,7 +1735,7 @@
+@@ -1760,7 +1760,7 @@
  
  static inline void refrigerator(void) {}
  static inline int freeze_processes(void) { BUG(); return 0; }
@@ -2488,9 +2471,9 @@ diff -Nur linux-2.6.16.11/include/linux/sched.h linux-2.6.16.11.suspend2/include
  
  static inline int try_to_freeze(void) { return 0; }
  
-diff -Nur linux-2.6.16.11/include/linux/suspend.h linux-2.6.16.11.suspend2/include/linux/suspend.h
---- linux-2.6.16.11/include/linux/suspend.h	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/suspend.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/include/linux/suspend.h linux-2.6.17-rc6.suspend2/include/linux/suspend.h
+--- linux-2.6.17-rc6/include/linux/suspend.h	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/suspend.h	2006-06-12 16:42:12.000000000 +0000
 @@ -9,6 +9,7 @@
  #include <linux/config.h>
  #include <linux/init.h>
@@ -2530,29 +2513,19 @@ diff -Nur linux-2.6.16.11/include/linux/suspend.h linux-2.6.16.11.suspend2/inclu
  unsigned long get_safe_page(gfp_t gfp_mask);
  
  /*
-diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/include/linux/suspend2.h
---- linux-2.6.16.11/include/linux/suspend2.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/suspend2.h	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,217 @@
+diff -Nur linux-2.6.17-rc6/include/linux/suspend2.h linux-2.6.17-rc6.suspend2/include/linux/suspend2.h
+--- linux-2.6.17-rc6/include/linux/suspend2.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/suspend2.h	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,190 @@
 +#ifndef _LINUX_SUSPEND2_H
 +#define _LINUX_SUSPEND2_H
 +
 +#include <linux/dyn_pageflags.h>
-+#include <linux/init.h>
-+#ifdef CONFIG_ACPI
-+#include <acpi/acpi_bus.h>
-+#include <acpi/acpi_drivers.h>
-+#endif
 +
 +/* arch/i386/mm/init.c */
 +extern char __nosave_begin, __nosave_end;
 +
-+extern char __nosavedata swsusp_pg_dir[PAGE_SIZE]
-+                  __attribute__ ((aligned (PAGE_SIZE)));
-+
 +#define SECTOR_SIZE 512
-+
-+/* kernel/power/process.c */
 +
 +/* kernel/power/main.c */
 +extern unsigned long suspend_result;
@@ -2565,7 +2538,7 @@ diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/incl
 +extern int suspend_io_time[2][2];
 +
 +extern dyn_pageflags_t pageset1_map;
-+extern dyn_pageflags_t	pageset1_copy_map;
++extern dyn_pageflags_t pageset1_copy_map;
 +
 +#ifdef CONFIG_PM_DEBUG
 +#define test_debug_state(bit) (test_bit(bit, &suspend_debug_state))
@@ -2588,20 +2561,11 @@ diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/incl
 +/* Debug sections  - if debugging compiled in */
 +enum {
 +	SUSPEND_ANY_SECTION,
-+	SUSPEND_FREEZER,
 +	SUSPEND_EAT_MEMORY,
-+	SUSPEND_PAGESETS,
 +	SUSPEND_IO,
-+	SUSPEND_BMAP,
 +	SUSPEND_HEADER,
 +	SUSPEND_WRITER,
 +	SUSPEND_MEMORY,
-+	SUSPEND_EXTENTS,
-+	SUSPEND_SPINLOCKS,
-+	SUSPEND_MEM_POOL,
-+	SUSPEND_RANGE_PARANOIA,
-+	SUSPEND_NOSAVE,
-+	SUSPEND_INTEGRITY
 +};
 +
 +/* debugging levels. */
@@ -2617,7 +2581,6 @@ diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/incl
 +	SUSPEND_REBOOT,
 +	SUSPEND_PAUSE,
 +	SUSPEND_SLOW,
-+	SUSPEND_NOPAGESET2,
 +	SUSPEND_LOGALL,
 +	SUSPEND_CAN_CANCEL,
 +	SUSPEND_KEEP_IMAGE,
@@ -2670,22 +2633,11 @@ diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/incl
 +	SUSPEND_BOOT_TIME,
 +	SUSPEND_NOW_RESUMING,
 +	SUSPEND_IGNORE_LOGLEVEL,
-+	SUSPEND_ACT_USED,
-+	SUSPEND_DBG_USED,
-+	SUSPEND_LVL_USED,
 +	SUSPEND_TRYING_TO_RESUME,
-+	SUSPEND_FORK_COPYBACK_THREAD,
 +	SUSPEND_TRY_RESUME_RD,
 +	SUSPEND_IGNORE_ROOTFS,
 +};
 +
-+#define test_and_set_suspend_state(bit) \
-+	(test_and_set_bit(bit, &suspend_state))
-+
-+#define get_suspend_state() 		(suspend_state)
-+#define restore_suspend_state(saved_state) \
-+	do { suspend_state = saved_state; } while(0)
-+	
 +/* --------------------------------------------------------------------- */
 +#ifdef CONFIG_SUSPEND2
 +
@@ -2695,7 +2647,6 @@ diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/incl
 +extern void suspend2_try_resume(void);
 +extern int suspend_early_boot_message 
 +	(int can_erase_image, int default_answer, char *warning_reason, ...);
-+extern void suspend_handle_keypress(unsigned int keycode, int source);
 +extern unsigned long suspend_update_status (unsigned long value, unsigned long maximum,
 +		const char *fmt, ...);
 +extern void suspend_prepare_status (int clearbar, const char *fmt, ...);
@@ -2708,9 +2659,6 @@ diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/incl
 +
 +#define set_suspend_state(bit) \
 +	(set_bit(bit, &suspend_state))
-+
-+extern inline void suspend_copyback_low(void);
-+extern inline void suspend_copyback_high(void);
 +
 +extern void suspend2_try_suspend(void);
 +
@@ -2725,7 +2673,6 @@ diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/incl
 +
 +#define suspend2_try_resume()			do { } while(0)
 +static inline int suspend_early_boot_message(int a, int b, char *c, ...)	{ return 0; }
-+#define suspend_handle_keypress(a, b) 		do { } while(0)
 +static inline unsigned long suspend_update_status(unsigned long value, unsigned long maximum,
 +		const char *fmt, ...)
 +{
@@ -2735,7 +2682,16 @@ diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/incl
 +
 +#endif /* CONFIG_SUSPEND2 */
 +
++#define test_and_set_suspend_state(bit) \
++	(test_and_set_bit(bit, &suspend_state))
++
++#define get_suspend_state()  (suspend_state)
++
++#define restore_suspend_state(saved_state) \
++	do { suspend_state = saved_state; } while(0)
++	
 +#if defined(CONFIG_SUSPEND2) && defined(CONFIG_ACPI)
++#include <acpi/acpi.h>
 +static inline int may_try_suspend2(u32 state)
 +{
 +	if (state == ACPI_STATE_S4) {
@@ -2751,30 +2707,29 @@ diff -Nur linux-2.6.16.11/include/linux/suspend2.h linux-2.6.16.11.suspend2/incl
 +}
 +#endif
 +#endif /* _LINUX_SUSPEND2_H */
-diff -Nur linux-2.6.16.11/include/linux/workqueue.h linux-2.6.16.11.suspend2/include/linux/workqueue.h
---- linux-2.6.16.11/include/linux/workqueue.h	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/include/linux/workqueue.h	2006-05-01 00:14:49.000000000 +0000
-@@ -51,9 +51,13 @@
+diff -Nur linux-2.6.17-rc6/include/linux/workqueue.h linux-2.6.17-rc6.suspend2/include/linux/workqueue.h
+--- linux-2.6.17-rc6/include/linux/workqueue.h	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/workqueue.h	2006-06-12 16:36:42.000000000 +0000
+@@ -55,9 +55,12 @@
  	} while (0)
  
  extern struct workqueue_struct *__create_workqueue(const char *name,
 -						    int singlethread);
 -#define create_workqueue(name) __create_workqueue((name), 0)
 -#define create_singlethread_workqueue(name) __create_workqueue((name), 1)
-+						    int singlethread,
-+						    unsigned long freezer_flag);
++ 						    int singlethread,
++ 						    unsigned long freezer_flag);
 +#define create_workqueue(name) __create_workqueue((name), 0, 0)
 +#define create_nofreeze_workqueue(name) __create_workqueue((name), 0, PF_NOFREEZE)
 +#define create_singlethread_workqueue(name) __create_workqueue((name), 1, 0)
 +#define create_nofreeze_singlethread_workqueue(name) __create_workqueue((name), 1, PF_NOFREEZE)
-+
  extern void set_workqueue_prio(struct workqueue_struct *wq, int policy,
  				int rt_priority, int nice);
  
-diff -Nur linux-2.6.16.11/init/do_mounts.c linux-2.6.16.11.suspend2/init/do_mounts.c
---- linux-2.6.16.11/init/do_mounts.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/init/do_mounts.c	2006-05-01 00:12:31.000000000 +0000
-@@ -139,11 +139,16 @@
+diff -Nur linux-2.6.17-rc6/init/do_mounts.c linux-2.6.17-rc6.suspend2/init/do_mounts.c
+--- linux-2.6.17-rc6/init/do_mounts.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/init/do_mounts.c	2006-06-12 16:41:38.000000000 +0000
+@@ -138,11 +138,16 @@
  	char s[32];
  	char *p;
  	dev_t res = 0;
@@ -2793,7 +2748,7 @@ diff -Nur linux-2.6.16.11/init/do_mounts.c linux-2.6.16.11.suspend2/init/do_moun
  		goto out;
  #endif
  
-@@ -195,7 +200,8 @@
+@@ -194,7 +199,8 @@
  	res = try_name(s, part);
  done:
  #ifdef CONFIG_SYSFS
@@ -2803,7 +2758,7 @@ diff -Nur linux-2.6.16.11/init/do_mounts.c linux-2.6.16.11.suspend2/init/do_moun
  out:
  	if (!mkdir_err)
  		sys_rmdir("/sys");
-@@ -412,9 +418,25 @@
+@@ -416,9 +422,25 @@
  
  	is_floppy = MAJOR(ROOT_DEV) == FLOPPY_MAJOR;
  
@@ -2829,9 +2784,9 @@ diff -Nur linux-2.6.16.11/init/do_mounts.c linux-2.6.16.11.suspend2/init/do_moun
  	if (is_floppy && rd_doload && rd_load_disk(0))
  		ROOT_DEV = Root_RAM0;
  
-diff -Nur linux-2.6.16.11/init/do_mounts_initrd.c linux-2.6.16.11.suspend2/init/do_mounts_initrd.c
---- linux-2.6.16.11/init/do_mounts_initrd.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/init/do_mounts_initrd.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/init/do_mounts_initrd.c linux-2.6.17-rc6.suspend2/init/do_mounts_initrd.c
+--- linux-2.6.17-rc6/init/do_mounts_initrd.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/init/do_mounts_initrd.c	2006-06-12 16:41:38.000000000 +0000
 @@ -7,6 +7,7 @@
  #include <linux/romfs_fs.h>
  #include <linux/initrd.h>
@@ -2840,8 +2795,8 @@ diff -Nur linux-2.6.16.11/init/do_mounts_initrd.c linux-2.6.16.11.suspend2/init/
  
  #include "do_mounts.h"
  
-@@ -58,10 +59,16 @@
- 
+@@ -59,10 +60,17 @@
+ 	current->flags |= PF_NOFREEZE;
  	pid = kernel_thread(do_linuxrc, "/linuxrc", SIGCHLD);
  	if (pid > 0) {
 -		while (pid != sys_wait4(-1, NULL, 0, NULL))
@@ -2854,14 +2809,15 @@ diff -Nur linux-2.6.16.11/init/do_mounts_initrd.c linux-2.6.16.11.suspend2/init/
 +	if (test_suspend_state(SUSPEND_RESUME_NOT_DONE))
 +		printk(KERN_ERR "Suspend2: Initrd lacks echo > /proc/suspend2/do_resume.\n");
 +	clear_suspend_state(SUSPEND_BOOT_TIME);
++	current->flags &= ~PF_NOFREEZE;
 +
  	/* move initrd to rootfs' /old */
  	sys_fchdir(old_fd);
  	sys_mount("/", ".", NULL, MS_MOVE, NULL);
-diff -Nur linux-2.6.16.11/init/main.c linux-2.6.16.11.suspend2/init/main.c
---- linux-2.6.16.11/init/main.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/init/main.c	2006-05-01 00:12:31.000000000 +0000
-@@ -716,7 +716,9 @@
+diff -Nur linux-2.6.17-rc6/init/main.c linux-2.6.17-rc6.suspend2/init/main.c
+--- linux-2.6.17-rc6/init/main.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/init/main.c	2006-06-12 16:41:38.000000000 +0000
+@@ -710,7 +710,9 @@
  
  	/*
  	 * check if there is an early userspace init.  If yes, let it do all
@@ -2872,10 +2828,10 @@ diff -Nur linux-2.6.16.11/init/main.c linux-2.6.16.11.suspend2/init/main.c
  	 */
  
  	if (!ramdisk_execute_command)
-diff -Nur linux-2.6.16.11/kernel/audit.c linux-2.6.16.11.suspend2/kernel/audit.c
---- linux-2.6.16.11/kernel/audit.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/audit.c	2006-05-01 00:12:31.000000000 +0000
-@@ -288,6 +288,9 @@
+diff -Nur linux-2.6.17-rc6/kernel/audit.c linux-2.6.17-rc6.suspend2/kernel/audit.c
+--- linux-2.6.17-rc6/kernel/audit.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/audit.c	2006-06-12 16:34:46.000000000 +0000
+@@ -351,6 +351,9 @@
  			}
  		} else {
  			DECLARE_WAITQUEUE(wait, current);
@@ -2885,9 +2841,9 @@ diff -Nur linux-2.6.16.11/kernel/audit.c linux-2.6.16.11.suspend2/kernel/audit.c
  			set_current_state(TASK_INTERRUPTIBLE);
  			add_wait_queue(&kauditd_wait, &wait);
  
-diff -Nur linux-2.6.16.11/kernel/kmod.c linux-2.6.16.11.suspend2/kernel/kmod.c
---- linux-2.6.16.11/kernel/kmod.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/kmod.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/kmod.c linux-2.6.17-rc6.suspend2/kernel/kmod.c
+--- linux-2.6.17-rc6/kernel/kmod.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/kmod.c	2006-06-12 16:41:09.000000000 +0000
 @@ -36,6 +36,7 @@
  #include <linux/mount.h>
  #include <linux/kernel.h>
@@ -2906,10 +2862,10 @@ diff -Nur linux-2.6.16.11/kernel/kmod.c linux-2.6.16.11.suspend2/kernel/kmod.c
  	if (path[0] == '\0')
  		return 0;
  
-diff -Nur linux-2.6.16.11/kernel/kthread.c linux-2.6.16.11.suspend2/kernel/kthread.c
---- linux-2.6.16.11/kernel/kthread.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/kthread.c	2006-05-01 00:12:31.000000000 +0000
-@@ -25,6 +25,7 @@
+diff -Nur linux-2.6.17-rc6/kernel/kthread.c linux-2.6.17-rc6.suspend2/kernel/kthread.c
+--- linux-2.6.17-rc6/kernel/kthread.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/kthread.c	2006-06-12 16:34:46.000000000 +0000
+@@ -26,6 +26,7 @@
  	/* Information passed to kthread() from keventd. */
  	int (*threadfn)(void *data);
  	void *data;
@@ -2917,7 +2873,7 @@ diff -Nur linux-2.6.16.11/kernel/kthread.c linux-2.6.16.11.suspend2/kernel/kthre
  	struct completion started;
  
  	/* Result passed back to kthread_create() from keventd. */
-@@ -86,6 +87,10 @@
+@@ -87,6 +88,10 @@
  	/* By default we can run anywhere, unlike keventd. */
  	set_cpus_allowed(current, CPU_MASK_ALL);
  
@@ -2928,7 +2884,7 @@ diff -Nur linux-2.6.16.11/kernel/kthread.c linux-2.6.16.11.suspend2/kernel/kthre
  	/* OK, tell user we're spawned, wait for stop or wakeup */
  	__set_current_state(TASK_INTERRUPTIBLE);
  	complete(&create->started);
-@@ -119,16 +124,18 @@
+@@ -122,16 +127,18 @@
  	complete(&create->done);
  }
  
@@ -2949,7 +2905,7 @@ diff -Nur linux-2.6.16.11/kernel/kthread.c linux-2.6.16.11.suspend2/kernel/kthre
  	init_completion(&create.started);
  	init_completion(&create.done);
  
-@@ -141,18 +148,89 @@
+@@ -144,18 +151,89 @@
  		queue_work(helper_wq, &work);
  		wait_for_completion(&create.done);
  	}
@@ -3045,9 +3001,9 @@ diff -Nur linux-2.6.16.11/kernel/kthread.c linux-2.6.16.11.suspend2/kernel/kthre
  void kthread_bind(struct task_struct *k, unsigned int cpu)
  {
  	BUG_ON(k->state != TASK_INTERRUPTIBLE);
-diff -Nur linux-2.6.16.11/kernel/power/Kconfig linux-2.6.16.11.suspend2/kernel/power/Kconfig
---- linux-2.6.16.11/kernel/power/Kconfig	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/Kconfig	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/Kconfig linux-2.6.17-rc6.suspend2/kernel/power/Kconfig
+--- linux-2.6.17-rc6/kernel/power/Kconfig	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/Kconfig	2006-06-12 16:42:12.000000000 +0000
 @@ -98,3 +98,74 @@
  	bool
  	depends on HOTPLUG_CPU && X86 && PM
@@ -3123,14 +3079,14 @@ diff -Nur linux-2.6.16.11/kernel/power/Kconfig linux-2.6.16.11.suspend2/kernel/p
 +	bool
 +	depends on SUSPEND2 || SOFTWARE_SUSPEND
 +	default y
-diff -Nur linux-2.6.16.11/kernel/power/Makefile linux-2.6.16.11.suspend2/kernel/power/Makefile
---- linux-2.6.16.11/kernel/power/Makefile	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/Makefile	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/Makefile linux-2.6.17-rc6.suspend2/kernel/power/Makefile
+--- linux-2.6.17-rc6/kernel/power/Makefile	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/Makefile	2006-06-12 16:42:12.000000000 +0000
 @@ -5,8 +5,27 @@
  
  obj-y				:= main.o process.o console.o
  obj-$(CONFIG_PM_LEGACY)		+= pm.o
--obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o disk.o snapshot.o
+-obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o disk.o snapshot.o swap.o user.o
  
  obj-$(CONFIG_SUSPEND_SMP)	+= smp.o
  
@@ -3141,10 +3097,10 @@ diff -Nur linux-2.6.16.11/kernel/power/Makefile linux-2.6.16.11.suspend2/kernel/
 +suspend_core-objs := io.o pagedir.o prepare_image.o \
 +		extent.o suspend.o modules.o \
 +		pageflags.o ui.o proc.o \
-+		power_off.o atomic_copy.o netlink.o
++		power_off.o atomic_copy.o
 +
 +#ifdef CONFIG_NET
-+suspend_core-objs += storage.o
++suspend_core-objs += storage.o netlink.o
 +#endif
 +obj-$(CONFIG_SUSPEND2)			+= suspend_core.o
 +obj-$(CONFIG_SUSPEND2_CRYPTO)		+= compression.o encryption.o
@@ -3152,13 +3108,13 @@ diff -Nur linux-2.6.16.11/kernel/power/Makefile linux-2.6.16.11.suspend2/kernel/
 +obj-$(CONFIG_SUSPEND2_SWAPWRITER)	+= suspend_block_io.o suspend_swap.o
 +obj-$(CONFIG_SUSPEND2_FILEWRITER)	+= suspend_block_io.o suspend_file.o
 +
-+obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o disk.o
++obj-$(CONFIG_SOFTWARE_SUSPEND)	+= swsusp.o disk.o swap.o user.o
 +
  obj-$(CONFIG_MAGIC_SYSRQ)	+= poweroff.o
-diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/kernel/power/atomic_copy.c
---- linux-2.6.16.11/kernel/power/atomic_copy.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/atomic_copy.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,427 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/atomic_copy.c linux-2.6.17-rc6.suspend2/kernel/power/atomic_copy.c
+--- linux-2.6.17-rc6/kernel/power/atomic_copy.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/atomic_copy.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,430 @@
 +/*
 + * kernel/power/atomic_copy.c
 + *
@@ -3194,7 +3150,7 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +static unsigned long __nosavedata copyoffset;
 +static __nosavedata int o_zone_num, c_zone_num;
 +
-+__nosavedata char resume_commandline[COMMAND_LINE_SIZE];
++__nosavedata char suspend_resume_commandline[COMMAND_LINE_SIZE];
 +
 +struct zone_data {
 +	unsigned long start_pfn;
@@ -3268,7 +3224,8 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +		counter++;
 +		if (counter > zone_nosave[*zone_num].end_pfn) {
 +			(*zone_num)++;
-+			while (!zone_nosave[*zone_num].end_pfn && *zone_num < num_zones)
++			while (!zone_nosave[*zone_num].end_pfn &&
++					*zone_num < num_zones)
 +				(*zone_num)++;
 +			
 +			if (*zone_num == num_zones)
@@ -3278,10 +3235,11 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +		} else
 +			if (!(counter & BIT_NUM_MASK))
 +				reset_ul_ptr = 1;
++
 +		if (reset_ul_ptr) {
 +			reset_ul_ptr = 0;
 +			ul_ptr = PAGE_UL_PTR(bitmap, *zone_num,
-+					(counter - zone_nosave[*zone_num].start_pfn));
++				(counter - zone_nosave[*zone_num].start_pfn));
 +			if (!*ul_ptr) {
 +				counter += BIT_NUM_MASK - 1;
 +				continue;
@@ -3408,7 +3366,7 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +
 +	userui_redraw();
 +
-+	check_shift_keys(1, "About to reload secondary pagedir.");
++	suspend_cond_pause(1, "About to reload secondary pagedir.");
 +
 +	if (read_pageset2(0))
 +		panic("Unable to successfully reread the page cache.");
@@ -3430,6 +3388,7 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +int suspend_post_context_save(void)
 +{
 +	int old_ps1_size = pagedir1.pageset_size;
++	int old_ps2_size = pagedir2.pageset_size;
 +	
 +	BUG_ON(!irqs_disabled());
 +
@@ -3442,6 +3401,8 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +			extra_pd1_pages_allowance);
 +		return -1;
 +	}
++
++	BUG_ON(old_ps2_size != pagedir2.pageset_size);
 +
 +	BUG_ON(!irqs_disabled());
 +
@@ -3473,9 +3434,6 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +	source_index = get_next_bit_on(pageset1_map, -1);
 +	dest_index = get_next_bit_on(pageset1_copy_map, -1);
 +
-+	source_index = get_next_bit_on(pageset1_map, -1);
-+	dest_index = get_next_bit_on(pageset1_copy_map, -1);
-+
 +	for (i = 0; i < pagedir1.pageset_size; i++) {
 +		unsigned long *origvirt, *copyvirt;
 +		struct page *origpage;
@@ -3483,12 +3441,12 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +
 +		origpage = pfn_to_page(source_index);
 +		
-+		copyvirt = (unsigned long *) page_address(pfn_to_page(dest_index));
-+
 +	       	if (PageHighMem(origpage))
-+			origvirt = kmap_atomic(origpage, KM_USER1);
++			origvirt = kmap_atomic(origpage, KM_USER0);
 +		else
 +			origvirt = page_address(origpage);
++
++		copyvirt = (unsigned long *) page_address(pfn_to_page(dest_index));
 +
 +		while (loop >= 0) {
 +			*(copyvirt + loop) = *(origvirt + loop);
@@ -3496,7 +3454,7 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +		}
 +		
 +		if (PageHighMem(origpage))
-+			kunmap_atomic(origvirt, KM_USER1);
++			kunmap_atomic(origvirt, KM_USER0);
 +		
 +		source_index = get_next_bit_on(pageset1_map, source_index);
 +		dest_index = get_next_bit_on(pageset1_copy_map, dest_index);
@@ -3551,7 +3509,7 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +	suspend_prepare_status(DONT_CLEAR_BAR,	"Atomic restore preparation");
 +	prepare_suspend2_pbe_list();
 +
-+	check_shift_keys(1, "Device suspend next.\n");
++	suspend_cond_pause(1, "Device suspend next.\n");
 +
 +	if ((error = device_suspend(PMSG_FREEZE))) {
 +		printk("Some devices failed to suspend\n");
@@ -3569,7 +3527,7 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +	for (loop = 0; loop < 4; loop++)
 +		io_speed_save[loop/2][loop%2] =
 +			suspend_io_time[loop/2][loop%2];
-+	memcpy(resume_commandline, saved_command_line, COMMAND_LINE_SIZE);
++	memcpy(suspend_resume_commandline, saved_command_line, COMMAND_LINE_SIZE);
 +
 +	local_irq_disable();
 +	if (device_power_down(PMSG_FREEZE))
@@ -3579,6 +3537,7 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +
 +	/* We'll ignore saved state, but this gets preempt count (etc) right */
 +	save_processor_state();
++	
 +	error = swsusp_arch_resume();
 +	/* Code below is only ever reached in case of failure. Otherwise
 +	 * execution continues at place where swsusp_arch_suspend was called
@@ -3586,9 +3545,9 @@ diff -Nur linux-2.6.16.11/kernel/power/atomic_copy.c linux-2.6.16.11.suspend2/ke
 +	BUG();
 +	return 1;
 +}
-diff -Nur linux-2.6.16.11/kernel/power/block_io.h linux-2.6.16.11.suspend2/kernel/power/block_io.h
---- linux-2.6.16.11/kernel/power/block_io.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/block_io.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/block_io.h linux-2.6.17-rc6.suspend2/kernel/power/block_io.h
+--- linux-2.6.17-rc6/kernel/power/block_io.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/block_io.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,53 @@
 +/*
 + * kernel/power/block_io.h
@@ -3643,10 +3602,10 @@ diff -Nur linux-2.6.16.11/kernel/power/block_io.h linux-2.6.16.11.suspend2/kerne
 +extern int suspend_read_fd;
 +extern struct extent_iterate_saved_state suspend_writer_posn_save[3];
 +extern struct extent_iterate_state suspend_writer_posn;
-diff -Nur linux-2.6.16.11/kernel/power/compression.c linux-2.6.16.11.suspend2/kernel/power/compression.c
---- linux-2.6.16.11/kernel/power/compression.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/compression.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,568 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/compression.c linux-2.6.17-rc6.suspend2/kernel/power/compression.c
+--- linux-2.6.17-rc6/kernel/power/compression.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/compression.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,572 @@
 +/*
 + * kernel/power/compression.c
 + *
@@ -3797,7 +3756,7 @@ diff -Nur linux-2.6.16.11/kernel/power/compression.c linux-2.6.16.11.suspend2/ke
 +}
 +
 +/* 
-+ * rw_init()
++ * suspend_compress_rw_init()
 + * @stream_number:	Ignored.
 + *
 + * Allocate buffers and prepare to compress data.
@@ -3810,7 +3769,8 @@ diff -Nur linux-2.6.16.11/kernel/power/compression.c linux-2.6.16.11.suspend2/ke
 +	next_driver = suspend_get_next_filter(&suspend_compression_ops);
 +
 +	if (!next_driver) {
-+		printk("Compression Driver: Argh! Nothing follows me in the pipeline!");
++		printk("Compression Driver: Argh! Nothing follows me in"
++				" the pipeline!");
 +		return -ECHILD;
 +	}
 +
@@ -4060,7 +4020,7 @@ diff -Nur linux-2.6.16.11/kernel/power/compression.c linux-2.6.16.11.suspend2/ke
 +
 +static unsigned long suspend_compress_storage_needed(void)
 +{
-+	return 2 * sizeof(unsigned long) + sizeof(int);
++	return 4 * sizeof(unsigned long) + strlen(suspend_compressor_name) + 1;
 +}
 +
 +/* 
@@ -4077,9 +4037,11 @@ diff -Nur linux-2.6.16.11/kernel/power/compression.c linux-2.6.16.11.suspend2/ke
 +	
 +	*((unsigned long *) buffer) = bytes_in;
 +	*((unsigned long *) (buffer + 1 * sizeof(unsigned long))) = bytes_out;
-+	*((unsigned long *) (buffer + 2 * sizeof(unsigned long))) = suspend_expected_compression;
++	*((unsigned long *) (buffer + 2 * sizeof(unsigned long))) =
++		suspend_expected_compression;
 +	*((unsigned long *) (buffer + 3 * sizeof(unsigned long))) = namelen;
-+	strncpy(buffer + 4 * sizeof(unsigned long), suspend_compressor_name, namelen);
++	strncpy(buffer + 4 * sizeof(unsigned long), suspend_compressor_name, 
++								namelen);
 +	total_len = 4 * sizeof(unsigned long) + namelen;
 +	return total_len;
 +}
@@ -4088,7 +4050,8 @@ diff -Nur linux-2.6.16.11/kernel/power/compression.c linux-2.6.16.11.suspend2/ke
 + * @buffer: Pointer to the start of the data.
 + * @size: Number of bytes that were saved.
 + *
-+ * Description:	Reload information needed for decompressing the image at resume time.
++ * Description:	Reload information needed for decompressing the image at
++ * resume time.
 + */
 +static void suspend_compress_load_config_info(char *buffer, int size)
 +{
@@ -4215,9 +4178,9 @@ diff -Nur linux-2.6.16.11/kernel/power/compression.c linux-2.6.16.11.suspend2/ke
 +#else
 +late_initcall(suspend_compress_load);
 +#endif
-diff -Nur linux-2.6.16.11/kernel/power/disk.c linux-2.6.16.11.suspend2/kernel/power/disk.c
---- linux-2.6.16.11/kernel/power/disk.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/disk.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/disk.c linux-2.6.17-rc6.suspend2/kernel/power/disk.c
+--- linux-2.6.17-rc6/kernel/power/disk.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/disk.c	2006-06-12 16:42:12.000000000 +0000
 @@ -10,6 +10,7 @@
   */
  
@@ -4226,7 +4189,7 @@ diff -Nur linux-2.6.16.11/kernel/power/disk.c linux-2.6.16.11.suspend2/kernel/po
  #include <linux/syscalls.h>
  #include <linux/reboot.h>
  #include <linux/string.h>
-@@ -99,7 +100,7 @@
+@@ -83,7 +84,7 @@
  	if (!(error = swsusp_shrink_memory()))
  		return 0;
  thaw:
@@ -4235,7 +4198,7 @@ diff -Nur linux-2.6.16.11/kernel/power/disk.c linux-2.6.16.11.suspend2/kernel/po
  	enable_nonboot_cpus();
  	pm_restore_console();
  	return error;
-@@ -108,7 +109,7 @@
+@@ -92,7 +93,7 @@
  static void unprepare_processes(void)
  {
  	platform_finish();
@@ -4244,10 +4207,10 @@ diff -Nur linux-2.6.16.11/kernel/power/disk.c linux-2.6.16.11.suspend2/kernel/po
  	enable_nonboot_cpus();
  	pm_restore_console();
  }
-diff -Nur linux-2.6.16.11/kernel/power/encryption.c linux-2.6.16.11.suspend2/kernel/power/encryption.c
---- linux-2.6.16.11/kernel/power/encryption.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/encryption.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,533 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/encryption.c linux-2.6.17-rc6.suspend2/kernel/power/encryption.c
+--- linux-2.6.17-rc6/kernel/power/encryption.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/encryption.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,555 @@
 +/*
 + * kernel/power/suspend_core/encryption.c
 + *
@@ -4321,7 +4284,7 @@ diff -Nur linux-2.6.16.11/kernel/power/encryption.c linux-2.6.16.11.suspend2/ker
 +			suspend_crypt_sg[i].offset = suspend_key_len * i;
 +			suspend_crypt_sg[i].length = suspend_key_len;
 +		}
-+
++		
 +		remainder = PAGE_SIZE % suspend_key_len;
 +
 +		if (remainder) {
@@ -4367,7 +4330,7 @@ diff -Nur linux-2.6.16.11/kernel/power/encryption.c linux-2.6.16.11.suspend2/ker
 + * Description:	Prepare to do some work by allocating buffers and transforms.
 + * Returns:	Int: Zero if successful, 1 otherwise.
 + */
-+static int suspend_encrypt_crypto_prepare(int rw)
++static int suspend_encrypt_rw_prepare(int rw)
 +{
 +	if (!*suspend_encryptor_name) {
 +		printk("Suspend2: Encryptor enabled but no name set.\n");
@@ -4375,9 +4338,11 @@ diff -Nur linux-2.6.16.11/kernel/power/encryption.c linux-2.6.16.11.suspend2/ker
 +		return 1;
 +	}
 +
-+	if (!(suspend_encryptor_transform = crypto_alloc_tfm(suspend_encryptor_name,
-+					1 << suspend_encryptor_mode))) {
-+		printk("Suspend2: Failed to initialise the encryption transform (%s, mode %d).\n",
++	suspend_encryptor_transform = crypto_alloc_tfm(suspend_encryptor_name,
++					1 << suspend_encryptor_mode);
++	if (!suspend_encryptor_transform) {
++		printk("Suspend2: Failed to initialise the encryption "
++				"transform (%s, mode %d).\n",
 +				suspend_encryptor_name, suspend_encryptor_mode);
 +		suspend_encryption_ops.disabled = 1;
 +		return 1;
@@ -4470,7 +4435,7 @@ diff -Nur linux-2.6.16.11/kernel/power/encryption.c linux-2.6.16.11.suspend2/ker
 +		return -ECHILD;
 +	}
 +	
-+	if ((result = suspend_encrypt_crypto_prepare(rw))) {
++	if ((result = suspend_encrypt_rw_prepare(rw))) {
 +		set_result_state(SUSPEND_ENCRYPTION_SETUP_FAILED);
 +		suspend_encrypt_rw_cleanup(rw);
 +		return result;
@@ -4560,9 +4525,12 @@ diff -Nur linux-2.6.16.11/kernel/power/encryption.c linux-2.6.16.11.suspend2/ker
 +
 +static unsigned long suspend_encrypt_storage_needed(void)
 +{
-+	return 2 * sizeof(unsigned long) + sizeof(int);
++	return 4 + strlen(suspend_encryptor_name) +
++		(suspend_encryptor_save_key_and_iv ?
++		 (4 + strlen(suspend_encryptor_key) +
++		  strlen(suspend_encryptor_iv)) : 0);
 +}
-+
++	
 +/* suspend_encrypt_save_config_info
 + *
 + * Description:	Save informaton needed when reloading the image at resume time.
@@ -4659,85 +4627,86 @@ diff -Nur linux-2.6.16.11/kernel/power/encryption.c linux-2.6.16.11.suspend2/ker
 +
 +	return 0;
 +}
++
 +/*
 + * data for our proc entries.
 + */
-+
 +static struct suspend_proc_data proc_params[] = {
-+	{
-+		.filename			= "encryptor",
-+		.permissions			= PROC_RW,
-+		.type				= SUSPEND_PROC_DATA_STRING,
-+		.data = {
-+			.string = {
-+				.variable	= suspend_encryptor_name,
-+				.max_length	= 31,
-+			}
-+		},
-+	},
-+
-+	{
-+		.filename			= "encryption_mode",
-+		.permissions			= PROC_RW,
-+		.type				= SUSPEND_PROC_DATA_INTEGER,
-+		.data = {
-+			.integer = {
-+				.variable	= &suspend_encryptor_mode,
-+				.minimum	= 0,
-+				.maximum	= 3,
-+			}
++{
++	.filename			= "encryptor",
++	.permissions			= PROC_RW,
++	.type				= SUSPEND_PROC_DATA_STRING,
++	.data = {
++		.string = {
++			.variable	= suspend_encryptor_name,
++			.max_length	= 31,
 +		}
 +	},
++	.write_proc			= suspend_encryptor_disable_if_empty,
++},
 +
-+	{
-+		.filename			= "encryption_save_key_and_iv",
-+		.permissions			= PROC_RW,
-+		.type				= SUSPEND_PROC_DATA_INTEGER,
-+		.data = {
-+			.integer = {
-+				.variable	= &suspend_encryptor_save_key_and_iv,
-+				.minimum	= 0,
-+				.maximum	= 1,
-+			}
++{
++	.filename			= "encryption_mode",
++	.permissions			= PROC_RW,
++	.type				= SUSPEND_PROC_DATA_INTEGER,
++	.data = {
++		.integer = {
++			.variable	= &suspend_encryptor_mode,
++			.minimum	= 0,
++			.maximum	= 3,
 +		}
-+	},
++	}
++},
 +
-+	{
-+		.filename			= "encryption_key",
-+		.permissions			= PROC_RW,
-+		.type				= SUSPEND_PROC_DATA_STRING,
-+		.data = {
-+			.string = {
-+				.variable	= suspend_encryptor_key,
-+				.max_length	= 255,
-+			}
++{
++	.filename			= "encryption_save_key_and_iv",
++	.permissions			= PROC_RW,
++	.type				= SUSPEND_PROC_DATA_INTEGER,
++	.data = {
++		.integer = {
++			.variable	= &suspend_encryptor_save_key_and_iv,
++			.minimum	= 0,
++			.maximum	= 1,
 +		}
-+	},
++	}
++},
 +
-+	{
-+		.filename			= "encryption_iv",
-+		.permissions			= PROC_RW,
-+		.type				= SUSPEND_PROC_DATA_STRING,
-+		.data = {
-+			.string = {
-+				.variable	= suspend_encryptor_iv,
-+				.max_length	= 255,
-+			}
++{
++	.filename			= "encryption_key",
++	.permissions			= PROC_RW,
++	.type				= SUSPEND_PROC_DATA_STRING,
++	.data = {
++		.string = {
++			.variable	= suspend_encryptor_key,
++			.max_length	= 255,
 +		}
-+	},
++	}
++},
 +
-+	{
-+		.filename			= "disable_encryption",
-+		.permissions			= PROC_RW,
-+		.type				= SUSPEND_PROC_DATA_INTEGER,
-+		.data = {
-+			.integer = {
-+				.variable	= &suspend_encryption_ops.disabled,
-+				.minimum	= 0,
-+				.maximum	= 1,
-+			}
++{
++	.filename			= "encryption_iv",
++	.permissions			= PROC_RW,
++	.type				= SUSPEND_PROC_DATA_STRING,
++	.data = {
++		.string = {
++			.variable	= suspend_encryptor_iv,
++			.max_length	= 255,
 +		}
-+	},
++	}
++},
++
++{
++	.filename			= "disable_encryption",
++	.permissions			= PROC_RW,
++	.type				= SUSPEND_PROC_DATA_INTEGER,
++	.data = {
++		.integer = {
++			.variable	= &suspend_encryption_ops.disabled,
++			.minimum	= 0,
++			.maximum	= 1,
++		}
++	}
++},
 +	
 +};
 +
@@ -4763,7 +4732,7 @@ diff -Nur linux-2.6.16.11/kernel/power/encryption.c linux-2.6.16.11.suspend2/ker
 +	.write_chunk		= suspend_encrypt_write_chunk,
 +	.read_chunk		= suspend_encrypt_read_chunk,
 +};
-+       
++
 +/* ---- Registration ---- */
 +
 +static __init int suspend_encrypt_load(void)
@@ -4780,11 +4749,27 @@ diff -Nur linux-2.6.16.11/kernel/power/encryption.c linux-2.6.16.11.suspend2/ker
 +	return result;
 +}
 +
++#ifdef MODULE
++static __exit void suspend_compress_unload(void)
++{
++	printk("Suspend2 Encryption Driver unloading.\n");
++	for (i=0; i< numfiles; i++)
++		suspend_unregister_procfile(&proc_params[i]);
++	suspend_unregister_module(&suspend_encryption_ops);
++}
++
++module_init(suspend_encrypt_load);
++module_exit(suspend_encrypt_unload);
++MODULE_LICENSE("GPL");
++MODULE_AUTHOR("Nigel Cunningham");
++MODULE_DESCRIPTION("Encryption Support for Suspend2");
++#else
 +late_initcall(suspend_encrypt_load);
-diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/power/extent.c
---- linux-2.6.16.11/kernel/power/extent.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/extent.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,300 @@
++#endif
+diff -Nur linux-2.6.17-rc6/kernel/power/extent.c linux-2.6.17-rc6.suspend2/kernel/power/extent.c
+--- linux-2.6.17-rc6/kernel/power/extent.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/extent.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,302 @@
 +/* 
 + * kernel/power/extent.c
 + * 
@@ -4802,43 +4787,43 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +#include "extent.h"
 +#include "ui.h"
 +
-+int extents_allocated = 0;
++int suspend_extents_allocated = 0;
 +
-+/* get_extent
++/* suspend_get_extent
 + *
 + * Returns a free extent. May fail, returning NULL instead.
 + */
-+static struct extent *get_extent(void)
++static struct extent *suspend_get_extent(void)
 +{
 +	struct extent *result;
 +	
 +	if (!(result = kmalloc(sizeof(struct extent), GFP_ATOMIC)))
 +		return NULL;
 +
-+	extents_allocated++;
++	suspend_extents_allocated++;
 +	result->minimum = result->maximum = 0;
 +	result->next = NULL;
 +
 +	return result;
 +}
 +
-+/* put_extent.
++/* suspend_put_extent.
 + *
 + * Frees an extent. Assumes unlinking is done by the caller.
 + */
-+void put_extent(struct extent *extent)
++void suspend_put_extent(struct extent *extent)
 +{
 +	BUG_ON(!extent);
 +
 +	kfree(extent);
-+	extents_allocated--;
++	suspend_extents_allocated--;
 +}
 +
-+/* put_extent_chain.
++/* suspend_put_extent_chain.
 + *
 + * Frees a whole chain of extents.
 + */
-+void put_extent_chain(struct extent_chain *chain)
++void suspend_put_extent_chain(struct extent_chain *chain)
 +{
 +	struct extent *this;
 +
@@ -4848,7 +4833,7 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +		struct extent *next = this->next;
 +		kfree(this);
 +		chain->frees++;
-+		extents_allocated --;
++		suspend_extents_allocated --;
 +		this = next;
 +	}
 +	
@@ -4858,17 +4843,18 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +}
 +
 +/* 
-+ * add_to_extent_chain
++ * suspend_add_to_extent_chain
 + *
 + * Add an extent to an existing chain.
 + */
-+int add_to_extent_chain(struct extent_chain *chain, 
++int suspend_add_to_extent_chain(struct extent_chain *chain, 
 +		unsigned long minimum, unsigned long maximum)
 +{
 +	struct extent *new_extent = NULL, *start_at;
 +
 +	/* Find the right place in the chain */
-+	start_at = (chain->last_touched && (chain->last_touched->minimum < minimum)) ?
++	start_at = (chain->last_touched && 
++		    (chain->last_touched->minimum < minimum)) ?
 +		chain->last_touched : NULL;
 +
 +	if (!start_at && chain->first && chain->first->minimum < minimum)
@@ -4881,12 +4867,13 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +		start_at->maximum = maximum;
 +
 +		/* Merge with the following one? */
-+		if (start_at->next && start_at->maximum + 1 == start_at->next->minimum) {
++		if (start_at->next &&
++		    start_at->maximum + 1 == start_at->next->minimum) {
 +			struct extent *to_free = start_at->next;
 +			start_at->maximum = start_at->next->maximum;
 +			start_at->next = start_at->next->next;
 +			chain->frees++;
-+			put_extent(to_free);
++			suspend_put_extent(to_free);
 +		}
 +
 +		chain->last_touched = start_at;
@@ -4895,7 +4882,7 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +		return 0;
 +	}
 +
-+	new_extent = get_extent();
++	new_extent = suspend_get_extent();
 +	if (!new_extent) {
 +		printk("Error unable to append a new extent to the chain.\n");
 +		return 2;
@@ -4926,11 +4913,11 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +	return 0;
 +}
 +
-+/* serialise_extent_chain
++/* suspend_serialise_extent_chain
 + *
 + * Write a chain in the image.
 + */
-+int serialise_extent_chain(struct extent_chain *chain)
++int suspend_serialise_extent_chain(struct extent_chain *chain)
 +{
 +	struct extent *this;
 +	int ret, i = 1;
@@ -4952,11 +4939,11 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +	return ret;
 +}
 +
-+/* load_extent_chain
++/* suspend_load_extent_chain
 + *
 + * Read back a chain saved in the image.
 + */
-+int load_extent_chain(struct extent_chain *chain)
++int suspend_load_extent_chain(struct extent_chain *chain)
 +{
 +	struct extent *this, *last = NULL;
 +	int i, ret;
@@ -4984,7 +4971,7 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +	return ret;
 +}
 +
-+/* extent_state_next
++/* suspend_extent_state_next
 + *
 + * Given a state, progress to the next valid entry. We may begin in an
 + * invalid state, as we do when invoked from extent_state_goto_start below.
@@ -4992,7 +4979,7 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 + * When using compression and expected_compression > 0, we allocate fewer
 + * swap entries, so we can validly run out of data to return.
 + */
-+unsigned long extent_state_next(struct extent_iterate_state *state)
++unsigned long suspend_extent_state_next(struct extent_iterate_state *state)
 +{
 +	if (state->current_chain > state->num_chains)
 +		return 0;
@@ -5027,24 +5014,24 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +	return state->current_offset;
 +}
 +
-+/* extent_state_goto_start
++/* suspend_extent_state_goto_start
 + *
 + * Find the first valid value in a group of chains.
 + */
-+void extent_state_goto_start(struct extent_iterate_state *state)
++void suspend_extent_state_goto_start(struct extent_iterate_state *state)
 +{
 +	state->current_chain = -1;
 +	state->current_extent = NULL;
 +	state->current_offset = 0;
 +}
 +
-+/* extent_start_save
++/* suspend_extent_start_save
 + *
 + * Given a state and a struct extent_state_store, save the crreutn
 + * position in a format that can be used with relocated chains (at
 + * resume time).
 + */
-+void extent_state_save(struct extent_iterate_state *state,
++void suspend_extent_state_save(struct extent_iterate_state *state,
 +		struct extent_iterate_saved_state *saved_state)
 +{
 +	struct extent *extent;
@@ -5064,17 +5051,17 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +	}
 +}
 +
-+/* extent_start_restore
++/* suspend_extent_start_restore
 + *
 + * Restore the position saved by extent_state_save.
 + */
-+void extent_state_restore(struct extent_iterate_state *state,
++void suspend_extent_state_restore(struct extent_iterate_state *state,
 +		struct extent_iterate_saved_state *saved_state)
 +{
 +	int posn = saved_state->extent_num;
 +
 +	if (saved_state->chain_num == -1) {
-+		extent_state_goto_start(state);
++		suspend_extent_state_goto_start(state);
 +		return;
 +	}
 +
@@ -5085,9 +5072,9 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.c linux-2.6.16.11.suspend2/kernel/
 +	while (posn--)
 +		state->current_extent = state->current_extent->next;
 +}
-diff -Nur linux-2.6.16.11/kernel/power/extent.h linux-2.6.16.11.suspend2/kernel/power/extent.h
---- linux-2.6.16.11/kernel/power/extent.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/extent.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/extent.h linux-2.6.17-rc6.suspend2/kernel/power/extent.h
+--- linux-2.6.17-rc6/kernel/power/extent.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/extent.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,80 @@
 +/*
 + * kernel/power/extent.h
@@ -5135,9 +5122,9 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.h linux-2.6.16.11.suspend2/kernel/
 +	unsigned long offset;
 +};
 +
-+#define extent_state_eof(state) ((state)->num_chains < (state)->current_chain)
++#define suspend_extent_state_eof(state) ((state)->num_chains < (state)->current_chain)
 +
-+#define extent_for_each(extent_chain, extentpointer, value) \
++#define suspend_extent_for_each(extent_chain, extentpointer, value) \
 +if ((extent_chain)->first) \
 +	for ((extentpointer) = (extent_chain)->first, (value) = \
 +			(extentpointer)->minimum; \
@@ -5148,13 +5135,13 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.h linux-2.6.16.11.suspend2/kernel/
 +		 ((extentpointer) ? (extentpointer)->minimum : 0)) : \
 +			(value)++))
 +
-+extern int extents_allocated;
-+void put_extent(struct extent *extent);
-+void put_extent_chain(struct extent_chain *chain);
-+int add_to_extent_chain(struct extent_chain *chain, 
++extern int suspend_extents_allocated;
++void suspend_put_extent(struct extent *extent);
++void suspend_put_extent_chain(struct extent_chain *chain);
++int suspend_add_to_extent_chain(struct extent_chain *chain, 
 +		unsigned long minimum, unsigned long maximum);
-+int serialise_extent_chain(struct extent_chain *chain);
-+int load_extent_chain(struct extent_chain *chain);
++int suspend_serialise_extent_chain(struct extent_chain *chain);
++int suspend_load_extent_chain(struct extent_chain *chain);
 +
 +/* swap_entry_to_extent_val & extent_val_to_swap_entry: 
 + * We are putting offset in the low bits so consecutive swap entries
@@ -5162,16 +5149,16 @@ diff -Nur linux-2.6.16.11/kernel/power/extent.h linux-2.6.16.11.suspend2/kernel/
 +#define swap_entry_to_extent_val(swp_entry) (swp_entry.val)
 +#define extent_val_to_swap_entry(val) (swp_entry_t) { (val) }
 +
-+void extent_state_save(struct extent_iterate_state *state,
++void suspend_extent_state_save(struct extent_iterate_state *state,
 +		struct extent_iterate_saved_state *saved_state);
-+void extent_state_restore(struct extent_iterate_state *state,
++void suspend_extent_state_restore(struct extent_iterate_state *state,
 +		struct extent_iterate_saved_state *saved_state);
-+void extent_state_goto_start(struct extent_iterate_state *state);
-+unsigned long extent_state_next(struct extent_iterate_state *state);
++void suspend_extent_state_goto_start(struct extent_iterate_state *state);
++unsigned long suspend_extent_state_next(struct extent_iterate_state *state);
 +#endif
-diff -Nur linux-2.6.16.11/kernel/power/io.c linux-2.6.16.11.suspend2/kernel/power/io.c
---- linux-2.6.16.11/kernel/power/io.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/io.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/io.c linux-2.6.17-rc6.suspend2/kernel/power/io.c
+--- linux-2.6.17-rc6/kernel/power/io.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/io.c	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,982 @@
 +/*
 + * kernel/power/io.c
@@ -5462,7 +5449,7 @@ diff -Nur linux-2.6.16.11/kernel/power/io.c linux-2.6.16.11.suspend2/kernel/powe
 +		}
 +
 +		/* Interactivity*/
-+		check_shift_keys(0, NULL);
++		suspend_cond_pause(0, NULL);
 +
 +		if (test_result_state(SUSPEND_ABORTED) && write)
 +			return 1;
@@ -5995,7 +5982,7 @@ diff -Nur linux-2.6.16.11/kernel/power/io.c linux-2.6.16.11.suspend2/kernel/powe
 +
 +	suspend_prepare_console();
 +
-+	check_shift_keys(1, "About to read original pageset1 locations.");
++	suspend_cond_pause(1, "About to read original pageset1 locations.");
 +	/* 
 +	 * Read original pageset1 locations. These are the addresses we can't
 +	 * use for the data to be restored
@@ -6019,7 +6006,7 @@ diff -Nur linux-2.6.16.11/kernel/power/io.c linux-2.6.16.11.suspend2/kernel/powe
 +		goto out_reset_console;
 +	}
 +
-+	check_shift_keys(1, "About to read pagedir.");
++	suspend_cond_pause(1, "About to read pagedir.");
 +
 +	/* 
 +	 * Get the addresses of pages into which we will load the kernel to
@@ -6032,7 +6019,7 @@ diff -Nur linux-2.6.16.11/kernel/power/io.c linux-2.6.16.11.suspend2/kernel/powe
 +	}
 +
 +	/* Read the original kernel back */
-+	check_shift_keys(1, "About to read pageset 1.");
++	suspend_cond_pause(1, "About to read pageset 1.");
 +
 +	if (read_pageset(&pagedir1, 1, 0)) {
 +		suspend_prepare_status(CLEAR_BAR, "Failed to read pageset 1.");
@@ -6041,7 +6028,7 @@ diff -Nur linux-2.6.16.11/kernel/power/io.c linux-2.6.16.11.suspend2/kernel/powe
 +		goto out_reset_console;
 +	}
 +
-+	check_shift_keys(1, "About to restore original kernel.");
++	suspend_cond_pause(1, "About to restore original kernel.");
 +	result = 0;
 +
 +	if (!test_action_state(SUSPEND_KEEP_IMAGE) &&
@@ -6151,13 +6138,13 @@ diff -Nur linux-2.6.16.11/kernel/power/io.c linux-2.6.16.11.suspend2/kernel/powe
 +	result = read_pageset(&pagedir2, 2, overwrittenpagesonly);
 +
 +	suspend_update_status(100, 100, NULL);
-+	check_shift_keys(1, "Pagedir 2 read.");
++	suspend_cond_pause(1, "Pagedir 2 read.");
 +
 +	return result;
 +}
-diff -Nur linux-2.6.16.11/kernel/power/io.h linux-2.6.16.11.suspend2/kernel/power/io.h
---- linux-2.6.16.11/kernel/power/io.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/io.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/io.h linux-2.6.17-rc6.suspend2/kernel/power/io.h
+--- linux-2.6.17-rc6/kernel/power/io.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/io.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,46 @@
 +/*
 + * kernel/power/io.h
@@ -6205,9 +6192,9 @@ diff -Nur linux-2.6.16.11/kernel/power/io.h linux-2.6.16.11.suspend2/kernel/powe
 +extern dev_t name_to_dev_t(char *line);
 +extern __nosavedata unsigned long bytes_in, bytes_out;
 +extern char *get_have_image_data(void);
-diff -Nur linux-2.6.16.11/kernel/power/main.c linux-2.6.16.11.suspend2/kernel/power/main.c
---- linux-2.6.16.11/kernel/power/main.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/main.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/main.c linux-2.6.17-rc6.suspend2/kernel/power/main.c
+--- linux-2.6.17-rc6/kernel/power/main.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/main.c	2006-06-12 16:42:12.000000000 +0000
 @@ -9,6 +9,7 @@
   */
  
@@ -6225,15 +6212,6 @@ diff -Nur linux-2.6.16.11/kernel/power/main.c linux-2.6.16.11.suspend2/kernel/po
   Enable_cpu:
  	enable_nonboot_cpus();
  	pm_restore_console();
-@@ -103,7 +104,7 @@
- }
- 
- 
--static int suspend_enter(suspend_state_t state)
-+int suspend_enter(suspend_state_t state)
- {
- 	int error = 0;
- 	unsigned long flags;
 @@ -133,7 +134,7 @@
  static void suspend_finish(suspend_state_t state)
  {
@@ -6243,10 +6221,10 @@ diff -Nur linux-2.6.16.11/kernel/power/main.c linux-2.6.16.11.suspend2/kernel/po
  	enable_nonboot_cpus();
  	if (pm_ops && pm_ops->finish)
  		pm_ops->finish(state);
-diff -Nur linux-2.6.16.11/kernel/power/modules.c linux-2.6.16.11.suspend2/kernel/power/modules.c
---- linux-2.6.16.11/kernel/power/modules.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/modules.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,313 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/modules.c linux-2.6.17-rc6.suspend2/kernel/power/modules.c
+--- linux-2.6.17-rc6/kernel/power/modules.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/modules.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,314 @@
 +/*
 + * kernel/power/modules.c
 + *
@@ -6258,6 +6236,7 @@ diff -Nur linux-2.6.16.11/kernel/power/modules.c linux-2.6.16.11.suspend2/kernel
 +#include <linux/module.h>
 +#include "suspend2.h"
 +#include "modules.h"
++#include "ui.h"
 +
 +struct list_head suspend_filters, suspend_writers, suspend_modules;
 +struct suspend_module_ops *suspend_active_writer;
@@ -6560,9 +6539,9 @@ diff -Nur linux-2.6.16.11/kernel/power/modules.c linux-2.6.16.11.suspend2/kernel
 +		module_put(this_module->module);
 +	}
 +}
-diff -Nur linux-2.6.16.11/kernel/power/modules.h linux-2.6.16.11.suspend2/kernel/power/modules.h
---- linux-2.6.16.11/kernel/power/modules.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/modules.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/modules.h linux-2.6.17-rc6.suspend2/kernel/power/modules.h
+--- linux-2.6.17-rc6/kernel/power/modules.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/modules.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,152 @@
 +/*
 + * kernel/power/modules.h
@@ -6716,9 +6695,9 @@ diff -Nur linux-2.6.16.11/kernel/power/modules.h linux-2.6.16.11.suspend2/kernel
 +	INIT_LIST_HEAD(&suspend_writers);
 +	INIT_LIST_HEAD(&suspend_modules);
 +}
-diff -Nur linux-2.6.16.11/kernel/power/netlink.c linux-2.6.16.11.suspend2/kernel/power/netlink.c
---- linux-2.6.16.11/kernel/power/netlink.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/netlink.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/netlink.c linux-2.6.17-rc6.suspend2/kernel/power/netlink.c
+--- linux-2.6.17-rc6/kernel/power/netlink.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/netlink.c	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,372 @@
 +/*
 + * kernel/power/netlink.c
@@ -7092,10 +7071,10 @@ diff -Nur linux-2.6.16.11/kernel/power/netlink.c linux-2.6.16.11.suspend2/kernel
 +	return 0;
 +}
 +#endif
-diff -Nur linux-2.6.16.11/kernel/power/netlink.h linux-2.6.16.11.suspend2/kernel/power/netlink.h
---- linux-2.6.16.11/kernel/power/netlink.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/netlink.h	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,47 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/netlink.h linux-2.6.17-rc6.suspend2/kernel/power/netlink.h
+--- linux-2.6.17-rc6/kernel/power/netlink.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/netlink.h	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,59 @@
 +/*
 + * kernel/power/netlink.h
 + *
@@ -7139,14 +7118,26 @@ diff -Nur linux-2.6.16.11/kernel/power/netlink.h linux-2.6.16.11.suspend2/kernel
 +	int must_init;
 +};
 +
-+void suspend_send_netlink_message(struct user_helper_data *uhd,
-+		int type, void* params, size_t len);
++
++#ifdef CONFIG_NET
 +int suspend_netlink_setup(struct user_helper_data *uhd);
 +void suspend_netlink_close(struct user_helper_data *uhd);
-diff -Nur linux-2.6.16.11/kernel/power/pagedir.c linux-2.6.16.11.suspend2/kernel/power/pagedir.c
---- linux-2.6.16.11/kernel/power/pagedir.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/pagedir.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,344 @@
++void suspend_send_netlink_message(struct user_helper_data *uhd,
++		int type, void* params, size_t len);
++#else
++static inline int suspend_netlink_setup(struct user_helper_data *uhd)
++{
++	return 0;
++}
++
++static inline void suspend_netlink_close(struct user_helper_data *uhd) { };
++static inline void suspend_send_netlink_message(struct user_helper_data *uhd,
++		int type, void* params, size_t len) { };
++#endif
+diff -Nur linux-2.6.17-rc6/kernel/power/pagedir.c linux-2.6.17-rc6.suspend2/kernel/power/pagedir.c
+--- linux-2.6.17-rc6/kernel/power/pagedir.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/pagedir.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,345 @@
 +/*
 + * kernel/power/pagedir.c
 + *
@@ -7166,6 +7157,7 @@ diff -Nur linux-2.6.16.11/kernel/power/pagedir.c linux-2.6.16.11.suspend2/kernel
 +#include <linux/highmem.h>
 +#include <linux/bootmem.h>
 +#include <linux/hardirq.h>
++#include <linux/sched.h>
 +
 +#include "pageflags.h"
 +#include "ui.h"
@@ -7386,7 +7378,7 @@ diff -Nur linux-2.6.16.11/kernel/power/pagedir.c linux-2.6.16.11.suspend2/kernel
 +	 */
 +	read_lock(&tasklist_lock);
 +	for_each_process(p)
-+		if ((p->mm || p->active_mm) && (p->flags & PF_NOFREEZE)) {
++		if ((p->flags & PF_NOFREEZE) || p == current) {
 +			struct attention_list *this = kmalloc(sizeof(struct attention_list), GFP_ATOMIC);
 +			BUG_ON(!this);
 +			this->task = p;
@@ -7491,9 +7483,9 @@ diff -Nur linux-2.6.16.11/kernel/power/pagedir.c linux-2.6.16.11.suspend2/kernel
 +
 +	return result;
 +}
-diff -Nur linux-2.6.16.11/kernel/power/pagedir.h linux-2.6.16.11.suspend2/kernel/power/pagedir.h
---- linux-2.6.16.11/kernel/power/pagedir.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/pagedir.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/pagedir.h linux-2.6.17-rc6.suspend2/kernel/power/pagedir.h
+--- linux-2.6.17-rc6/kernel/power/pagedir.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/pagedir.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,37 @@
 +/*
 + * kernel/power/pagedir.h
@@ -7532,9 +7524,9 @@ diff -Nur linux-2.6.16.11/kernel/power/pagedir.h linux-2.6.16.11.suspend2/kernel
 +extern int extra_pagedir_pages_allocated;
 +
 +extern unsigned long suspend_get_nonconflicting_page(void);
-diff -Nur linux-2.6.16.11/kernel/power/pageflags.c linux-2.6.16.11.suspend2/kernel/power/pageflags.c
---- linux-2.6.16.11/kernel/power/pageflags.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/pageflags.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/pageflags.c linux-2.6.17-rc6.suspend2/kernel/power/pageflags.c
+--- linux-2.6.17-rc6/kernel/power/pageflags.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/pageflags.c	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,141 @@
 +/*
 + * kernel/power/pageflags.c
@@ -7677,9 +7669,9 @@ diff -Nur linux-2.6.16.11/kernel/power/pageflags.c linux-2.6.16.11.suspend2/kern
 +		zone_num++;
 +	}
 +}
-diff -Nur linux-2.6.16.11/kernel/power/pageflags.h linux-2.6.16.11.suspend2/kernel/power/pageflags.h
---- linux-2.6.16.11/kernel/power/pageflags.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/pageflags.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/pageflags.h linux-2.6.17-rc6.suspend2/kernel/power/pageflags.h
+--- linux-2.6.17-rc6/kernel/power/pageflags.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/pageflags.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,51 @@
 +/*
 + * kernel/power/pageflags.h
@@ -7732,9 +7724,9 @@ diff -Nur linux-2.6.16.11/kernel/power/pageflags.h linux-2.6.16.11.suspend2/kern
 +extern void load_dyn_pageflags(dyn_pageflags_t pagemap);
 +void relocate_dyn_pageflags(dyn_pageflags_t *pagemap);
 +
-diff -Nur linux-2.6.16.11/kernel/power/power.h linux-2.6.16.11.suspend2/kernel/power/power.h
---- linux-2.6.16.11/kernel/power/power.h	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/power.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/power.h linux-2.6.17-rc6.suspend2/kernel/power/power.h
+--- linux-2.6.17-rc6/kernel/power/power.h	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/power.h	2006-06-12 16:42:12.000000000 +0000
 @@ -1,6 +1,8 @@
  #include <linux/suspend.h>
  #include <linux/utsname.h>
@@ -7744,19 +7736,19 @@ diff -Nur linux-2.6.16.11/kernel/power/power.h linux-2.6.16.11.suspend2/kernel/p
  struct swsusp_info {
  	struct new_utsname	uts;
  	u32			version_code;
-@@ -34,9 +36,6 @@
+@@ -35,9 +37,6 @@
  
  extern struct subsystem power_subsys;
  
 -/* References to section boundaries */
 -extern const void __nosave_begin, __nosave_end;
 -
- extern unsigned int nr_copy_pages;
  extern struct pbe *pagedir_nosave;
  
-diff -Nur linux-2.6.16.11/kernel/power/power_off.c linux-2.6.16.11.suspend2/kernel/power/power_off.c
---- linux-2.6.16.11/kernel/power/power_off.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/power_off.c	2006-05-01 00:12:31.000000000 +0000
+ /* Preferred image size in bytes (default 500 MB) */
+diff -Nur linux-2.6.17-rc6/kernel/power/power_off.c linux-2.6.17-rc6.suspend2/kernel/power/power_off.c
+--- linux-2.6.17-rc6/kernel/power/power_off.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/power_off.c	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,80 @@
 +/*
 + * kernel/power/power_off.c
@@ -7838,9 +7830,9 @@ diff -Nur linux-2.6.16.11/kernel/power/power_off.c linux-2.6.16.11.suspend2/kern
 +		cpu_relax();
 +}
 +
-diff -Nur linux-2.6.16.11/kernel/power/power_off.h linux-2.6.16.11.suspend2/kernel/power/power_off.h
---- linux-2.6.16.11/kernel/power/power_off.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/power_off.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/power_off.h linux-2.6.17-rc6.suspend2/kernel/power/power_off.h
+--- linux-2.6.17-rc6/kernel/power/power_off.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/power_off.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,13 @@
 +/*
 + * kernel/power/power_off.h
@@ -7855,10 +7847,10 @@ diff -Nur linux-2.6.16.11/kernel/power/power_off.h linux-2.6.16.11.suspend2/kern
 +int suspend_pm_state_finish(void);
 +void suspend_power_down(void);
 +extern unsigned long suspend_powerdown_method;
-diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/kernel/power/prepare_image.c
---- linux-2.6.16.11/kernel/power/prepare_image.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/prepare_image.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,741 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/prepare_image.c linux-2.6.17-rc6.suspend2/kernel/power/prepare_image.c
+--- linux-2.6.17-rc6/kernel/power/prepare_image.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/prepare_image.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,769 @@
 +/*
 + * kernel/power/prepare_image.c
 + *
@@ -7979,11 +7971,27 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +}
 +
 +/*
++ * Storage needed for the image header, in bytes.
++ * TEMPORARY - FOR CHECKING CALCULATIONS VS REAL
++ */
++int header_storage_bytes_needed(void)
++{
++	unsigned long bytes = (sizeof(struct suspend_header) +
++	 sizeof(struct suspend_module_header) +
++	 (int) suspend_header_storage_for_modules() +
++	 (dyn_pageflags_pages_per_bitmap() << PAGE_SHIFT) +
++	 suspend_num_modules *
++	 	(sizeof(struct suspend_module_header) + sizeof(int)));
++
++	return bytes;
++}
++
++/*
 + * Storage needed for the image header, in bytes until the return.
 + */
 +static int header_storage_needed(void)
 +{
-+	unsigned long bytes = ((extents_allocated * 2 * sizeof(unsigned long)) +
++	unsigned long bytes = ((suspend_extents_allocated * 2 * sizeof(unsigned long)) +
 +	 sizeof(struct suspend_header) +
 +	 sizeof(struct suspend_module_header) +
 +	 (int) suspend_header_storage_for_modules() +
@@ -8059,10 +8067,8 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +		spin_lock_irqsave(&zone->lock, flags);
 +		for (order = MAX_ORDER - 1; order >= 0; --order) {
 +			list_for_each_entry(page, &zone->free_area[order].free_list, lru)
-+				for(loop=0; loop < (1 << order); loop++) {
++				for(loop=0; loop < (1 << order); loop++)
 +					ClearPageInUse(page+loop);
-+					ClearPagePageset2(page+loop);
-+				}
 +		}
 +
 +		
@@ -8077,10 +8083,8 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +				struct page *page;
 +
 +				pcp = &pset->pcp[i];
-+				list_for_each_entry(page, &pcp->list, lru) {
++				list_for_each_entry(page, &pcp->list, lru)
 +					ClearPageInUse(page);
-+					ClearPagePageset2(page);
-+				}
 +			}
 +		}
 +		
@@ -8099,8 +8103,10 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +	struct page *posn = page, *last_in_zone =
 +		pfn_to_page(zone->zone_start_pfn) + zone->spanned_pages - 1;
 +
-+	while (posn < last_in_zone && !PageInUse(posn)) 
++	while (posn < last_in_zone && !PageInUse(posn)) {
++		BUG_ON(PagePageset2(posn));
 +		posn++;
++	}
 +	return (posn - page);
 +}
 +
@@ -8167,9 +8173,6 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +
 +	generate_free_page_map();
 +
-+	if (test_result_state(SUSPEND_ABORTED))
-+		return result;
-+
 +	/*
 +	 * Pages not to be saved are marked Nosave irrespective of being reserved
 +	 */
@@ -8201,6 +8204,7 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +			last_type = type;
 +
 +			if (type && !chunk_size) {
++				BUG_ON(PagePageset2(page));
 +				num_nosave++;
 +				continue;
 +			}
@@ -8227,7 +8231,7 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +		}
 +
 +		if (last_type && last_type < 4)
-+			show_range(last_type, type_start_pfn, loop - 1);
++			show_range(last_type, type_start_pfn, zone->zone_start_pfn + loop - 1);
 +	}
 +	
 +	suspend_message(SUSPEND_EAT_MEMORY, SUSPEND_MEDIUM, 0,
@@ -8261,24 +8265,68 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 + * Eaten is the number of pages which have been eaten.
 + * Pagedirincluded is the number of pages which have been allocated for the pagedir.
 + */
-+void suspend_recalculate_image_contents(int storage_unavailable) 
++void suspend_recalculate_image_contents(int atomic_copy) 
 +{
 +	struct pageset_sizes_result result;
 +	int pfn;
 +
 +	clear_dyn_pageflags(pageset1_map);
-+	BITMAP_FOR_EACH_SET(pageset2_map, pfn)
-+		ClearPagePageset1Copy(pfn_to_page(pfn));
-+	clear_dyn_pageflags(pageset2_map);
++	if (!atomic_copy) {
++		BITMAP_FOR_EACH_SET(pageset2_map, pfn)
++			ClearPagePageset1Copy(pfn_to_page(pfn));
++		clear_dyn_pageflags(pageset2_map);
++		suspend_mark_pages_for_pageset2();  /* Need to call this before getting pageset1_size! */
++	} else {
++		/* Check for changes in the second pageset. Just paranoia, but paranoia can be good. */
++		dyn_pageflags_t old_map;
++		struct zone *zone;
++		unsigned long loop;
++		int err = 0, counted = 0;
++		old_map = pageset2_map;
++		pageset2_map = NULL;
++		BUG_ON(allocate_dyn_pageflags(&pageset2_map));
++		suspend_mark_pages_for_pageset2();  /* Need to call this before getting pageset1_size! */
++		for_each_zone(zone) {
++			for (loop = 0; loop < zone->spanned_pages; loop++) {
++				unsigned long pfn = zone->zone_start_pfn + loop;
++				struct page *page = pfn_to_page(pfn);
 +
-+	suspend_mark_pages_for_pageset2();  /* Need to call this before getting pageset1_size! */
++				/* 
++				 * Pageset2 pages can be faulted in while
++				 * we're writing the image, but none should
++				 * be discarded. If there are new LRU pages,
++				 * they're put in Pageset1.
++				 */
++				if (!PagePageset2(page) && test_dynpageflag(&old_map, page)) {
++					printk("Page %ld was pageset2, now isn't.\n", pfn);
++					err++;
++				}
++
++				if (PagePageset2(page))
++					counted++;
++			}
++		}
++		if (err)
++			BUG();
++
++		if (counted != pagedir2.pageset_size)
++			printk("Pagedir2 size changed from %ld to %d.\n",
++				pagedir2.pageset_size,
++				counted);
++		/* 
++		 * Restore the old map so that LRU pages which weren't
++		 * saved are saved in pageset 1.
++		 */
++		free_dyn_pageflags(&pageset2_map);
++		pageset2_map = old_map;
++	}
 +	BUG_ON(in_atomic() && !irqs_disabled());
 +	result = count_data_pages();
 +	pageset1_sizelow = result.size1low;
 +	pageset2_sizelow = result.size2low;
 +	pagedir1.lastpageset_size = pagedir1.pageset_size = result.size1;
 +	pagedir2.lastpageset_size = pagedir2.pageset_size = result.size2;
-+	if (!storage_unavailable) {
++	if (!atomic_copy) {
 +		storage_available = suspend_active_writer->storage_available();
 +		display_stats(0, 0);
 +	}
@@ -8370,7 +8418,7 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +			storage_allocated <
 +			(header_storage_needed() + main_storage_needed(1, 1)));
 +
-+	check_shift_keys(0, NULL);
++	suspend_cond_pause(0, NULL);
 +
 +	return ((amount_needed(0) > 0) ||
 +		header_space_allocated < header_storage_needed() ||
@@ -8430,7 +8478,7 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 + */
 +static int eat_memory(void)
 +{
-+	int orig_memory_still_to_eat, last_amount_needed = 0, times_criteria_met = 0;
++	int amount_wanted = 0;
 +	int free_flags = 0, did_eat_memory = 0;
 +	
 +	/*
@@ -8448,19 +8496,18 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +
 +	
 +	suspend_recalculate_image_contents(0);
-+
-+	orig_memory_still_to_eat = amount_needed(1);
-+	last_amount_needed = orig_memory_still_to_eat;
++	amount_wanted = amount_needed(1);
 +
 +	switch (image_size_limit) {
 +		case -1: /* Don't eat any memory */
-+			if (orig_memory_still_to_eat) {
++			if (amount_wanted > 0) {
 +				set_result_state(SUSPEND_ABORTED);
 +				set_result_state(SUSPEND_WOULD_EAT_MEMORY);
 +			}
 +			break;
 +		case -2:  /* Free caches only */
 +			free_flags = GFP_NOIO | __GFP_HIGHMEM;
++			amount_wanted = 1 << 31; /* As much cache as we can get */
 +			break;
 +		default:
 +			free_flags = GFP_ATOMIC | __GFP_HIGHMEM;
@@ -8470,37 +8517,17 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +
 +	/* -- Stage 2: Eat memory -- */
 +
-+	while (((amount_needed(1) > 0) || (image_size_limit == -2)) && 
-+		(!test_result_state(SUSPEND_ABORTED)) && 
-+		(times_criteria_met < 10)) {
-+		int amount_freed;
-+		int amount_wanted = orig_memory_still_to_eat - amount_needed(1);
++	if (amount_wanted > 0 && !test_result_state(SUSPEND_ABORTED) &&
++			image_size_limit != -1) {
 +
-+		suspend_prepare_status(CLEAR_BAR, "Seeking to free %dMB of memory.", MB(amount_needed(1)));
++		suspend_prepare_status(CLEAR_BAR, "Seeking to free %dMB of memory.", MB(amount_wanted));
 +
-+		if (amount_wanted < 1)
-+			amount_wanted = 1; /* image_size_limit == -2 */
-+
-+		if (orig_memory_still_to_eat)
-+			suspend_update_status(orig_memory_still_to_eat - amount_needed(1),
-+				orig_memory_still_to_eat,
-+				" Image size %d ",
-+				MB(storage_needed(1, 0)));
-+		else
-+			suspend_update_status(0, 1, "Image size %d ",
-+					MB(storage_needed(1, 0)));
-+		
-+		if ((last_amount_needed - amount_needed(1)) < 10)
-+			times_criteria_met++;
-+		else
-+			times_criteria_met = 0;
-+		last_amount_needed = amount_needed(1);
-+		amount_freed = shrink_all_memory(last_amount_needed);
++		shrink_all_memory(amount_wanted);
 +		suspend_recalculate_image_contents(0);
 +
 +		did_eat_memory = 1;
 +
-+		check_shift_keys(0, NULL);
++		suspend_cond_pause(0, NULL);
 +	}
 +
 +	if (freeze_processes()) {
@@ -8518,20 +8545,13 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +	/* Blank out image size display */
 +	suspend_update_status(100, 100, NULL);
 +
-+	if (!test_result_state(SUSPEND_ABORTED)) {
-+		/* Include image size limit when checking what to report */
-+		if (amount_needed(1) - extra_pd1_pages_allowance > 0) 
-+			set_result_state(SUSPEND_UNABLE_TO_FREE_ENOUGH_MEMORY);
-+
-+		/* But don't include it when deciding whether to abort (soft limit) */
-+		if ((amount_needed(0) - extra_pd1_pages_allowance > 0)) {
-+			printk("Unable to free sufficient memory to suspend. Still need %d pages.\n",
-+				amount_needed(1));
-+			display_stats(1, 1);
-+			set_result_state(SUSPEND_ABORTED);
-+		}
-+		
-+		check_shift_keys(1, "Memory eating completed.");
++	if (!test_result_state(SUSPEND_ABORTED) &&
++	    (amount_needed(0) - extra_pd1_pages_allowance > 0)) {
++		printk("Unable to free sufficient memory to suspend. Still need %d pages.\n",
++			amount_needed(1));
++		display_stats(1, 1);
++		set_result_state(SUSPEND_ABORTED);
++		set_result_state(SUSPEND_UNABLE_TO_FREE_ENOUGH_MEMORY);
 +	}
 +
 +	return 0;
@@ -8584,7 +8604,7 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +
 +		result = update_image();
 +
-+		check_shift_keys(0, NULL);
++		suspend_cond_pause(0, NULL);
 +		
 +		tries++;
 +
@@ -8596,13 +8616,13 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.c linux-2.6.16.11.suspend2/
 +		display_stats(1, 0);
 +	}
 +
-+	check_shift_keys(1, "Image preparation complete.");
++	suspend_cond_pause(1, "Image preparation complete.");
 +
 +	return result;
 +}
-diff -Nur linux-2.6.16.11/kernel/power/prepare_image.h linux-2.6.16.11.suspend2/kernel/power/prepare_image.h
---- linux-2.6.16.11/kernel/power/prepare_image.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/prepare_image.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/prepare_image.h linux-2.6.17-rc6.suspend2/kernel/power/prepare_image.h
+--- linux-2.6.17-rc6/kernel/power/prepare_image.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/prepare_image.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,92 @@
 +/*
 + * kernel/power/prepare_image.h
@@ -8696,9 +8716,9 @@ diff -Nur linux-2.6.16.11/kernel/power/prepare_image.h linux-2.6.16.11.suspend2/
 +{
 +	return virt_to_page(&__nosave_end);
 +}
-diff -Nur linux-2.6.16.11/kernel/power/proc.c linux-2.6.16.11.suspend2/kernel/power/proc.c
---- linux-2.6.16.11/kernel/power/proc.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/proc.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/proc.c linux-2.6.17-rc6.suspend2/kernel/power/proc.c
+--- linux-2.6.17-rc6/kernel/power/proc.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/proc.c	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,326 @@
 +/*
 + * kernel/power/proc.c
@@ -9026,9 +9046,9 @@ diff -Nur linux-2.6.16.11/kernel/power/proc.c linux-2.6.16.11.suspend2/kernel/po
 +		suspend_dir);
 +	list_del(&suspend_proc_data->proc_data_list);
 +}
-diff -Nur linux-2.6.16.11/kernel/power/proc.h linux-2.6.16.11.suspend2/kernel/power/proc.h
---- linux-2.6.16.11/kernel/power/proc.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/proc.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/proc.h linux-2.6.17-rc6.suspend2/kernel/power/proc.h
+--- linux-2.6.17-rc6/kernel/power/proc.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/proc.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,76 @@
 +/*
 + * kernel/power/proc.h
@@ -9106,10 +9126,10 @@ diff -Nur linux-2.6.16.11/kernel/power/proc.h linux-2.6.16.11.suspend2/kernel/po
 +		struct suspend_proc_data *suspend_proc_data);
 +void suspend_unregister_procfile(struct suspend_proc_data *suspend_proc_data);
 +
-diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel/power/process.c
---- linux-2.6.16.11/kernel/power/process.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/process.c	2006-05-01 00:12:31.000000000 +0000
-@@ -1,133 +1,421 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/process.c linux-2.6.17-rc6.suspend2/kernel/power/process.c
+--- linux-2.6.17-rc6/kernel/power/process.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/process.c	2006-06-12 16:42:12.000000000 +0000
+@@ -1,164 +1,427 @@
  /*
 - * drivers/power/process.c - Functions for starting/stopping processes on 
 - *                           suspend transitions.
@@ -9159,6 +9179,7 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
  #include <linux/suspend.h>
 +#include <linux/freezer.h>
  #include <linux/module.h>
+-#include <linux/syscalls.h>
 +#include <linux/mount.h>
 +#include <linux/namespace.h>
 +#include <linux/buffer_head.h>
@@ -9208,7 +9229,7 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 + * Done after userspace is frozen, so there should be no danger of
 + * fses being unmounted while we're in here.
   */
--#define TIMEOUT	(6 * HZ)
+-#define TIMEOUT	(20 * HZ)
 +int freezer_make_fses_ro(void)
 +{
 +	struct frozen_fs *fs;
@@ -9253,6 +9274,7 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
  	    (p->exit_state == EXIT_DEAD) ||
 -	    (p->state == TASK_STOPPED))
 +	    (p->state == TASK_STOPPED) ||
++	    (p->state == TASK_TRACED) ||
 +	    (!p->mm && !all_freezable))
  		return 0;
  	return 1;
@@ -9322,18 +9344,16 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 +	spin_unlock_irqrestore(&current->sighand->siglock, flags);
 +
 +	return;
- }
- 
--/* 0 = success, else # of processes that we failed to stop */
--int freeze_processes(void)
++}
++
 +void thaw_processes(int do_all_threads)
- {
--	int todo;
--	unsigned long start_time;
++{
 +	if (do_all_threads) {
 +		clear_freezer_state(FREEZER_ON);
 +		clear_freezer_state(ABORT_FREEZING);
 +	}
++	
++	clear_freezer_state(FREEZING_COMPLETE);
 +
 +	complete_all(&kernelspace_thaw);
 +	while (atomic_read(&nr_kernelspace_frozen) > 0)
@@ -9360,63 +9380,19 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 + */
 +static int num_freezeable(int do_all_threads) {
 +	
- 	struct task_struct *g, *p;
--	unsigned long flags;
++	struct task_struct *g, *p;
 +	int todo_this_type = 0;
- 
--	printk( "Stopping tasks: " );
--	start_time = jiffies;
--	do {
--		todo = 0;
--		read_lock(&tasklist_lock);
--		do_each_thread(g, p) {
--			if (!freezeable(p))
--				continue;
--			if (frozen(p))
--				continue;
++
 +	read_lock(&tasklist_lock);
 +	do_each_thread(g, p) {
 +		if (freezeable(p, do_all_threads))
 +			todo_this_type++;
 +	} while_each_thread(g, p);
 +	read_unlock(&tasklist_lock);
- 
--			freeze(p);
--			spin_lock_irqsave(&p->sighand->siglock, flags);
--			signal_wake_up(p, 0);
--			spin_unlock_irqrestore(&p->sighand->siglock, flags);
--			todo++;
--		} while_each_thread(g, p);
--		read_unlock(&tasklist_lock);
--		yield();			/* Yield is okay here */
--		if (todo && time_after(jiffies, start_time + TIMEOUT)) {
--			printk( "\n" );
--			printk(KERN_ERR " stopping tasks failed (%d tasks remaining)\n", todo );
--			break;
--		}
--	} while(todo);
++
 +	return todo_this_type;
 +}
- 
--	/* This does not unfreeze processes that are already frozen
--	 * (we have slightly ugly calling convention in that respect,
--	 * and caller must call thaw_processes() if something fails),
--	 * but it cleans up leftover PF_FREEZE requests.
--	 */
--	if (todo) {
--		read_lock(&tasklist_lock);
--		do_each_thread(g, p)
--			if (freezing(p)) {
--				pr_debug("  clean up: %s\n", p->comm);
--				p->flags &= ~PF_FREEZE;
--				spin_lock_irqsave(&p->sighand->siglock, flags);
--				recalc_sigpending_tsk(p);
--				spin_unlock_irqrestore(&p->sighand->siglock, flags);
--			}
--		while_each_thread(g, p);
--		read_unlock(&tasklist_lock);
--		return todo;
--	}
++
 +/*
 + * num_uninterruptible
 + *
@@ -9428,10 +9404,7 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 +	
 +	struct task_struct *g, *p;
 +	int count = 0;
- 
--	printk( "|\n" );
--	BUG_ON(in_atomic());
--	return 0;
++
 +	read_lock(&tasklist_lock);
 +	do_each_thread(g, p) {
 +		if (freezeable(p, do_all_threads) &&
@@ -9443,40 +9416,73 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 +	return count;
  }
  
--void thaw_processes(void)
+-static inline void freeze_process(struct task_struct *p)
 +/*
 + * Tell threads of the type to enter the freezer.
 + */
 +static void signal_threads(int do_all_threads)
  {
- 	struct task_struct *g, *p;
-+	unsigned long flags;
++	struct task_struct *g, *p;
+ 	unsigned long flags;
  
--	printk( "Restarting tasks..." );
- 	read_lock(&tasklist_lock);
- 	do_each_thread(g, p) {
--		if (!freezeable(p))
+-	if (!freezing(p)) {
++	read_lock(&tasklist_lock);
++	do_each_thread(g, p) {
 +		if (!freezeable(p, do_all_threads))
- 			continue;
--		if (!thaw_process(p))
--			printk(KERN_INFO " Strange, %s not stopped\n", p->comm );
++			continue;
 +
-+		freeze(p);
-+		spin_lock_irqsave(&p->sighand->siglock, flags);
-+		signal_wake_up(p, 0);
-+		spin_unlock_irqrestore(&p->sighand->siglock, flags);
- 	} while_each_thread(g, p);
+ 		freeze(p);
+ 		spin_lock_irqsave(&p->sighand->siglock, flags);
+ 		signal_wake_up(p, 0);
+ 		spin_unlock_irqrestore(&p->sighand->siglock, flags);
+-	}
++	} while_each_thread(g, p);
 +	read_unlock(&tasklist_lock);
-+}
+ }
  
+-/* 0 = success, else # of processes that we failed to stop */
+-int freeze_processes(void)
 +/*
 + * Prod processes that haven't entered the refrigerator yet.
 + */
 +static void prod_processes(int do_all_threads)
-+{
-+	struct task_struct *g, *p;
-+	unsigned long flags;
-+
+ {
+-	int todo, nr_user, user_frozen;
+-	unsigned long start_time;
+ 	struct task_struct *g, *p;
+ 	unsigned long flags;
+ 
+-	printk( "Stopping tasks: " );
+-	start_time = jiffies;
+-	user_frozen = 0;
+-	do {
+-		nr_user = todo = 0;
+-		read_lock(&tasklist_lock);
+-		do_each_thread(g, p) {
+-			if (!freezeable(p))
+-				continue;
+-			if (frozen(p))
+-				continue;
+-			if (p->mm && !(p->flags & PF_BORROWED_MM)) {
+-				/* The task is a user-space one.
+-				 * Freeze it unless there's a vfork completion
+-				 * pending
+-				 */
+-				if (!p->vfork_done)
+-					freeze_process(p);
+-				nr_user++;
+-			} else {
+-				/* Freeze only if the user space is frozen */
+-				if (user_frozen)
+-					freeze_process(p);
+-				todo++;
+-			}
+-		} while_each_thread(g, p);
+-		read_unlock(&tasklist_lock);
+-		todo += nr_user;
+-		if (!user_frozen && !nr_user) {
+-			sys_sync();
+-			start_time = jiffies;
 +	read_lock(&tasklist_lock);
 +	do_each_thread(g, p) {
 +		if (!freezeable(p, do_all_threads))
@@ -9486,14 +9492,48 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 +		if (!(p->flags & PF_FROZEN)) {
 +			recalc_sigpending();
 +			signal_wake_up(p, 0);
-+		}
+ 		}
+-		user_frozen = !nr_user;
+-		yield();			/* Yield is okay here */
+-		if (todo && time_after(jiffies, start_time + TIMEOUT))
+-			break;
+-	} while(todo);
+-
+-	/* This does not unfreeze processes that are already frozen
+-	 * (we have slightly ugly calling convention in that respect,
+-	 * and caller must call thaw_processes() if something fails),
+-	 * but it cleans up leftover PF_FREEZE requests.
+-	 */
+-	if (todo) {
+-		printk( "\n" );
+-		printk(KERN_ERR " stopping tasks timed out "
+-			"after %d seconds (%d tasks remaining):\n",
+-			TIMEOUT / HZ, todo);
+-		read_lock(&tasklist_lock);
+-		do_each_thread(g, p) {
+-			if (freezeable(p) && !frozen(p))
+-				printk(KERN_ERR "  %s\n", p->comm);
+-			if (freezing(p)) {
+-				pr_debug("  clean up: %s\n", p->comm);
+-				p->flags &= ~PF_FREEZE;
+-				spin_lock_irqsave(&p->sighand->siglock, flags);
+-				recalc_sigpending_tsk(p);
+-				spin_unlock_irqrestore(&p->sighand->siglock, flags);
+-			}
+-		} while_each_thread(g, p);
+-		read_unlock(&tasklist_lock);
+-		return todo;
+-	}
+-
+-	printk( "|\n" );
+-	BUG_ON(in_atomic());
+-	return 0;
 +		spin_unlock_irqrestore(&p->sighand->siglock, flags);
 +	} while_each_thread(g, p);
- 	read_unlock(&tasklist_lock);
--	schedule();
--	printk( " done\n" );
++	read_unlock(&tasklist_lock);
  }
  
+-void thaw_processes(void)
 +/*
 + * Freezer failure.
 + *
@@ -9502,16 +9542,21 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 + * we give useful information on what failed and how.
 + */
 +static int freezer_failure(int do_all_threads)
-+{
+ {
 +	int result = 0;
-+	struct task_struct *g, *p;
-+
-+	read_lock(&tasklist_lock);
-+	do_each_thread(g, p) {
+ 	struct task_struct *g, *p;
+ 
+-	printk( "Restarting tasks..." );
+ 	read_lock(&tasklist_lock);
+ 	do_each_thread(g, p) {
+-		if (!freezeable(p))
 +		if (!freezeable(p, do_all_threads) || 
 +				p->state == TASK_UNINTERRUPTIBLE) 
-+			continue;
-+
+ 			continue;
+-		if (!thaw_process(p))
+-			printk(KERN_INFO " Strange, %s not stopped\n", p->comm );
+-	} while_each_thread(g, p);
+ 
 +		if (!result) {
 +			printk(KERN_ERR	"Stopping tasks failed.\n");
 +			printk(KERN_ERR "Tasks that refused to be "
@@ -9529,7 +9574,9 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 +				"and todo list empty.\n",
 +				p->comm, p->pid);
 +	} while_each_thread(g, p);
-+	read_unlock(&tasklist_lock);
+ 	read_unlock(&tasklist_lock);
+-	schedule();
+-	printk( " done\n" );
 +
 +	return result;
 +}
@@ -9574,6 +9621,9 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 +			&& (still_to_do))
 +		result = freezer_failure(do_all_threads);
 +
++	if (do_all_threads)
++		set_freezer_state(FREEZING_COMPLETE);
++
 +	BUG_ON(in_atomic());
 +	
 +	return 0; 
@@ -9612,13 +9662,13 @@ diff -Nur linux-2.6.16.11/kernel/power/process.c linux-2.6.16.11.suspend2/kernel
 +out:
 +	system_state = old_state;
 +	return result;
-+}
-+
+ }
+ 
 +EXPORT_SYMBOL(freezer_state);
  EXPORT_SYMBOL(refrigerator);
-diff -Nur linux-2.6.16.11/kernel/power/shared.c linux-2.6.16.11.suspend2/kernel/power/shared.c
---- linux-2.6.16.11/kernel/power/shared.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/shared.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/shared.c linux-2.6.17-rc6.suspend2/kernel/power/shared.c
+--- linux-2.6.17-rc6/kernel/power/shared.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/shared.c	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,12 @@
 +/*
 + * kernel/power/shared.c
@@ -9632,9 +9682,9 @@ diff -Nur linux-2.6.16.11/kernel/power/shared.c linux-2.6.16.11.suspend2/kernel/
 +
 +int suspend2_running;
 +
-diff -Nur linux-2.6.16.11/kernel/power/smp.c linux-2.6.16.11.suspend2/kernel/power/smp.c
---- linux-2.6.16.11/kernel/power/smp.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/smp.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/smp.c linux-2.6.17-rc6.suspend2/kernel/power/smp.c
+--- linux-2.6.17-rc6/kernel/power/smp.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/smp.c	2006-06-12 16:42:12.000000000 +0000
 @@ -2,7 +2,7 @@
   * drivers/power/smp.c - Functions for stopping other CPUs.
   *
@@ -9644,10 +9694,10 @@ diff -Nur linux-2.6.16.11/kernel/power/smp.c linux-2.6.16.11.suspend2/kernel/pow
   *
   * This file is released under the GPLv2.
   */
-diff -Nur linux-2.6.16.11/kernel/power/snapshot.c linux-2.6.16.11.suspend2/kernel/power/snapshot.c
---- linux-2.6.16.11/kernel/power/snapshot.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/snapshot.c	2006-05-01 00:12:31.000000000 +0000
-@@ -33,6 +33,13 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/snapshot.c linux-2.6.17-rc6.suspend2/kernel/power/snapshot.c
+--- linux-2.6.17-rc6/kernel/power/snapshot.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/snapshot.c	2006-06-12 16:42:12.000000000 +0000
+@@ -34,6 +34,13 @@
  
  #include "power.h"
  
@@ -9659,9 +9709,9 @@ diff -Nur linux-2.6.16.11/kernel/power/snapshot.c linux-2.6.16.11.suspend2/kerne
 +#endif
 +
  struct pbe *pagedir_nosave;
- unsigned int nr_copy_pages;
- 
-@@ -172,7 +179,6 @@
+ static unsigned int nr_copy_pages;
+ static unsigned int nr_meta_pages;
+@@ -177,7 +184,6 @@
  		return 0;
  
  	page = pfn_to_page(pfn);
@@ -9669,7 +9719,7 @@ diff -Nur linux-2.6.16.11/kernel/power/snapshot.c linux-2.6.16.11.suspend2/kerne
  	if (PageNosave(page))
  		return 0;
  	if (PageReserved(page) && pfn_is_nosave(pfn))
-@@ -352,6 +358,10 @@
+@@ -358,6 +364,10 @@
  
  unsigned long get_safe_page(gfp_t gfp_mask)
  {
@@ -9680,7 +9730,7 @@ diff -Nur linux-2.6.16.11/kernel/power/snapshot.c linux-2.6.16.11.suspend2/kerne
  	return (unsigned long)alloc_image_page(gfp_mask, 1);
  }
  
-@@ -471,6 +481,11 @@
+@@ -480,6 +490,11 @@
  {
  	unsigned int nr_pages;
  
@@ -9692,10 +9742,10 @@ diff -Nur linux-2.6.16.11/kernel/power/snapshot.c linux-2.6.16.11.suspend2/kerne
  	pr_debug("swsusp: critical section: \n");
  
  	drain_local_pages();
-diff -Nur linux-2.6.16.11/kernel/power/storage.c linux-2.6.16.11.suspend2/kernel/power/storage.c
---- linux-2.6.16.11/kernel/power/storage.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/storage.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,323 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/storage.c linux-2.6.17-rc6.suspend2/kernel/power/storage.c
+--- linux-2.6.17-rc6/kernel/power/storage.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/storage.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,326 @@
 +/*
 + * kernel/power/storage.c
 + *
@@ -9727,7 +9777,6 @@ diff -Nur linux-2.6.16.11/kernel/power/storage.c linux-2.6.16.11.suspend2/kernel
 +static struct user_helper_data usm_helper_data;
 +static struct suspend_module_ops usm_ops;
 +static int message_received = 0;
-+static int activations = 0;
 +static int usm_prepare_count = 0;
 +static int storage_manager_last_action = 0;
 +static int storage_manager_action = 0;
@@ -9769,6 +9818,9 @@ diff -Nur linux-2.6.16.11/kernel/power/storage.c linux-2.6.16.11.suspend2/kernel
 +
 +	return 1;
 +}
++
++#ifdef CONFIG_NET
++static int activations = 0;
 +
 +int suspend_activate_storage(int force)
 +{
@@ -9827,6 +9879,7 @@ diff -Nur linux-2.6.16.11/kernel/power/storage.c linux-2.6.16.11.suspend2/kernel
 +
 +	return 0;
 +}
++#endif
 +
 +#ifdef CONFIG_PM_DEBUG
 +static void storage_manager_simulate(void)
@@ -10019,10 +10072,10 @@ diff -Nur linux-2.6.16.11/kernel/power/storage.c linux-2.6.16.11.suspend2/kernel
 +}
 +
 +late_initcall(suspend_usm_proc_init);
-diff -Nur linux-2.6.16.11/kernel/power/storage.h linux-2.6.16.11.suspend2/kernel/power/storage.h
---- linux-2.6.16.11/kernel/power/storage.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/storage.h	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,25 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/storage.h linux-2.6.17-rc6.suspend2/kernel/power/storage.h
+--- linux-2.6.17-rc6/kernel/power/storage.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/storage.h	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,37 @@
 +/*
 + * kernel/power/storage.h
 + *
@@ -10034,8 +10087,20 @@ diff -Nur linux-2.6.16.11/kernel/power/storage.h linux-2.6.16.11.suspend2/kernel
 +int suspend_prepare_usm(void);
 +void suspend_cleanup_usm(void);
 +
++#ifdef CONFIG_NET
 +int suspend_activate_storage(int force);
 +int suspend_deactivate_storage(int force);
++#else
++static inline int suspend_activate_storage(int force)
++{
++	return 0;
++}
++
++static inline int suspend_deactivate_storage(int force)
++{
++	return 0;
++}
++#endif
 +
 +enum {
 +	USM_MSG_BASE = 0x10,
@@ -10048,10 +10113,10 @@ diff -Nur linux-2.6.16.11/kernel/power/storage.h linux-2.6.16.11.suspend2/kernel
 +
 +	USM_MSG_MAX,
 +};
-diff -Nur linux-2.6.16.11/kernel/power/suspend.c linux-2.6.16.11.suspend2/kernel/power/suspend.c
---- linux-2.6.16.11/kernel/power/suspend.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/suspend.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,1049 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/suspend.c linux-2.6.17-rc6.suspend2/kernel/power/suspend.c
+--- linux-2.6.17-rc6/kernel/power/suspend.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/suspend.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,1054 @@
 +/*
 + * kernel/power/suspend.c
 + */
@@ -10178,7 +10243,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend.c linux-2.6.16.11.suspend2/kernel
 +static char *debug_info_buffer;
 +static char suspend_core_version[] = SUSPEND_CORE_VERSION;
 +
-+extern __nosavedata char resume_commandline[COMMAND_LINE_SIZE];
++extern __nosavedata char suspend_resume_commandline[COMMAND_LINE_SIZE];
 +
 +unsigned long suspend_action = 0;
 +unsigned long suspend_result = 0;
@@ -10300,15 +10365,18 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend.c linux-2.6.16.11.suspend2/kernel
 +		pagedir1.pageset_size, 
 +		pagedir2.pageset_size);
 +
-+	check_shift_keys(1, "About to write pagedir2.");
++	suspend_cond_pause(1, "About to write pagedir2.");
 +
 +	temp_result = write_pageset(&pagedir2, 2);
 +	
 +	if (temp_result == -1 || test_result_state(SUSPEND_ABORTED))
 +		return -1;
 +
-+	check_shift_keys(1, "About to copy pageset 1.");
++	suspend_cond_pause(1, "About to copy pageset 1.");
 +
++	if (test_result_state(SUSPEND_ABORTED))
++		return -1;
++	
 +	suspend_deactivate_storage(1);
 +
 +	suspend_prepare_status(DONT_CLEAR_BAR, "Doing atomic copy.");
@@ -10368,7 +10436,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend.c linux-2.6.16.11.suspend2/kernel
 +	if (test_result_state(SUSPEND_ABORTED))
 +		goto abort_reloading_pagedir_two;
 +
-+	check_shift_keys(1, "About to write pageset1.");
++	suspend_cond_pause(1, "About to write pageset1.");
 +
 +	/*
 +	 * End of critical section.
@@ -10386,7 +10454,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend.c linux-2.6.16.11.suspend2/kernel
 +	if (temp_result == -1 || test_result_state(SUSPEND_ABORTED))
 +		goto abort_reloading_pagedir_two;
 +
-+	check_shift_keys(1, "About to write header.");
++	suspend_cond_pause(1, "About to write header.");
 +
 +	if (test_result_state(SUSPEND_ABORTED))
 +		goto abort_reloading_pagedir_two;
@@ -10399,7 +10467,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend.c linux-2.6.16.11.suspend2/kernel
 +	if (temp_result || (test_result_state(SUSPEND_ABORTED)))
 +		goto abort_reloading_pagedir_two;
 +
-+	check_shift_keys(1, "About to power down or reboot.");
++	suspend_cond_pause(1, "About to power down or reboot.");
 +
 +	return 0;
 +
@@ -10833,7 +10901,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend.c linux-2.6.16.11.suspend2/kernel
 +	  .type				= SUSPEND_PROC_DATA_STRING,
 +	  .data = {
 +		  .string = {
-+			  .variable	= resume_commandline,
++			  .variable	= suspend_resume_commandline,
 +			  .max_length	= COMMAND_LINE_SIZE,
 +		  }
 +	  },
@@ -10990,6 +11058,8 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend.c linux-2.6.16.11.suspend2/kernel
 +	if (read_image_result)
 +		return 1;
 +
++	suspend2_running = 1;
++
 +	suspend_atomic_restore();
 +
 +	BUG();
@@ -11101,9 +11171,9 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend.c linux-2.6.16.11.suspend2/kernel
 +
 +late_initcall(core_load);
 +EXPORT_SYMBOL(suspend_state);
-diff -Nur linux-2.6.16.11/kernel/power/suspend.h linux-2.6.16.11.suspend2/kernel/power/suspend.h
---- linux-2.6.16.11/kernel/power/suspend.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/suspend.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/suspend.h linux-2.6.17-rc6.suspend2/kernel/power/suspend.h
+--- linux-2.6.17-rc6/kernel/power/suspend.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/suspend.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,19 @@
 +/*
 + * kernel/power/suspend.h
@@ -11124,9 +11194,9 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend.h linux-2.6.16.11.suspend2/kernel
 +extern int suspend_atomic_restore(void);
 +
 +#endif
-diff -Nur linux-2.6.16.11/kernel/power/suspend2.h linux-2.6.16.11.suspend2/kernel/power/suspend2.h
---- linux-2.6.16.11/kernel/power/suspend2.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/suspend2.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/suspend2.h linux-2.6.17-rc6.suspend2/kernel/power/suspend2.h
+--- linux-2.6.17-rc6/kernel/power/suspend2.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/suspend2.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,31 @@
 +/*
 + * kernel/power/suspend2.h
@@ -11159,9 +11229,9 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend2.h linux-2.6.16.11.suspend2/kerne
 +#endif
 +
 +#endif
-diff -Nur linux-2.6.16.11/kernel/power/suspend2_common.h linux-2.6.16.11.suspend2/kernel/power/suspend2_common.h
---- linux-2.6.16.11/kernel/power/suspend2_common.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/suspend2_common.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/suspend2_common.h linux-2.6.17-rc6.suspend2/kernel/power/suspend2_common.h
+--- linux-2.6.17-rc6/kernel/power/suspend2_common.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/suspend2_common.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,43 @@
 +/*
 + * kernel/power/suspend2_common.h
@@ -11206,10 +11276,10 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend2_common.h linux-2.6.16.11.suspend
 +};
 +
 +extern unsigned int nr_suspends;
-diff -Nur linux-2.6.16.11/kernel/power/suspend_block_io.c linux-2.6.16.11.suspend2/kernel/power/suspend_block_io.c
---- linux-2.6.16.11/kernel/power/suspend_block_io.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/suspend_block_io.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,1039 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/suspend_block_io.c linux-2.6.17-rc6.suspend2/kernel/power/suspend_block_io.c
+--- linux-2.6.17-rc6/kernel/power/suspend_block_io.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/suspend_block_io.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,1048 @@
 +/*
 + * kernel/power/suspend_block_io.c
 + *
@@ -11335,7 +11405,9 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_block_io.c linux-2.6.16.11.suspen
 +
 +static struct suspend_bdev_info *suspend_devinfo;
 +int need_extra_next;
-+       
++
++static int header_bytes_written;
++
 +/*
 + * suspend_reset_io_stats
 + *
@@ -11990,14 +12062,14 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_block_io.c linux-2.6.16.11.suspen
 +	int i, j;
 +
 +	for (j = 0; j < need_extra_next + 1; j++) {
-+		extent_state_next(&suspend_writer_posn);
++		suspend_extent_state_next(&suspend_writer_posn);
 +	
 +		/* Have to go forward one to ensure we're on the right chain,
 +		 * before we can know how many more blocks to skip.*/
 +		for (i = 1; i < suspend_devinfo[suspend_writer_posn.current_chain].blocks_per_page; i++)
-+			extent_state_next(&suspend_writer_posn);
++			suspend_extent_state_next(&suspend_writer_posn);
 +
-+		if (extent_state_eof(&suspend_writer_posn)) {
++		if (suspend_extent_state_eof(&suspend_writer_posn)) {
 +			printk("Extent state eof.\n");
 +			return -ENODATA;
 +		}
@@ -12109,7 +12181,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_block_io.c linux-2.6.16.11.suspen
 +
 +static int suspend_rw_init(int rw, int stream_number)
 +{
-+	extent_state_restore(&suspend_writer_posn,
++	suspend_extent_state_restore(&suspend_writer_posn,
 +			&suspend_writer_posn_save[stream_number]);
 +	current_stream = stream_number;
 +
@@ -12125,7 +12197,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_block_io.c linux-2.6.16.11.suspen
 +static int suspend_rw_cleanup(int rw)
 +{
 +	if (rw == WRITE && current_stream == 2)
-+		extent_state_save(&suspend_writer_posn,
++		suspend_extent_state_save(&suspend_writer_posn,
 +				&suspend_writer_posn_save[1]);
 +	
 +	suspend_finish_all_io();
@@ -12153,6 +12225,8 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_block_io.c linux-2.6.16.11.suspen
 +{
 +	int bytes_left = buffer_size;
 +	
++	header_bytes_written += buffer_size;
++
 +	/* Read a chunk of the header */
 +	while (bytes_left) {
 +		char *source_start = buffer + buffer_size - bytes_left;
@@ -12189,7 +12263,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_block_io.c linux-2.6.16.11.suspen
 +		}
 +
 +		suspend_writer_buffer_posn = 0;
-+		check_shift_keys(0, NULL);
++		suspend_cond_pause(0, NULL);
 +	}
 +
 +	return rw ? 0 : buffer_size;
@@ -12200,6 +12274,11 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_block_io.c linux-2.6.16.11.suspen
 +	return suspend_rw_page(WRITE,
 +		virt_to_page(suspend_writer_buffer),
 +		-1, 0, test_debug_state(SUSPEND_HEADER)) ? -EIO : 0;
++}
++
++int suspend_header_bytes_written(void)
++{
++	return header_bytes_written;
 +}
 +
 +struct suspend_bio_ops suspend_bio_ops = {
@@ -12249,10 +12328,10 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_block_io.c linux-2.6.16.11.suspen
 +#else
 +late_initcall(suspend_block_io_load);
 +#endif
-diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/kernel/power/suspend_file.c
---- linux-2.6.16.11/kernel/power/suspend_file.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/suspend_file.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,1125 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/suspend_file.c linux-2.6.17-rc6.suspend2/kernel/power/suspend_file.c
+--- linux-2.6.17-rc6/kernel/power/suspend_file.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/suspend_file.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,1115 @@
 +/*
 + * kernel/power/suspend_file.c
 + *
@@ -12410,7 +12489,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 + * Ramdisk access variables
 + */
 +
-+static int size_ignoring_sparseness(void)
++static int size_ignoring_ignored_pages(void)
 +{
 +	int mappable = 0, i;
 +	
@@ -12424,12 +12503,12 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +		return filewriter_storage_available();
 +}
 +
-+static void get_main_pool_phys_params(void)
++static void populate_block_list(void)
 +{
 +	int i;
 +	
 +	if (block_chain.first)
-+		put_extent_chain(&block_chain);
++		suspend_put_extent_chain(&block_chain);
 +
 +	if (target_is_normal_file()) {
 +		int extent_min = -1, extent_max = -1;
@@ -12458,7 +12537,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +						printk("Adding extent %d-%d.\n",
 +							extent_min << devinfo.bmap_shift,
 +						        ((extent_max + 1) << devinfo.bmap_shift) - 1);
-+					add_to_extent_chain(
++					suspend_add_to_extent_chain(
 +						&block_chain,
 +						extent_min,
 +						extent_max);
@@ -12468,7 +12547,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +			}
 +		}
 +		if (extent_min > -1) {
-+			add_to_extent_chain(&block_chain,
++			suspend_add_to_extent_chain(&block_chain,
 +				       extent_min, extent_max);
 +			if (test_action_state(SUSPEND_TEST_BIO))
 +				printk("Adding extent %d-%d.\n",
@@ -12478,7 +12557,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +
 +	} else
 +		if (target_storage_available > 0) {
-+			add_to_extent_chain(&block_chain,
++			suspend_add_to_extent_chain(&block_chain,
 +			 0, 
 +			 min(main_pages, target_storage_available) * devinfo.blocks_per_page - 1);
 +		}
@@ -12593,7 +12672,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +	set_devinfo(filewriter_target_bdev, target_inode->i_blkbits);
 +
 +	if (get_size)
-+		target_storage_available = size_ignoring_sparseness();
++		target_storage_available = size_ignoring_ignored_pages();
 +
 +	if (!resume2)
 +		target_firstblock = bmap(target_inode, 0) << devinfo.bmap_shift;
@@ -12662,7 +12741,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +	     test_suspend_state(SUSPEND_NOW_RESUMING))
 +		return 0;
 +
-+	put_extent_chain(&block_chain);
++	suspend_put_extent_chain(&block_chain);
 +
 +	header_pages = main_pages = 0;
 +	return 0;
@@ -12677,7 +12756,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +	if (!block_chain.first)
 +		return 0;
 +
-+	extent_state_goto_start(&suspend_writer_posn);
++	suspend_extent_state_goto_start(&suspend_writer_posn);
 +	
 +	for (i = 0; i < space_requested; i++) {
 +		if (suspend_bio_ops.forward_one_page())
@@ -12685,7 +12764,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +	}
 +
 +	/* The end of header pages will be the start of pageset 2 */
-+	extent_state_save(&suspend_writer_posn, &suspend_writer_posn_save[2]);
++	suspend_extent_state_save(&suspend_writer_posn, &suspend_writer_posn_save[2]);
 +	header_pages = space_requested;
 +	return 0;
 +}
@@ -12702,7 +12781,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +
 +	main_pages = space_requested;
 +
-+	get_main_pool_phys_params();
++	populate_block_list();
 +
 +	suspend_message(SUSPEND_WRITER, SUSPEND_MEDIUM, 0,
 +		"Finished with block_chain.size == %d.\n",
@@ -12721,7 +12800,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +{
 +	char new_sig[sig_size];
 +	
-+	extent_state_goto_start(&suspend_writer_posn);
++	suspend_extent_state_goto_start(&suspend_writer_posn);
 +
 +	suspend_writer_buffer = (char *) get_zeroed_page(GFP_ATOMIC);
 +	suspend_writer_buffer_posn = 0;
@@ -12745,7 +12824,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +	suspend_bio_ops.rw_header_chunk(WRITE, (char *) &devinfo,
 +			sizeof(devinfo));
 +
-+	serialise_extent_chain(&block_chain);
++	suspend_serialise_extent_chain(&block_chain);
 +	
 +	return 0;
 +}
@@ -12758,7 +12837,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +
 +	suspend_bio_ops.finish_all_io();
 +
-+	extent_state_goto_start(&suspend_writer_posn);
++	suspend_extent_state_goto_start(&suspend_writer_posn);
 +	suspend_bio_ops.forward_one_page();
 +
 +	/* Adjust image header */
@@ -12883,8 +12962,8 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +	devinfo.bdev = tmp;
 +	suspend_writer_buffer_posn += sizeof(struct suspend_bdev_info);
 +
-+	extent_state_goto_start(&suspend_writer_posn);
-+	load_extent_chain(&block_chain);
++	suspend_extent_state_goto_start(&suspend_writer_posn);
++	suspend_load_extent_chain(&block_chain);
 +
 +	return 0;
 +}
@@ -12944,20 +13023,6 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +	return result;
 +}
 +
-+/*
-+ * workspace_size
-+ *
-+ * Description:
-+ * Returns the number of bytes of RAM needed for this
-+ * code to do its work. (Used when calculating whether
-+ * we have enough memory to be able to suspend & resume).
-+ *
-+ */
-+static unsigned long filewriter_memory_needed(void)
-+{
-+	return 0;
-+}
-+
 +/* Print debug info
 + *
 + * Description:
@@ -12992,7 +13057,12 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 + */
 +static unsigned long filewriter_storage_needed(void)
 +{
-+	return strlen(filewriter_target) + 1;
++	return sig_size + strlen(filewriter_target) + 1 +
++		3 * sizeof(struct extent_iterate_saved_state) +
++		sizeof(devinfo) +
++		sizeof(struct extent_chain) - 2 * sizeof(void *) +
++		(2 * sizeof(unsigned long) *
++		 (block_chain.allocs - block_chain.frees));
 +}
 +
 +/* 
@@ -13311,7 +13381,6 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +	.type					= WRITER_MODULE,
 +	.name					= "File Writer",
 +	.module					= THIS_MODULE,
-+	.memory_needed				= filewriter_memory_needed,
 +	.print_debug_info			= filewriter_print_debug_stats,
 +	.save_config_info			= filewriter_save_config_info,
 +	.load_config_info			= filewriter_load_config_info,
@@ -13378,9 +13447,9 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_file.c linux-2.6.16.11.suspend2/k
 +#else
 +late_initcall(filewriter_load);
 +#endif
-diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/kernel/power/suspend_swap.c
---- linux-2.6.16.11/kernel/power/suspend_swap.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/suspend_swap.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/suspend_swap.c linux-2.6.17-rc6.suspend2/kernel/power/suspend_swap.c
+--- linux-2.6.17-rc6/kernel/power/suspend_swap.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/suspend_swap.c	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,1238 @@
 +/*
 + * Swapwriter.c
@@ -13460,7 +13529,6 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +{
 +	dev_t device;
 +	struct block_device *bdev;
-+	int set_swapinfo;
 +	int claimed;
 +};
 +
@@ -13481,12 +13549,6 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +
 +	/* Release our reference. */
 +	blkdev_put(this->bdev);
-+
-+	if (this->set_swapinfo) {
-+		struct swap_info_struct *si = 
-+			get_swap_info_struct(i);
-+		si->bdev = NULL;
-+	}
 +
 +	/* Free our info. */
 +	kfree(this);
@@ -13509,7 +13571,6 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +{
 +	struct bdev_opened *this;
 +	struct block_device *bdev;
-+	struct swap_info_struct *si;
 +
 +	if (bdev_info_list[index] && (bdev_info_list[index]->device == device)) {
 +		bdev = bdev_info_list[index]->bdev;
@@ -13537,12 +13598,8 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +	this->device = device;
 +	this->bdev = bdev;
 +
-+	si = get_swap_info_struct(index);
-+
-+	if ((index < MAX_SWAPFILES) && !si->bdev) {
-+		this->set_swapinfo = 1;
-+		devinfo[index].bdev = si->bdev = bdev;
-+	}
++	if (index < MAX_SWAPFILES)
++		devinfo[index].bdev = bdev;
 +
 +	return bdev;
 +}
@@ -13734,7 +13791,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +	if (!swapextents.size)
 +		swapwriter_allocate_storage(space_requested);
 +
-+	extent_state_goto_start(&suspend_writer_posn);
++	suspend_extent_state_goto_start(&suspend_writer_posn);
 +	
 +	for (i = 0; i < space_requested; i++) {
 +		if (suspend_bio_ops.forward_one_page()) {
@@ -13746,7 +13803,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +	}
 +
 +	/* The end of header pages will be the start of pageset 2 */
-+	extent_state_save(&suspend_writer_posn, &suspend_writer_posn_save[2]);
++	suspend_extent_state_save(&suspend_writer_posn, &suspend_writer_posn_save[2]);
 +	return 0;
 +}
 +
@@ -13759,9 +13816,9 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +
 +	for (i = 0; i < MAX_SWAPFILES; i++)
 +		if (block_chain[i].first)
-+			put_extent_chain(&block_chain[i]);
++			suspend_put_extent_chain(&block_chain[i]);
 +
-+	extent_for_each(&swapextents, extentpointer, address) {
++	suspend_extent_for_each(&swapextents, extentpointer, address) {
 +		swp_entry_t swap_address = extent_val_to_swap_entry(address);
 +		pgoff_t offset = swp_offset(swap_address);
 +		unsigned swapfilenum = swp_type(swap_address);
@@ -13781,7 +13838,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +						extent_max <<
 +							devinfo[last_chain].bmap_shift);
 +						
-+				add_to_extent_chain(
++				suspend_add_to_extent_chain(
 +					&block_chain[last_chain],
 +					extent_min, extent_max);
 +			}
@@ -13798,7 +13855,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +					devinfo[last_chain].bmap_shift,
 +				extent_max <<
 +					devinfo[last_chain].bmap_shift);
-+		add_to_extent_chain(
++		suspend_add_to_extent_chain(
 +			&block_chain[last_chain],
 +			extent_min, extent_max);
 +	}
@@ -13857,17 +13914,17 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +		struct extent *extentpointer;
 +		unsigned long extentvalue;
 +		swp_entry_t entry;
-+		extent_for_each(&swapextents, extentpointer, 
++		suspend_extent_for_each(&swapextents, extentpointer, 
 +				extentvalue) {
 +			entry = extent_val_to_swap_entry(extentvalue);
 +			swap_free(entry);
 +		}
 +
-+		put_extent_chain(&swapextents);
++		suspend_put_extent_chain(&swapextents);
 +		
 +		for (i = 0; i < MAX_SWAPFILES; i++)
 +			if (block_chain[i].first)
-+				put_extent_chain(&block_chain[i]);
++				suspend_put_extent_chain(&block_chain[i]);
 +	}
 +	
 +	return 0;
@@ -13917,7 +13974,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +			if (new_value == extent_max[swapfilenum] + 1)
 +				extent_max[swapfilenum]++;
 +			else {
-+				add_to_extent_chain(
++				suspend_add_to_extent_chain(
 +					&swapextents,
 +					extent_min[swapfilenum], extent_max[swapfilenum]);
 +				extent_min[swapfilenum] = extent_max[swapfilenum] = new_value;
@@ -13927,7 +13984,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +
 +	for (i = 0; i < MAX_SWAPFILES; i++)
 +		if (!first[i])
-+			add_to_extent_chain(
++			suspend_add_to_extent_chain(
 +				&swapextents,
 +				extent_min[i], extent_max[i]);
 +
@@ -13940,7 +13997,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +	int i, result;
 +	struct swap_info_struct *si;
 +
-+	extent_state_goto_start(&suspend_writer_posn);
++	suspend_extent_state_goto_start(&suspend_writer_posn);
 +	/* Forward one page will be done prior to the read */
 +
 +	for (i = 0; i < MAX_SWAPFILES; i++) {
@@ -13976,10 +14033,13 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +		return result;
 +
 +	for (i=0; i < MAX_SWAPFILES; i++)
-+		serialise_extent_chain(&block_chain[i]);
++		suspend_serialise_extent_chain(&block_chain[i]);
 +
 +	return 0;
 +}
++
++extern int header_storage_bytes_needed(void);
++extern int suspend_header_bytes_written(void);
 +
 +static int swapwriter_write_header_cleanup(void)
 +{
@@ -13990,7 +14050,7 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +	if (suspend_writer_buffer_posn)
 +		suspend_bio_ops.write_header_chunk_finish();
 +
-+	extent_state_goto_start(&suspend_writer_posn);
++	suspend_extent_state_goto_start(&suspend_writer_posn);
 +	suspend_bio_ops.forward_one_page();
 +
 +	/* Adjust swap header */
@@ -14012,6 +14072,10 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +	suspend_writer_buffer = NULL;
 +	
 +	suspend_bio_ops.finish_all_io();
++
++	printk("Header storage needed: %d pages. Actually used %d.\n",
++			header_storage_bytes_needed(),
++			suspend_header_bytes_written());
 +
 +	return result;
 +}
@@ -14084,28 +14148,24 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +	for (i = 0; i < MAX_SWAPFILES; i++) {
 +		dev_t thisdevice = devinfo[i].dev_t;
 +		struct block_device *result;
-+		struct swap_info_struct *si = 
-+			get_swap_info_struct(i);
 +
-+		devinfo[i].bdev = si->bdev = NULL;
++		devinfo[i].bdev = NULL;
 +
 +		if (!thisdevice)
 +			continue;
 +
 +		if (thisdevice == resume_dev_t) {
-+			devinfo[i].bdev = si->bdev = resume_block_device;
++			devinfo[i].bdev = resume_block_device;
 +			bdev_info_list[i] = bdev_info_list[MAX_SWAPFILES];
 +			BUG_ON(!bdev_info_list[i]);
-+			bdev_info_list[i]->set_swapinfo = 1;
 +			bdev_info_list[MAX_SWAPFILES] = NULL;
 +			continue;
 +		}
 +
 +		if (thisdevice == header_dev_t) {
-+			devinfo[i].bdev = si->bdev = header_block_device;
++			devinfo[i].bdev = header_block_device;
 +			bdev_info_list[i] = bdev_info_list[MAX_SWAPFILES + 1];
 +			BUG_ON(!bdev_info_list[i]);
-+			bdev_info_list[i]->set_swapinfo = 1;
 +			bdev_info_list[MAX_SWAPFILES + 1] = NULL;
 +			continue;
 +		}
@@ -14117,11 +14177,11 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +		}
 +	}
 +
-+	extent_state_goto_start(&suspend_writer_posn);
++	suspend_extent_state_goto_start(&suspend_writer_posn);
 +	*(suspend_bio_ops.need_extra_next) = 1;
 +
 +	for (i = 0; i < MAX_SWAPFILES; i++)
-+		load_extent_chain(&block_chain[i]);
++		suspend_load_extent_chain(&block_chain[i]);
 +
 +	return 0;
 +}
@@ -14242,7 +14302,16 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 + */
 +static unsigned long swapwriter_storage_needed(void)
 +{
-+	return sizeof(suspend_writer_posn_save) + sizeof(devinfo);
++	int i, result;
++	result = sizeof(suspend_writer_posn_save) + sizeof(devinfo);
++
++	for (i = 0; i < MAX_SWAPFILES; i++) {
++		result += sizeof(struct extent_chain) - 2 * sizeof(void *);
++		result += (2 * sizeof(unsigned long) * 
++			(block_chain[i].allocs - block_chain[i].frees));
++	}
++
++	return result;
 +}
 +
 +/*
@@ -14620,19 +14689,14 @@ diff -Nur linux-2.6.16.11/kernel/power/suspend_swap.c linux-2.6.16.11.suspend2/k
 +#else
 +late_initcall(swapwriter_load);
 +#endif
-diff -Nur linux-2.6.16.11/kernel/power/swsusp.c linux-2.6.16.11.suspend2/kernel/power/swsusp.c
---- linux-2.6.16.11/kernel/power/swsusp.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/swsusp.c	2006-05-01 00:12:31.000000000 +0000
-@@ -60,6 +60,7 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/swsusp.c linux-2.6.17-rc6.suspend2/kernel/power/swsusp.c
+--- linux-2.6.17-rc6/kernel/power/swsusp.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/swsusp.c	2006-06-12 16:46:03.000000000 +0000
+@@ -49,8 +49,11 @@
+ #include <linux/bootmem.h>
  #include <linux/syscalls.h>
  #include <linux/highmem.h>
- #include <linux/bio.h>
 +#include <linux/freezer.h>
- 
- #include <asm/uaccess.h>
- #include <asm/mmu_context.h>
-@@ -68,6 +69,8 @@
- #include <asm/io.h>
  
  #include "power.h"
 +#include "swsusp.h"
@@ -14640,7 +14704,20 @@ diff -Nur linux-2.6.16.11/kernel/power/swsusp.c linux-2.6.16.11.suspend2/kernel/
  
  /*
   * Preferred image size in bytes (tunable via /sys/power/image_size).
-@@ -573,6 +576,8 @@
+@@ -175,6 +178,12 @@
+  */
+ 
+ #define SHRINK_BITE	10000
++static inline unsigned long __shrink_memory(long tmp)
++{
++	if (tmp > SHRINK_BITE)
++		tmp = SHRINK_BITE;
++	return shrink_all_memory(tmp);
++}
+ 
+ int swsusp_shrink_memory(void)
+ {
+@@ -184,6 +193,8 @@
  	unsigned int i = 0;
  	char *p = "-\\|/";
  
@@ -14649,7 +14726,21 @@ diff -Nur linux-2.6.16.11/kernel/power/swsusp.c linux-2.6.16.11.suspend2/kernel/
  	printk("Shrinking memory...  ");
  	do {
  		size = 2 * count_highmem_pages();
-@@ -596,6 +601,8 @@
+@@ -195,18 +206,20 @@
+ 			if (!is_highmem(zone))
+ 				tmp -= zone->free_pages;
+ 		if (tmp > 0) {
+-			tmp = shrink_all_memory(SHRINK_BITE);
++			tmp = __shrink_memory(tmp);
+ 			if (!tmp)
+ 				return -ENOMEM;
+ 			pages += tmp;
+ 		} else if (size > image_size / PAGE_SIZE) {
+-			tmp = shrink_all_memory(SHRINK_BITE);
++			tmp = __shrink_memory(size - (image_size / PAGE_SIZE));
+ 			pages += tmp;
+ 		}
+ 		printk("\b%c", p[i++%4]);
  	} while (tmp > 0);
  	printk("\bdone (%lu pages freed)\n", pages);
  
@@ -14658,9 +14749,9 @@ diff -Nur linux-2.6.16.11/kernel/power/swsusp.c linux-2.6.16.11.suspend2/kernel/
  	return 0;
  }
  
-diff -Nur linux-2.6.16.11/kernel/power/swsusp.h linux-2.6.16.11.suspend2/kernel/power/swsusp.h
---- linux-2.6.16.11/kernel/power/swsusp.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/swsusp.h	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/power/swsusp.h linux-2.6.17-rc6.suspend2/kernel/power/swsusp.h
+--- linux-2.6.17-rc6/kernel/power/swsusp.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/swsusp.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,24 @@
 +
 +struct suspend_header {
@@ -14686,10 +14777,10 @@ diff -Nur linux-2.6.16.11/kernel/power/swsusp.h linux-2.6.16.11.suspend2/kernel/
 +	unsigned int num_pbes;
 +};
 +
-diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/power/ui.c
---- linux-2.6.16.11/kernel/power/ui.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/ui.c	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,856 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/ui.c linux-2.6.17-rc6.suspend2/kernel/power/ui.c
+--- linux-2.6.17-rc6/kernel/power/ui.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/ui.c	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,815 @@
 +/*
 + * kernel/power/ui.c
 + *
@@ -14739,6 +14830,9 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +
 +static char local_printf_buf[1024];	/* Same as printk - should be safe */
 +
++/*! The console log level we default to. */
++int suspend_default_console_level = 0;
++
 +#ifdef CONFIG_NET
 +static struct user_helper_data ui_helper_data;
 +static struct suspend_module_ops userui_ops;
@@ -14753,9 +14847,6 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +static int progress_granularity = 30;
 +
 +DECLARE_WAIT_QUEUE_HEAD(userui_wait_for_key);
-+
-+/*! The console log level we default to. */
-+int suspend_default_console_level = 0;
 +       
 +static void ui_nl_set_state(int n)
 +{
@@ -14862,7 +14953,8 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +
 +static unsigned long userui_storage_needed(void)
 +{
-+	return sizeof(ui_helper_data.program);
++	return sizeof(ui_helper_data.program) + 1 +
++		sizeof(int);
 +}
 +
 +static int userui_save_config_info(char *buf)
@@ -14894,8 +14986,20 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +	return (128 * PAGE_SIZE);
 +}
 +
-+unsigned long userui_update_progress(unsigned long value, unsigned long maximum,
-+		const char *fmt, va_list args)
++/* update_status
++ *
++ * Description: Update the progress bar and (if on) in-bar message.
++ * Arguments:	UL value, maximum: Current progress percentage (value/max).
++ * 		const char *fmt, ...: Message to be displayed in the middle
++ * 		of the progress bar.
++ * 		Note that a NULL message does not mean that any previous
++ * 		message is erased! For that, you need suspend_prepare_status with
++ * 		clearbar on.
++ * Returns:	Unsigned long: The next value where status needs to be updated.
++ * 		This is to reduce unnecessary calls to update_status.
++ */
++unsigned long suspend_update_status(unsigned long value, unsigned long maximum,
++		const char *fmt, ...)
 +{
 +	static int last_step = -1;
 +	struct userui_msg_params msg;
@@ -14941,7 +15045,10 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +	msg.b = progress_granularity;
 +
 +	if (fmt) {
++		va_list args;
++		va_start(args, fmt);
 +		vsnprintf(msg.text, sizeof(msg.text), fmt, args);
++		va_end(args);
 +		msg.text[sizeof(msg.text)-1] = '\0';
 +	}
 +
@@ -15128,7 +15235,7 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +	}
 +
 +	if (clearbar)
-+		userui_update_progress(0, 1, NULL, NULL);
++		suspend_update_status(0, 1, NULL);
 +
 +	__suspend_message(0, SUSPEND_STATUS, 1, lastheader, NULL);
 +
@@ -15136,43 +15243,7 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +		printk(KERN_EMERG "%s\n", lastheader);
 +}
 +
-+/* update_status
-+ *
-+ * Description: Update the progress bar and (if on) in-bar message.
-+ * Arguments:	UL value, maximum: Current progress percentage (value/max).
-+ * 		const char *fmt, ...: Message to be displayed in the middle
-+ * 		of the progress bar.
-+ * 		Note that a NULL message does not mean that any previous
-+ * 		message is erased! For that, you need suspend_prepare_status with
-+ * 		clearbar on.
-+ * Returns:	Unsigned long: The next value where status needs to be updated.
-+ * 		This is to reduce unnecessary calls to update_status.
-+ */
-+unsigned long suspend_update_status(unsigned long value, unsigned long maximum,
-+		const char *fmt, ...)
-+{
-+	unsigned long next_update = maximum;
-+	va_list args;
-+
-+	if (!maximum)
-+		return maximum;
-+
-+	if (value < 0)
-+		value = 0;
-+
-+	if (value > maximum)
-+		value = maximum;
-+
-+	va_start(args, fmt);
-+
-+	next_update = userui_update_progress(value, maximum, fmt, args);
-+
-+	va_end(args);
-+
-+	return next_update;
-+}
-+
-+/* check_shift_keys
++/* suspend_cond_pause
 + * 
 + * Description:	Potentially pause and wait for the user to tell us to continue.
 + * 		We normally only pause when @pause is set.
@@ -15181,7 +15252,7 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 + * 		 because it's normally a constant.
 + */
 +
-+void check_shift_keys(int pause, char *message)
++void suspend_cond_pause(int pause, char *message)
 +{
 +#ifdef CONFIG_PM_DEBUG
 +	int displayed_message = 0, last_key = 0;
@@ -15267,27 +15338,6 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +	kmsg_redirect = orig_kmsg;
 +	default_message_loglevel = orig_default_message_loglevel;
 +}       
-+#else
-+static char suspend_wait_for_keypress(int timeout)
-+{
-+	return 0;
-+} 
-+
-+unsigned long suspend_update_status(unsigned long value, unsigned long maximum,
-+		const char *fmt, ...)
-+{
-+	return maximum;
-+} 
-+
-+void __suspend_message(unsigned long section, unsigned long level,
-+		int normally_logged,
-+		const char *fmt, ...)  { }
-+void suspend_prepare_status(int clearbar, const char *fmt, ...) { }
-+void check_shift_keys(int pause, char *message) { }
-+void abort_suspend(const char *fmt, ...) { }
-+void suspend_prepare_console(void) { }
-+void suspend_cleanup_console(void) { }
-+void userui_redraw(void) { }
 +#endif
 +       
 +/* suspend_early_boot_message()
@@ -15530,7 +15580,6 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +#ifdef CONFIG_NET
 +	ui_helper_data.nl = NULL;
 +	ui_helper_data.program[0] = '\0';
-+#endif
 +	ui_helper_data.pid = -1;
 +	ui_helper_data.skb_size = sizeof(struct userui_msg_params);
 +	ui_helper_data.pool_limit = 6;
@@ -15541,31 +15590,22 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.c linux-2.6.16.11.suspend2/kernel/powe
 +	ui_helper_data.must_init = 0;
 +	ui_helper_data.not_ready = suspend_cleanup_console;
 +	init_completion(&ui_helper_data.wait_for_process);
++#endif
 +
 +	return result;
 +}
 +
 +late_initcall(suspend_console_proc_init);
-diff -Nur linux-2.6.16.11/kernel/power/ui.h linux-2.6.16.11.suspend2/kernel/power/ui.h
---- linux-2.6.16.11/kernel/power/ui.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/ui.h	2006-05-01 00:12:31.000000000 +0000
-@@ -0,0 +1,47 @@
+diff -Nur linux-2.6.17-rc6/kernel/power/ui.h linux-2.6.17-rc6.suspend2/kernel/power/ui.h
+--- linux-2.6.17-rc6/kernel/power/ui.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/ui.h	2006-06-12 16:42:12.000000000 +0000
+@@ -0,0 +1,71 @@
 +/*
 + * kernel/power/ui.h
 + *
 + * Copyright 2004-2006 Nigel Cunningham <nigel@suspend2.net>
 + */
 +
-+extern void suspend_prepare_console(void);
-+extern void suspend_cleanup_console(void);
-+
-+extern void check_shift_keys(int pause, char *message);
-+extern unsigned long suspend_update_status(unsigned long value, unsigned long maximum,
-+		const char *fmt, ...);
-+
-+extern void abort_suspend(const char *fmt, ...);
-+
-+extern void userui_redraw(void);
 +extern int suspend_default_console_level;
 +
 +enum {
@@ -15597,9 +15637,81 @@ diff -Nur linux-2.6.16.11/kernel/power/ui.h linux-2.6.16.11.suspend2/kernel/powe
 +	unsigned long a, b, c, d;
 +	char text[255];
 +};
-diff -Nur linux-2.6.16.11/kernel/power/version.h linux-2.6.16.11.suspend2/kernel/power/version.h
---- linux-2.6.16.11/kernel/power/version.h	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/power/version.h	2006-05-01 00:12:31.000000000 +0000
++
++#if defined(CONFIG_NET)
++
++extern unsigned long suspend_update_status(unsigned long value, unsigned long maximum,
++		const char *fmt, ...);
++extern void suspend_prepare_status (int clearbar, const char *fmt, ...);
++extern void suspend_cond_pause(int pause, char *message);
++extern void abort_suspend(const char *fmt, ...);
++extern void suspend_prepare_console(void);
++extern void suspend_cleanup_console(void);
++extern void userui_redraw(void);
++
++#else
++static inline char suspend_wait_for_keypress(int timeout)
++{
++	return 0;
++} 
++
++static inline unsigned long suspend_update_status(unsigned long value, unsigned long maximum,
++		const char *fmt, ...)
++{
++	return maximum;
++} 
++
++static inline void __suspend_message(unsigned long section, unsigned long level,
++		int normally_logged,
++		const char *fmt, ...)  { }
++static inline void suspend_prepare_status(int clearbar, const char *fmt, ...) { }
++static inline void suspend_cond_pause(int pause, char *message) { }
++static inline void abort_suspend(const char *fmt, ...) { }
++static inline void suspend_prepare_console(void) { }
++static inline void suspend_cleanup_console(void) { }
++static inline void userui_redraw(void) { }
++#endif
+diff -Nur linux-2.6.17-rc6/kernel/power/user.c linux-2.6.17-rc6.suspend2/kernel/power/user.c
+--- linux-2.6.17-rc6/kernel/power/user.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/user.c	2006-06-12 16:42:12.000000000 +0000
+@@ -19,6 +19,7 @@
+ #include <linux/swapops.h>
+ #include <linux/pm.h>
+ #include <linux/fs.h>
++#include <linux/freezer.h>
+ 
+ #include <asm/uaccess.h>
+ 
+@@ -75,7 +76,7 @@
+ 	free_bitmap(data->bitmap);
+ 	if (data->frozen) {
+ 		down(&pm_sem);
+-		thaw_processes();
++		thaw_processes(FREEZER_ALL_THREADS);
+ 		enable_nonboot_cpus();
+ 		up(&pm_sem);
+ 	}
+@@ -141,7 +142,7 @@
+ 		down(&pm_sem);
+ 		disable_nonboot_cpus();
+ 		if (freeze_processes()) {
+-			thaw_processes();
++			thaw_processes(FREEZER_ALL_THREADS);
+ 			enable_nonboot_cpus();
+ 			error = -EBUSY;
+ 		}
+@@ -154,7 +155,7 @@
+ 		if (!data->frozen)
+ 			break;
+ 		down(&pm_sem);
+-		thaw_processes();
++		thaw_processes(FREEZER_ALL_THREADS);
+ 		enable_nonboot_cpus();
+ 		up(&pm_sem);
+ 		data->frozen = 0;
+diff -Nur linux-2.6.17-rc6/kernel/power/version.h linux-2.6.17-rc6.suspend2/kernel/power/version.h
+--- linux-2.6.17-rc6/kernel/power/version.h	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/power/version.h	2006-06-12 16:42:12.000000000 +0000
 @@ -0,0 +1,10 @@
 +/*
 + * kernel/power/version.h
@@ -15609,12 +15721,12 @@ diff -Nur linux-2.6.16.11/kernel/power/version.h linux-2.6.16.11.suspend2/kernel
 + * Distributed under GPLv2.
 + */
 +
-+#define SUSPEND_CORE_VERSION "2.2.4.2"
++#define SUSPEND_CORE_VERSION "2.2.5"
 +#define name_suspend "Suspend2 " SUSPEND_CORE_VERSION ": "
-diff -Nur linux-2.6.16.11/kernel/sched.c linux-2.6.16.11.suspend2/kernel/sched.c
---- linux-2.6.16.11/kernel/sched.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/sched.c	2006-05-01 00:12:31.000000000 +0000
-@@ -5437,7 +5437,6 @@
+diff -Nur linux-2.6.17-rc6/kernel/sched.c linux-2.6.17-rc6.suspend2/kernel/sched.c
+--- linux-2.6.17-rc6/kernel/sched.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/sched.c	2006-06-12 16:34:46.000000000 +0000
+@@ -5538,7 +5538,6 @@
  		p = kthread_create(migration_thread, hcpu, "migration/%d",cpu);
  		if (IS_ERR(p))
  			return NOTIFY_BAD;
@@ -15622,15 +15734,15 @@ diff -Nur linux-2.6.16.11/kernel/sched.c linux-2.6.16.11.suspend2/kernel/sched.c
  		kthread_bind(p, cpu);
  		/* Must be high prio: stop_machine expects to yield to it. */
  		rq = task_rq_lock(p, &flags);
-diff -Nur linux-2.6.16.11/kernel/softirq.c linux-2.6.16.11.suspend2/kernel/softirq.c
---- linux-2.6.16.11/kernel/softirq.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/softirq.c	2006-05-01 00:20:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/softirq.c linux-2.6.17-rc6.suspend2/kernel/softirq.c
+--- linux-2.6.17-rc6/kernel/softirq.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/softirq.c	2006-06-12 16:40:44.000000000 +0000
 @@ -585,7 +585,7 @@
  	param.sched_priority = 1;
  	sys_sched_setscheduler(current->pid, SCHED_FIFO, &param);
  //	set_user_nice(current, -10);
 -	current->flags |= PF_NOFREEZE | PF_SOFTIRQ;
-+	current->flags |= PF_SOFTIRQ;
++	current->flags |= /*PF_NOFREEZE |*/ PF_SOFTIRQ;
  
  #ifdef CONFIG_PREEMPT_SOFTIRQS
  	init_waitqueue_head(&data->wait);
@@ -15643,10 +15755,10 @@ diff -Nur linux-2.6.16.11/kernel/softirq.c linux-2.6.16.11.suspend2/kernel/softi
  					   "softirq-%s/%d", softirq_names[i], hotcpu);
  			if (IS_ERR(p)) {
  				printk("ksoftirqd %d for %i failed\n", i, hotcpu);
-diff -Nur linux-2.6.16.11/kernel/sys.c linux-2.6.16.11.suspend2/kernel/sys.c
---- linux-2.6.16.11/kernel/sys.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/sys.c	2006-05-01 00:12:31.000000000 +0000
-@@ -545,12 +545,12 @@
+diff -Nur linux-2.6.17-rc6/kernel/sys.c linux-2.6.17-rc6.suspend2/kernel/sys.c
+--- linux-2.6.17-rc6/kernel/sys.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/sys.c	2006-06-12 16:41:31.000000000 +0000
+@@ -738,12 +738,12 @@
  		unlock_kernel();
  		return -EINVAL;
  
@@ -15662,9 +15774,21 @@ diff -Nur linux-2.6.16.11/kernel/sys.c linux-2.6.16.11.suspend2/kernel/sys.c
  		}
  #endif
  
-diff -Nur linux-2.6.16.11/kernel/timer.c linux-2.6.16.11.suspend2/kernel/timer.c
---- linux-2.6.16.11/kernel/timer.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/timer.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/kernel/sysctl.c linux-2.6.17-rc6.suspend2/kernel/sysctl.c
+--- linux-2.6.17-rc6/kernel/sysctl.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/sysctl.c	2006-06-12 16:45:55.000000000 +0000
+@@ -540,7 +540,7 @@
+ 		.strategy	= &sysctl_string,
+ 	},
+ #endif
+-#ifdef CONFIG_HOTPLUG
++#if defined(CONFIG_HOTPLUG) && defined(CONFIG_NET)
+ 	{
+ 		.ctl_name	= KERN_HOTPLUG,
+ 		.procname	= "hotplug",
+diff -Nur linux-2.6.17-rc6/kernel/timer.c linux-2.6.17-rc6.suspend2/kernel/timer.c
+--- linux-2.6.17-rc6/kernel/timer.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/timer.c	2006-06-12 16:42:12.000000000 +0000
 @@ -35,6 +35,7 @@
  #include <linux/syscalls.h>
  #include <linux/kallsyms.h>
@@ -15673,7 +15797,7 @@ diff -Nur linux-2.6.16.11/kernel/timer.c linux-2.6.16.11.suspend2/kernel/timer.c
  
  #include <asm/uaccess.h>
  #include <asm/unistd.h>
-@@ -1060,6 +1061,16 @@
+@@ -1283,6 +1284,16 @@
  	count -= ticks;
  	if (count < 0) {
  		count += LOAD_FREQ;
@@ -15690,10 +15814,10 @@ diff -Nur linux-2.6.16.11/kernel/timer.c linux-2.6.16.11.suspend2/kernel/timer.c
  		active_tasks = count_active_tasks();
  		CALC_LOAD(avenrun[0], EXP_1, active_tasks);
  		CALC_LOAD(avenrun[1], EXP_5, active_tasks);
-diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/workqueue.c
---- linux-2.6.16.11/kernel/workqueue.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/kernel/workqueue.c	2006-05-01 00:12:31.000000000 +0000
-@@ -193,8 +193,6 @@
+diff -Nur linux-2.6.17-rc6/kernel/workqueue.c linux-2.6.17-rc6.suspend2/kernel/workqueue.c
+--- linux-2.6.17-rc6/kernel/workqueue.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/workqueue.c	2006-06-12 16:34:46.000000000 +0000
+@@ -194,8 +194,6 @@
  	struct k_sigaction sa;
  	sigset_t blocked;
  
@@ -15702,7 +15826,7 @@ diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/wor
  	set_user_nice(current, -5);
  
  	/* Block and flush all signals */
-@@ -215,6 +213,7 @@
+@@ -216,6 +214,7 @@
  			schedule();
  		else
  			__set_current_state(TASK_RUNNING);
@@ -15710,7 +15834,7 @@ diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/wor
  		remove_wait_queue(&cwq->more_work, &wait);
  
  		if (!list_empty(&cwq->worklist))
-@@ -284,7 +283,8 @@
+@@ -285,7 +284,8 @@
  }
  
  static struct task_struct *create_workqueue_thread(struct workqueue_struct *wq,
@@ -15720,7 +15844,7 @@ diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/wor
  {
  	struct cpu_workqueue_struct *cwq = per_cpu_ptr(wq->cpu_wq, cpu);
  	struct task_struct *p;
-@@ -298,10 +298,21 @@
+@@ -299,10 +299,21 @@
  	init_waitqueue_head(&cwq->more_work);
  	init_waitqueue_head(&cwq->work_done);
  
@@ -15746,7 +15870,7 @@ diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/wor
  	if (IS_ERR(p))
  		return NULL;
  	cwq->thread = p;
-@@ -309,7 +320,8 @@
+@@ -310,7 +321,8 @@
  }
  
  struct workqueue_struct *__create_workqueue(const char *name,
@@ -15756,7 +15880,7 @@ diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/wor
  {
  	int cpu, destroy = 0;
  	struct workqueue_struct *wq;
-@@ -330,7 +342,7 @@
+@@ -331,7 +343,7 @@
  	lock_cpu_hotplug();
  	if (singlethread) {
  		INIT_LIST_HEAD(&wq->list);
@@ -15765,7 +15889,7 @@ diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/wor
  		if (!p)
  			destroy = 1;
  		else
-@@ -340,7 +352,7 @@
+@@ -341,7 +353,7 @@
  		list_add(&wq->list, &workqueues);
  		spin_unlock(&workqueue_lock);
  		for_each_online_cpu(cpu) {
@@ -15774,7 +15898,7 @@ diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/wor
  			if (p) {
  				kthread_bind(p, cpu);
  				wake_up_process(p);
-@@ -571,7 +583,7 @@
+@@ -600,7 +612,7 @@
  	case CPU_UP_PREPARE:
  		/* Create a new workqueue thread for it. */
  		list_for_each_entry(wq, &workqueues, list) {
@@ -15783,7 +15907,7 @@ diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/wor
  				printk("workqueue for %i failed\n", hotcpu);
  				return NOTIFY_BAD;
  			}
-@@ -614,7 +626,7 @@
+@@ -643,7 +655,7 @@
  {
  	singlethread_cpu = first_cpu(cpu_possible_map);
  	hotcpu_notifier(workqueue_cpu_callback, 0);
@@ -15792,9 +15916,9 @@ diff -Nur linux-2.6.16.11/kernel/workqueue.c linux-2.6.16.11.suspend2/kernel/wor
  	BUG_ON(!keventd_wq);
  	set_workqueue_prio(keventd_wq, SCHED_FIFO, 1, -20);
  }
-diff -Nur linux-2.6.16.11/lib/Kconfig linux-2.6.16.11.suspend2/lib/Kconfig
---- linux-2.6.16.11/lib/Kconfig	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/lib/Kconfig	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/lib/Kconfig linux-2.6.17-rc6.suspend2/lib/Kconfig
+--- linux-2.6.17-rc6/lib/Kconfig	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/lib/Kconfig	2006-06-12 16:41:48.000000000 +0000
 @@ -38,6 +38,9 @@
  	  require M here.  See Castagnoli93.
  	  Module will be libcrc32c.
@@ -15805,10 +15929,10 @@ diff -Nur linux-2.6.16.11/lib/Kconfig linux-2.6.16.11.suspend2/lib/Kconfig
  #
  # compression support is select'ed if needed
  #
-diff -Nur linux-2.6.16.11/lib/Makefile linux-2.6.16.11.suspend2/lib/Makefile
---- linux-2.6.16.11/lib/Makefile	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/lib/Makefile	2006-05-01 00:12:31.000000000 +0000
-@@ -30,6 +30,8 @@
+diff -Nur linux-2.6.17-rc6/lib/Makefile linux-2.6.17-rc6.suspend2/lib/Makefile
+--- linux-2.6.17-rc6/lib/Makefile	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/lib/Makefile	2006-06-12 16:41:48.000000000 +0000
+@@ -33,6 +33,8 @@
    lib-y += dec_and_lock.o
  endif
  
@@ -15817,9 +15941,9 @@ diff -Nur linux-2.6.16.11/lib/Makefile linux-2.6.16.11.suspend2/lib/Makefile
  obj-$(CONFIG_CRC_CCITT)	+= crc-ccitt.o
  obj-$(CONFIG_CRC16)	+= crc16.o
  obj-$(CONFIG_CRC32)	+= crc32.o
-diff -Nur linux-2.6.16.11/lib/dyn_pageflags.c linux-2.6.16.11.suspend2/lib/dyn_pageflags.c
---- linux-2.6.16.11/lib/dyn_pageflags.c	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.16.11.suspend2/lib/dyn_pageflags.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/lib/dyn_pageflags.c linux-2.6.17-rc6.suspend2/lib/dyn_pageflags.c
+--- linux-2.6.17-rc6/lib/dyn_pageflags.c	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/lib/dyn_pageflags.c	2006-06-12 16:41:48.000000000 +0000
 @@ -0,0 +1,330 @@
 +/*
 + * lib/dyn_pageflags.c
@@ -16107,7 +16231,7 @@ diff -Nur linux-2.6.16.11/lib/dyn_pageflags.c linux-2.6.16.11.suspend2/lib/dyn_p
 +	first = (counter == -1);
 +	
 +	if (first)
-+		counter = pgdat_list->node_zones->zone_start_pfn;
++		counter = first_online_pgdat()->node_zones->zone_start_pfn;
 +
 +	page = pfn_to_page(counter);
 +	zone = page_zone(page);
@@ -16151,9 +16275,9 @@ diff -Nur linux-2.6.16.11/lib/dyn_pageflags.c linux-2.6.16.11.suspend2/lib/dyn_p
 +	return counter;
 +}
 +
-diff -Nur linux-2.6.16.11/lib/vsprintf.c linux-2.6.16.11.suspend2/lib/vsprintf.c
---- linux-2.6.16.11/lib/vsprintf.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/lib/vsprintf.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/lib/vsprintf.c linux-2.6.17-rc6.suspend2/lib/vsprintf.c
+--- linux-2.6.17-rc6/lib/vsprintf.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/lib/vsprintf.c	2006-06-12 16:42:12.000000000 +0000
 @@ -236,6 +236,29 @@
  	return buf;
  }
@@ -16184,10 +16308,10 @@ diff -Nur linux-2.6.16.11/lib/vsprintf.c linux-2.6.16.11.suspend2/lib/vsprintf.c
  /**
   * vsnprintf - Format a string and place it in a buffer
   * @buf: The buffer to place the result into
-diff -Nur linux-2.6.16.11/mm/memory.c linux-2.6.16.11.suspend2/mm/memory.c
---- linux-2.6.16.11/mm/memory.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/mm/memory.c	2006-05-01 00:12:31.000000000 +0000
-@@ -996,6 +996,15 @@
+diff -Nur linux-2.6.17-rc6/mm/memory.c linux-2.6.17-rc6.suspend2/mm/memory.c
+--- linux-2.6.17-rc6/mm/memory.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/mm/memory.c	2006-06-12 16:42:12.000000000 +0000
+@@ -997,6 +997,15 @@
  	return page;
  }
  
@@ -16203,9 +16327,9 @@ diff -Nur linux-2.6.16.11/mm/memory.c linux-2.6.16.11.suspend2/mm/memory.c
  int get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
  		unsigned long start, int len, int write, int force,
  		struct page **pages, struct vm_area_struct **vmas)
-diff -Nur linux-2.6.16.11/mm/page_alloc.c linux-2.6.16.11.suspend2/mm/page_alloc.c
---- linux-2.6.16.11/mm/page_alloc.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/mm/page_alloc.c	2006-05-01 00:12:31.000000000 +0000
+diff -Nur linux-2.6.17-rc6/mm/page_alloc.c linux-2.6.17-rc6.suspend2/mm/page_alloc.c
+--- linux-2.6.17-rc6/mm/page_alloc.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/mm/page_alloc.c	2006-06-12 16:45:38.000000000 +0000
 @@ -25,6 +25,7 @@
  #include <linux/kernel.h>
  #include <linux/module.h>
@@ -16221,47 +16345,94 @@ diff -Nur linux-2.6.16.11/mm/page_alloc.c linux-2.6.16.11.suspend2/mm/page_alloc
 +#include <linux/freezer.h>
  
  #include <asm/tlbflush.h>
- #include "internal.h"
-@@ -453,6 +455,7 @@
+ #include <asm/div64.h>
+@@ -464,6 +466,7 @@
  {
  	if (order == 0) {
  		__ClearPageReserved(page);
 +		ClearPageNosave(page);
  		set_page_count(page, 0);
- 
- 		free_hot_page(page);
-@@ -466,6 +469,7 @@
- 			if (loop + 16 < BITS_PER_LONG)
- 				prefetchw(p + 16);
+ 		set_page_refcounted(page);
+ 		__free_page(page);
+@@ -477,6 +480,7 @@
+ 			if (loop + 1 < BITS_PER_LONG)
+ 				prefetchw(p + 1);
  			__ClearPageReserved(p);
 +			ClearPageNosave(p);
  			set_page_count(p, 0);
  		}
  
-@@ -996,8 +1000,9 @@
+@@ -936,7 +940,8 @@
+ 			else
+ 				mark = (*z)->pages_high;
+ 			if (!zone_watermark_ok(*z, order, mark,
+-				    classzone_idx, alloc_flags))
++				    classzone_idx, alloc_flags) &&
++			    likely(!test_freezer_state(FREEZER_ON)))
+ 				if (!zone_reclaim_mode ||
+ 				    !zone_reclaim(*z, gfp_mask, order))
+ 					continue;
+@@ -981,10 +986,12 @@
+ 	if (page)
+ 		goto got_pg;
+ 
+-	do {
+-		if (cpuset_zone_allowed(*z, gfp_mask|__GFP_HARDWALL))
+-			wakeup_kswapd(*z, order);
+-	} while (*(++z));
++ 	if (likely(!test_freezer_state(FREEZER_ON))) {
++ 		do {
++ 			if (cpuset_zone_allowed(*z, gfp_mask|__GFP_HARDWALL))
++ 				wakeup_kswapd(*z, order);
++ 		} while (*(++z));
++ 	}
+ 
+ 	/*
+ 	 * OK, we're below the kswapd watermark and have kicked background
+@@ -1018,8 +1025,8 @@
  
  	/* This allocation should allow future memory freeing. */
  
 -	if (((p->flags & PF_MEMALLOC) || unlikely(test_thread_flag(TIF_MEMDIE)))
 -			&& !in_interrupt()) {
-+	if ((((p->flags & PF_MEMALLOC) || unlikely(test_thread_flag(TIF_MEMDIE))) && 
-+				!in_interrupt()) || 
-+			(unlikely(test_freezer_state(FREEZER_ON)))) {
++	if (((p->flags & PF_MEMALLOC) || unlikely(test_thread_flag(TIF_MEMDIE))) && 
++				!in_interrupt()) {
  		if (!(gfp_mask & __GFP_NOMEMALLOC)) {
  nofail_alloc:
  			/* go through the zonelist yet again, ignoring mins */
-@@ -1816,6 +1821,7 @@
- 		set_page_count(page, 1);
+@@ -1042,6 +1049,8 @@
+ #endif
+ 
+ rebalance:
++	BUG_ON(unlikely(test_freezer_state(FREEZER_ON)));
++
+ 	cond_resched();
+ 
+ 	/* We now go into synchronous reclaim */
+@@ -1829,13 +1838,17 @@
+ 	unsigned long pfn;
+ 
+ 	for (pfn = start_pfn; pfn < end_pfn; pfn++) {
+-		if (!early_pfn_valid(pfn))
+-			continue;
+ 		page = pfn_to_page(pfn);
++		if (!early_pfn_valid(pfn)) {
++			SetPageNosave(page);
++			continue;
++		}
+ 		set_page_links(page, zone, nid, pfn);
+ 		init_page_count(page);
  		reset_page_mapcount(page);
  		SetPageReserved(page);
-+		SetPageNosave(page);
++		if (!(page_is_ram(pfn)))
++			SetPageNosave(page);
  		INIT_LIST_HEAD(&page->lru);
  #ifdef WANT_PAGE_VIRTUAL
  		/* The shift won't overflow because ZONE_NORMAL is below 4G. */
-diff -Nur linux-2.6.16.11/mm/swapfile.c linux-2.6.16.11.suspend2/mm/swapfile.c
---- linux-2.6.16.11/mm/swapfile.c	2006-04-24 20:20:24.000000000 +0000
-+++ linux-2.6.16.11.suspend2/mm/swapfile.c	2006-05-01 00:12:31.000000000 +0000
-@@ -1193,6 +1193,7 @@
+diff -Nur linux-2.6.17-rc6/mm/swapfile.c linux-2.6.17-rc6.suspend2/mm/swapfile.c
+--- linux-2.6.17-rc6/mm/swapfile.c	2006-06-06 00:57:02.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/mm/swapfile.c	2006-06-12 16:41:44.000000000 +0000
+@@ -1254,6 +1254,7 @@
  	swap_file = p->swap_file;
  	p->swap_file = NULL;
  	p->max = 0;
@@ -16269,10 +16440,133 @@ diff -Nur linux-2.6.16.11/mm/swapfile.c linux-2.6.16.11.suspend2/mm/swapfile.c
  	swap_map = p->swap_map;
  	p->swap_map = NULL;
  	p->flags = 0;
-diff -Nur linux-2.6.16.11/mm/vmscan.c linux-2.6.16.11.suspend2/mm/vmscan.c
---- linux-2.6.16.11/mm/vmscan.c	2006-05-01 00:11:09.000000000 +0000
-+++ linux-2.6.16.11.suspend2/mm/vmscan.c	2006-05-01 00:12:31.000000000 +0000
-@@ -1736,7 +1736,8 @@
+diff -Nur linux-2.6.17-rc6/mm/vmscan.c linux-2.6.17-rc6.suspend2/mm/vmscan.c
+--- linux-2.6.17-rc6/mm/vmscan.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/mm/vmscan.c	2006-06-12 16:46:03.000000000 +0000
+@@ -204,7 +204,7 @@
+ 		total_scan = shrinker->nr;
+ 		shrinker->nr = 0;
+ 
+-		while (total_scan >= SHRINK_BATCH) {
++		while (total_scan >= SHRINK_BATCH && ret < scanned) {
+ 			long this_scan = SHRINK_BATCH;
+ 			int shrink_ret;
+ 			int nr_before;
+@@ -1027,10 +1027,6 @@
+  * For kswapd, balance_pgdat() will work across all this node's zones until
+  * they are all at pages_high.
+  *
+- * If `nr_pages' is non-zero then it is the number of pages which are to be
+- * reclaimed, regardless of the zone occupancies.  This is a software suspend
+- * special.
+- *
+  * Returns the number of pages which were actually freed.
+  *
+  * There is special handling here for zones which are full of pinned pages.
+@@ -1048,10 +1044,8 @@
+  * the page allocator fallback scheme to ensure that aging of pages is balanced
+  * across the zones.
+  */
+-static unsigned long balance_pgdat(pg_data_t *pgdat, unsigned long nr_pages,
+-				int order)
++static unsigned long balance_pgdat(pg_data_t *pgdat, int order)
+ {
+-	unsigned long to_free = nr_pages;
+ 	int all_zones_ok;
+ 	int priority;
+ 	int i;
+@@ -1061,7 +1055,7 @@
+ 	struct scan_control sc = {
+ 		.gfp_mask = GFP_KERNEL,
+ 		.may_swap = 1,
+-		.swap_cluster_max = nr_pages ? nr_pages : SWAP_CLUSTER_MAX,
++		.swap_cluster_max = SWAP_CLUSTER_MAX,
+ 	};
+ 
+ loop_again:
+@@ -1088,31 +1082,27 @@
+ 
+ 		all_zones_ok = 1;
+ 
+-		if (nr_pages == 0) {
+-			/*
+-			 * Scan in the highmem->dma direction for the highest
+-			 * zone which needs scanning
+-			 */
+-			for (i = pgdat->nr_zones - 1; i >= 0; i--) {
+-				struct zone *zone = pgdat->node_zones + i;
++		/*
++		 * Scan in the highmem->dma direction for the highest
++		 * zone which needs scanning
++		 */
++		for (i = pgdat->nr_zones - 1; i >= 0; i--) {
++			struct zone *zone = pgdat->node_zones + i;
++
++			if (!populated_zone(zone))
++				continue;
+ 
+-				if (!populated_zone(zone))
+-					continue;
++			if (zone->all_unreclaimable &&
++					priority != DEF_PRIORITY)
++				continue;
+ 
+-				if (zone->all_unreclaimable &&
+-						priority != DEF_PRIORITY)
+-					continue;
+-
+-				if (!zone_watermark_ok(zone, order,
+-						zone->pages_high, 0, 0)) {
+-					end_zone = i;
+-					goto scan;
+-				}
++			if (!zone_watermark_ok(zone, order, zone->pages_high,
++					       0, 0)) {
++				end_zone = i;
++				goto scan;
+ 			}
+-			goto out;
+-		} else {
+-			end_zone = pgdat->nr_zones - 1;
+ 		}
++		goto out;
+ scan:
+ 		for (i = 0; i <= end_zone; i++) {
+ 			struct zone *zone = pgdat->node_zones + i;
+@@ -1139,11 +1129,9 @@
+ 			if (zone->all_unreclaimable && priority != DEF_PRIORITY)
+ 				continue;
+ 
+-			if (nr_pages == 0) {	/* Not software suspend */
+-				if (!zone_watermark_ok(zone, order,
+-						zone->pages_high, end_zone, 0))
+-					all_zones_ok = 0;
+-			}
++			if (!zone_watermark_ok(zone, order, zone->pages_high,
++					       end_zone, 0))
++				all_zones_ok = 0;
+ 			zone->temp_priority = priority;
+ 			if (zone->prev_priority > priority)
+ 				zone->prev_priority = priority;
+@@ -1168,8 +1156,6 @@
+ 			    total_scanned > nr_reclaimed + nr_reclaimed / 2)
+ 				sc.may_writepage = 1;
+ 		}
+-		if (nr_pages && to_free > nr_reclaimed)
+-			continue;	/* swsusp: need to do more work */
+ 		if (all_zones_ok)
+ 			break;		/* kswapd: all done */
+ 		/*
+@@ -1185,7 +1171,7 @@
+ 		 * matches the direct reclaim path behaviour in terms of impact
+ 		 * on zone->*_priority.
+ 		 */
+-		if ((nr_reclaimed >= SWAP_CLUSTER_MAX) && !nr_pages)
++		if (nr_reclaimed >= SWAP_CLUSTER_MAX)
+ 			break;
+ 	}
+ out:
+@@ -1250,7 +1236,8 @@
  	for ( ; ; ) {
  		unsigned long new_order;
  
@@ -16282,3 +16576,183 @@ diff -Nur linux-2.6.16.11/mm/vmscan.c linux-2.6.16.11.suspend2/mm/vmscan.c
  
  		prepare_to_wait(&pgdat->kswapd_wait, &wait, TASK_INTERRUPTIBLE);
  		new_order = pgdat->kswapd_max_order;
+@@ -1267,7 +1254,7 @@
+ 		}
+ 		finish_wait(&pgdat->kswapd_wait, &wait);
+ 
+-		balance_pgdat(pgdat, 0, order);
++		balance_pgdat(pgdat, order);
+ 	}
+ 	return 0;
+ }
+@@ -1296,35 +1283,153 @@
+ 
+ #ifdef CONFIG_PM
+ /*
+- * Try to free `nr_pages' of memory, system-wide.  Returns the number of freed
+- * pages.
++ * Helper function for shrink_all_memory().  Tries to reclaim 'nr_pages' pages
++ * from LRU lists system-wide, for given pass and priority, and returns the
++ * number of reclaimed pages
++ *
++ * For pass > 3 we also try to shrink the LRU lists that contain a few pages
++ */
++unsigned long shrink_all_zones(unsigned long nr_pages, int pass, int prio,
++				struct scan_control *sc)
++{
++	struct zone *zone;
++	unsigned long nr_to_scan, ret = 0;
++
++	for_each_zone(zone) {
++
++		if (!populated_zone(zone))
++			continue;
++
++		if (zone->all_unreclaimable && prio != DEF_PRIORITY)
++			continue;
++
++		/* For pass = 0 we don't shrink the active list */
++		if (pass > 0) {
++			zone->nr_scan_active += (zone->nr_active >> prio) + 1;
++			if (zone->nr_scan_active >= nr_pages || pass > 3) {
++				zone->nr_scan_active = 0;
++				nr_to_scan = min(nr_pages, zone->nr_active);
++				shrink_active_list(nr_to_scan, zone, sc);
++			}
++		}
++
++		zone->nr_scan_inactive += (zone->nr_inactive >> prio) + 1;
++		if (zone->nr_scan_inactive >= (nr_pages - ret) || pass > 3) {
++			zone->nr_scan_inactive = 0;
++			nr_to_scan = min(nr_pages - ret, zone->nr_inactive);
++			ret += shrink_inactive_list(nr_to_scan, zone, sc);
++			if (ret >= nr_pages)
++				return ret;
++		}
++	}
++
++	return ret;
++}
++
++/*
++ * Try to free `nr_pages' of memory, system-wide, and return the number of
++ * freed pages.
++ *
++ * Rather than trying to age LRUs the aim is to preserve the overall
++ * LRU order by reclaiming preferentially
++ * inactive > active > active referenced > active mapped
+  */
+ unsigned long shrink_all_memory(unsigned long nr_pages)
+ {
+-	pg_data_t *pgdat;
+-	unsigned long nr_to_free = nr_pages;
++	unsigned long lru_pages, nr_slab;
+ 	unsigned long ret = 0;
+-	unsigned retry = 2;
+-	struct reclaim_state reclaim_state = {
+-		.reclaimed_slab = 0,
++	int swappiness = vm_swappiness, pass;
++	struct reclaim_state reclaim_state;
++	struct zone *zone;
++	struct scan_control sc = {
++		.gfp_mask = GFP_KERNEL,
++		.may_swap = 1,
++		.swap_cluster_max = nr_pages,
++		.may_writepage = 1,
+ 	};
+ 
+ 	current->reclaim_state = &reclaim_state;
+-repeat:
+-	for_each_online_pgdat(pgdat) {
+-		unsigned long freed;
+ 
+-		freed = balance_pgdat(pgdat, nr_to_free, 0);
+-		ret += freed;
+-		nr_to_free -= freed;
+-		if ((long)nr_to_free <= 0)
++	lru_pages = 0;
++	for_each_zone(zone)
++		lru_pages += zone->nr_active + zone->nr_inactive;
++	nr_slab = read_page_state(nr_slab);
++	/* If slab caches are huge, it's better to hit them first */
++	while (nr_slab >= lru_pages) {
++		reclaim_state.reclaimed_slab = 0;
++		shrink_slab(nr_pages, sc.gfp_mask, lru_pages);
++		if (!reclaim_state.reclaimed_slab)
+ 			break;
++
++		ret += reclaim_state.reclaimed_slab;
++		if (ret >= nr_pages)
++			goto out;
++
++		nr_slab -= reclaim_state.reclaimed_slab;
+ 	}
+-	if (retry-- && ret < nr_pages) {
+-		blk_congestion_wait(WRITE, HZ/5);
+-		goto repeat;
++
++	/*
++	 * We try to shrink LRUs in 5 passes:
++	 * 0 = Reclaim from inactive_list only
++	 * 1 = Reclaim from active list but don't reclaim mapped
++	 * 2 = 2nd pass of type 1
++	 * 3 = Reclaim mapped (normal reclaim)
++	 * 4 = 2nd pass of type 3
++	 */
++	for (pass = 0; pass < 5; pass++) {
++		int prio;
++
++		/* Needed for shrinking slab caches later on */
++		if (!lru_pages)
++			for_each_zone(zone) {
++				lru_pages += zone->nr_active;
++				lru_pages += zone->nr_inactive;
++			}
++
++		/* Force reclaiming mapped pages in the passes #3 and #4 */
++		if (pass > 2)
++			vm_swappiness = 100;
++
++		for (prio = DEF_PRIORITY; prio >= 0; prio--) {
++			unsigned long nr_to_scan = nr_pages - ret;
++
++			sc.nr_mapped = read_page_state(nr_mapped);
++			sc.nr_scanned = 0;
++			sc.swap_cluster_max = nr_pages - ret;
++
++			ret += shrink_all_zones(nr_to_scan, prio, pass, &sc);
++			if (ret >= nr_pages)
++				goto out;
++
++			reclaim_state.reclaimed_slab = 0;
++			shrink_slab(sc.nr_scanned, sc.gfp_mask, lru_pages);
++			ret += reclaim_state.reclaimed_slab;
++			if (ret >= nr_pages)
++				goto out;
++
++			if (sc.nr_scanned && prio < DEF_PRIORITY - 2)
++				blk_congestion_wait(WRITE, HZ / 10);
++		}
++
++		lru_pages = 0;
+ 	}
++
++
++	/*
++	 * If ret = 0, we could not shrink LRUs, but there may be something
++	 * in slab caches
++	 */
++	if (!ret)
++		do {
++			reclaim_state.reclaimed_slab = 0;
++			shrink_slab(nr_pages, sc.gfp_mask, lru_pages);
++			ret += reclaim_state.reclaimed_slab;
++		} while (ret < nr_pages && reclaim_state.reclaimed_slab > 0);
++
++out:
+ 	current->reclaim_state = NULL;
++	vm_swappiness = swappiness;
++
+ 	return ret;
+ }
+ #endif
