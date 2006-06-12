@@ -5638,7 +5638,7 @@ Index: linux/arch/i386/kernel/io_apic.c
 +
 +	if ((trigger == IOAPIC_AUTO && IO_APIC_irq_trigger(irq)) ||
 +			trigger == IOAPIC_LEVEL)
-+#ifdef CONFIG_PREMMPT_HARDIRQS
++#ifdef CONFIG_PREEMPT_HARDIRQS
 +		set_irq_chip_and_handler(idx, &ioapic_chip,
 +					 handle_level_irq);
 +#else
@@ -37560,7 +37560,7 @@ Index: linux/kernel/irq/chip.c
 ===================================================================
 --- /dev/null
 +++ linux/kernel/irq/chip.c
-@@ -0,0 +1,549 @@
+@@ -0,0 +1,562 @@
 +/*
 + * linux/kernel/irq/chip.c
 + *
@@ -37771,8 +37771,15 @@ Index: linux/kernel/irq/chip.c
 +
 +	spin_lock(&desc->lock);
 +
-+	if (unlikely(desc->status & IRQ_INPROGRESS))
++	if (unlikely(desc->status & IRQ_INPROGRESS)) {
++		static int once = 0;
++		if (!once) {
++			once = 1;
++			printk(KERN_WARNING "handle_simple_irq reentered while "
++			       "processing irq %d\n", irq);
++		}
 +		goto out_unlock;
++	}
 +	desc->status &= ~(IRQ_REPLAY | IRQ_WAITING);
 +	kstat_cpu(cpu).irqs[irq]++;
 +
@@ -37819,8 +37826,15 @@ Index: linux/kernel/irq/chip.c
 +	spin_lock(&desc->lock);
 +	mask_ack_irq(desc, irq);
 +
-+	if (unlikely(desc->status & IRQ_INPROGRESS))
-+		goto out_unlock;
++	if (unlikely(desc->status & IRQ_INPROGRESS)) {
++		static int once = 0;
++		if (!once) {
++			once = 1;
++			printk(KERN_WARNING "handle_level_irq reentered while "
++			       "processing irq %d\n", irq);
++		}
++		goto out;
++	}
 +	desc->status &= ~(IRQ_REPLAY | IRQ_WAITING);
 +	kstat_cpu(cpu).irqs[irq]++;
 +
@@ -37830,7 +37844,7 @@ Index: linux/kernel/irq/chip.c
 +	 */
 +	action = desc->action;
 +	if (unlikely(!action || (desc->status & IRQ_DISABLED)))
-+		goto out_unlock;
++		goto out;
 +
 +	desc->status |= IRQ_INPROGRESS;
 +
@@ -37838,7 +37852,7 @@ Index: linux/kernel/irq/chip.c
 +	 * hardirq redirection to the irqd process context:
 +	 */
 +	if (redirect_hardirq(desc))
-+		goto out_unlock;
++		goto out;
 +
 +	spin_unlock(&desc->lock);
 +
@@ -37848,10 +37862,9 @@ Index: linux/kernel/irq/chip.c
 +
 +	spin_lock(&desc->lock);
 +	desc->status &= ~IRQ_INPROGRESS;
-+
 +	if (!(desc->status & IRQ_DISABLED) && desc->chip->unmask)
 +		desc->chip->unmask(irq);
-+out_unlock:
++out:
 +	spin_unlock(&desc->lock);
 +}
 +
@@ -38161,7 +38174,7 @@ Index: linux/kernel/irq/handle.c
   * controller. Thus drivers need not be aware of the
   * interrupt-controller.
   *
-@@ -28,41 +48,53 @@
+@@ -28,41 +48,58 @@
   *
   * Controller mappings for all interrupt sources:
   */
@@ -38181,27 +38194,43 @@ Index: linux/kernel/irq/handle.c
  	}
  };
 +EXPORT_SYMBOL_GPL(irq_desc);
++
++/*
++ * What should we do if we get a hw irq event on an illegal vector?
++ * Each architecture has to answer this themself.
++ */
++static void ack_bad(unsigned int irq)
++{
++	struct irq_desc *desc = irq_desc + irq;
++
++	if (desc->handle_irq == handle_bad_irq) {
++		print_irq_desc(irq, desc);
++		ack_bad_irq(irq);
++	}
++}
  
  /*
 - * Generic 'no controller' code
-+ * What should we do if we get a hw irq event on an illegal vector?
-+ * Each architecture has to answer this themself.
++ * NOP functions
   */
 -static void end_none(unsigned int irq) { }
 -static void enable_none(unsigned int irq) { }
 -static void disable_none(unsigned int irq) { }
 -static void shutdown_none(unsigned int irq) { }
 -static unsigned int startup_none(unsigned int irq) { return 0; }
--
++static void noop(unsigned int irq)
++{
++}
+ 
 -static void ack_none(unsigned int irq)
-+static void ack_bad(unsigned int irq)
++static unsigned int noop_ret(unsigned int irq)
  {
 -	/*
 -	 * 'what should we do if we get a hw irq event on an illegal vector'.
 -	 * each architecture has to answer this themself.
 -	 */
-+	print_irq_desc(irq, irq_desc + irq);
- 	ack_bad_irq(irq);
+-	ack_bad_irq(irq);
++	return 0;
  }
  
 -struct hw_interrupt_type no_irq_type = {
@@ -38214,18 +38243,6 @@ Index: linux/kernel/irq/handle.c
 -	.end = 		end_none,
 -	.set_affinity = NULL
 +/*
-+ * NOP functions
-+ */
-+static void noop(unsigned int irq)
-+{
-+}
-+
-+static unsigned int noop_ret(unsigned int irq)
-+{
-+	return 0;
-+}
-+
-+/*
 + * Generic no controller implementation
 + */
 +struct irq_chip no_irq_chip = {
@@ -38235,11 +38252,12 @@ Index: linux/kernel/irq/handle.c
 +	.enable		= noop,
 +	.disable	= noop,
 +	.ack		= ack_bad,
++	.unmask		= noop,
 +	.end		= noop,
  };
  
  /*
-@@ -73,43 +105,118 @@ irqreturn_t no_action(int cpl, void *dev
+@@ -73,43 +110,118 @@ irqreturn_t no_action(int cpl, void *dev
  	return IRQ_NONE;
  }
  
@@ -38368,7 +38386,7 @@ Index: linux/kernel/irq/handle.c
  	kstat_this_cpu.irqs[irq]++;
  	if (CHECK_IRQ_PER_CPU(desc->status)) {
  		irqreturn_t action_ret;
-@@ -117,16 +224,16 @@ fastcall unsigned int __do_IRQ(unsigned 
+@@ -117,16 +229,16 @@ fastcall unsigned int __do_IRQ(unsigned 
  		/*
  		 * No locking required for CPU-local interrupts:
  		 */
@@ -38390,7 +38408,7 @@ Index: linux/kernel/irq/handle.c
  	/*
  	 * REPLAY is when Linux resends an IRQ that was dropped earlier
  	 * WAITING is used by probe to mark irqs that are being tested
-@@ -156,6 +263,12 @@ fastcall unsigned int __do_IRQ(unsigned 
+@@ -156,6 +268,12 @@ fastcall unsigned int __do_IRQ(unsigned 
  		goto out;
  
  	/*
@@ -38403,7 +38421,7 @@ Index: linux/kernel/irq/handle.c
  	 * Edge triggered interrupts need to remember
  	 * pending events.
  	 * This applies to any hw interrupts that allow a second
-@@ -186,7 +299,8 @@ out:
+@@ -186,7 +304,8 @@ out:
  	 * The ->end() handler has to deal with interrupts which got
  	 * disabled while the handler was running.
  	 */
@@ -38686,7 +38704,7 @@ Index: linux/kernel/irq/manage.c
  		return -EINVAL;
  
 -	if (desc->handler == &no_irq_type)
-+	if (desc->chip == &no_irq_chip)
++	if (desc->handle_irq == &handle_bad_irq)
  		return -ENOSYS;
  	/*
  	 * Some drivers like serial.c use request_irq() heavily,
@@ -39256,7 +39274,7 @@ Index: linux/kernel/irq/proc.c
  		return -EIO;
  
  	err = cpumask_parse(buffer, count, new_value);
-@@ -81,37 +78,6 @@ static int irq_affinity_write_proc(struc
+@@ -81,60 +78,28 @@ static int irq_affinity_write_proc(struc
  
  #endif
  
@@ -39294,14 +39312,14 @@ Index: linux/kernel/irq/proc.c
  #define MAX_NAMELEN 10
  
  void register_irq_proc(unsigned int irq)
-@@ -119,22 +85,22 @@ void register_irq_proc(unsigned int irq)
+ {
  	char name [MAX_NAMELEN];
  
- 	if (!root_irq_dir ||
+-	if (!root_irq_dir ||
 -		(irq_desc[irq].handler == &no_irq_type) ||
 -			irq_dir[irq])
-+		(irq_desc[irq].chip == &no_irq_chip) ||
-+			irq_desc[irq].dir)
++	if (!root_irq_dir || (irq_desc[irq].handle_irq == &handle_bad_irq) ||
++	    irq_desc[irq].dir)
  		return;
  
  	memset(name, 0, MAX_NAMELEN);
@@ -39321,7 +39339,7 @@ Index: linux/kernel/irq/proc.c
  
  		if (entry) {
  			entry->nlink = 1;
-@@ -142,7 +108,6 @@ void register_irq_proc(unsigned int irq)
+@@ -142,7 +107,6 @@ void register_irq_proc(unsigned int irq)
  			entry->read_proc = irq_affinity_read_proc;
  			entry->write_proc = irq_affinity_write_proc;
  		}
@@ -39329,7 +39347,7 @@ Index: linux/kernel/irq/proc.c
  	}
  #endif
  }
-@@ -151,10 +116,104 @@ void register_irq_proc(unsigned int irq)
+@@ -151,10 +115,104 @@ void register_irq_proc(unsigned int irq)
  
  void unregister_handler_proc(unsigned int irq, struct irqaction *action)
  {
@@ -39435,7 +39453,7 @@ Index: linux/kernel/irq/proc.c
  void init_irq_proc(void)
  {
  	int i;
-@@ -164,6 +223,9 @@ void init_irq_proc(void)
+@@ -164,6 +222,9 @@ void init_irq_proc(void)
  	if (!root_irq_dir)
  		return;
  
@@ -42600,6 +42618,24 @@ Index: linux/kernel/posix-cpu-timers.c
  	}
  
  	if (error)
+@@ -562,7 +564,7 @@ static void arm_timer(struct k_itimer *t
+ 		p->cpu_timers : p->signal->cpu_timers);
+ 	head += CPUCLOCK_WHICH(timer->it_clock);
+ 
+-	BUG_ON(!irqs_disabled());
++	BUG_ON_NONRT(!irqs_disabled());
+ 	spin_lock(&p->sighand->siglock);
+ 
+ 	listpos = head;
+@@ -719,7 +721,7 @@ int posix_cpu_timer_set(struct k_itimer 
+ 	/*
+ 	 * Disarm any old timer after extracting its expiry time.
+ 	 */
+-	BUG_ON(!irqs_disabled());
++	BUG_ON_NONRT(!irqs_disabled());
+ 
+ 	ret = 0;
+ 	spin_lock(&p->sighand->siglock);
 @@ -1196,7 +1198,7 @@ static void check_process_timers(struct 
  
  			do {
@@ -47105,43 +47141,41 @@ Index: linux/kernel/sched.c
  	rq = task_rq_lock(p, &flags);
  	old_state = p->state;
  	if (!(old_state & state))
-@@ -1270,12 +1588,45 @@ out_set_cpu:
- 
+@@ -1271,11 +1589,43 @@ out_set_cpu:
  		this_cpu = smp_processor_id();
  		cpu = task_cpu(p);
-+	} else {
-+		/*
-+		 * If a newly woken up RT task cannot preempt the
-+		 * current (RT) task (on a target runqueue) then try
-+		 * to find another CPU it can preempt:
-+		 */
-+		if (rt_task(p) && !TASK_PREEMPTS_CURR(p, rq)) {
-+			this_rq = cpu_rq(this_cpu);
-+			/*
-+			 * Special-case: the task on this CPU can be
-+			 * preempted. In that case there's no need to
-+			 * trigger reschedules on other CPUs, we can
-+			 * mark the current task for reschedule.
-+			 *
-+			 * (Note that it's safe to access this_rq without
-+			 * extra locking in this particular case, because
-+			 * we are on the current CPU.)
-+			 */
-+			if (TASK_PREEMPTS_CURR(p, this_rq))
-+				set_tsk_need_resched(this_rq->curr);
-+			else
-+				/*
-+				 * Neither the intended target runqueue
-+				 * nor the current CPU can take this task.
-+				 * Trigger a reschedule on all other CPUs
-+				 * nevertheless, maybe one of them can take
-+				 * this task:
-+				 */
-+				smp_send_reschedule_allbutself();
-+
-+			schedstat_inc(this_rq, rto_wakeup);
-+		}
  	}
++	/*
++	 * If a newly woken up RT task cannot preempt the
++	 * current (RT) task (on a target runqueue) then try
++	 * to find another CPU it can preempt:
++	 */
++	if (rt_task(p) && !TASK_PREEMPTS_CURR(p, rq)) {
++		this_rq = cpu_rq(this_cpu);
++		/*
++		 * Special-case: the task on this CPU can be
++		 * preempted. In that case there's no need to
++		 * trigger reschedules on other CPUs, we can
++		 * mark the current task for reschedule.
++		 *
++		 * (Note that it's safe to access this_rq without
++		 * extra locking in this particular case, because
++		 * we are on the current CPU.)
++		 */
++		if (TASK_PREEMPTS_CURR(p, this_rq))
++			set_tsk_need_resched(this_rq->curr);
++		else
++			/*
++			 * Neither the intended target runqueue
++			 * nor the current CPU can take this task.
++			 * Trigger a reschedule on all other CPUs
++			 * nevertheless, maybe one of them can take
++			 * this task:
++			 */
++			smp_send_reschedule_allbutself();
++
++		schedstat_inc(this_rq, rto_wakeup);
++	}
  
  out_activate:
  #endif /* CONFIG_SMP */
@@ -47151,7 +47185,7 @@ Index: linux/kernel/sched.c
  		/*
  		 * Tasks on involuntary sleep don't earn
  		 * sleep_avg beyond just interactive state.
-@@ -1292,7 +1643,6 @@ out_activate:
+@@ -1292,7 +1642,6 @@ out_activate:
  			p->sleep_type = SLEEP_NONINTERACTIVE;
  
  
@@ -47159,7 +47193,7 @@ Index: linux/kernel/sched.c
  	/*
  	 * Sync wakeups (i.e. those types of wakeups where the waker
  	 * has indicated that it will leave the CPU in short order)
-@@ -1302,13 +1652,32 @@ out_activate:
+@@ -1302,13 +1651,32 @@ out_activate:
  	 * to be considered on this CPU.)
  	 */
  	if (!sync || cpu != this_cpu) {
@@ -47194,7 +47228,7 @@ Index: linux/kernel/sched.c
  out:
  	task_rq_unlock(rq, &flags);
  
-@@ -1317,15 +1686,58 @@ out:
+@@ -1317,15 +1685,58 @@ out:
  
  int fastcall wake_up_process(task_t *p)
  {
@@ -47256,7 +47290,7 @@ Index: linux/kernel/sched.c
  }
  
  /*
-@@ -1348,6 +1760,12 @@ void fastcall sched_fork(task_t *p, int 
+@@ -1348,6 +1759,12 @@ void fastcall sched_fork(task_t *p, int 
  	 * event cannot wake it up and insert it on the runqueue either.
  	 */
  	p->state = TASK_RUNNING;
@@ -47269,7 +47303,7 @@ Index: linux/kernel/sched.c
  	INIT_LIST_HEAD(&p->run_list);
  	p->array = NULL;
  #ifdef CONFIG_SCHEDSTATS
-@@ -1427,15 +1845,17 @@ void fastcall wake_up_new_task(task_t *p
+@@ -1427,15 +1844,17 @@ void fastcall wake_up_new_task(task_t *p
  				__activate_task(p, rq);
  			else {
  				p->prio = current->prio;
@@ -47292,7 +47326,7 @@ Index: linux/kernel/sched.c
  		/*
  		 * We skip the following code due to cpu == this_cpu
  	 	 *
-@@ -1551,11 +1971,26 @@ static inline void finish_task_switch(ru
+@@ -1551,11 +1970,26 @@ static inline void finish_task_switch(ru
  	 * be dropped twice.
  	 *		Manfred Spraul <manfred@colorfullife.com>
  	 */
@@ -47321,7 +47355,7 @@ Index: linux/kernel/sched.c
  	if (unlikely(prev_task_flags & PF_DEAD)) {
  		/*
  		 * Remove function-return probe instances associated with this
-@@ -1573,12 +2008,17 @@ static inline void finish_task_switch(ru
+@@ -1573,12 +2007,17 @@ static inline void finish_task_switch(ru
  asmlinkage void schedule_tail(task_t *prev)
  	__releases(rq->lock)
  {
@@ -47341,7 +47375,7 @@ Index: linux/kernel/sched.c
  	if (current->set_child_tid)
  		put_user(current->pid, current->set_child_tid);
  }
-@@ -1606,6 +2046,13 @@ task_t * context_switch(runqueue_t *rq, 
+@@ -1606,6 +2045,13 @@ task_t * context_switch(runqueue_t *rq, 
  		rq->prev_mm = oldmm;
  	}
  
@@ -47355,7 +47389,7 @@ Index: linux/kernel/sched.c
  	/* Here we just switch the register state and the stack. */
  	switch_to(prev, next, prev);
  
-@@ -1646,6 +2093,43 @@ unsigned long nr_uninterruptible(void)
+@@ -1646,6 +2092,43 @@ unsigned long nr_uninterruptible(void)
  	return sum;
  }
  
@@ -47399,7 +47433,7 @@ Index: linux/kernel/sched.c
  unsigned long long nr_context_switches(void)
  {
  	unsigned long long i, sum = 0;
-@@ -1730,7 +2214,7 @@ static void double_rq_unlock(runqueue_t 
+@@ -1730,7 +2213,7 @@ static void double_rq_unlock(runqueue_t 
  /*
   * double_lock_balance - lock the busiest runqueue, this_rq is locked already.
   */
@@ -47408,7 +47442,7 @@ Index: linux/kernel/sched.c
  	__releases(this_rq->lock)
  	__acquires(busiest->lock)
  	__acquires(this_rq->lock)
-@@ -1740,9 +2224,12 @@ static void double_lock_balance(runqueue
+@@ -1740,9 +2223,12 @@ static void double_lock_balance(runqueue
  			spin_unlock(&this_rq->lock);
  			spin_lock(&busiest->lock);
  			spin_lock(&this_rq->lock);
@@ -47421,7 +47455,7 @@ Index: linux/kernel/sched.c
  }
  
  /*
-@@ -2482,6 +2969,7 @@ unsigned long long current_sched_time(co
+@@ -2482,6 +2968,7 @@ unsigned long long current_sched_time(co
  {
  	unsigned long long ns;
  	unsigned long flags;
@@ -47429,7 +47463,7 @@ Index: linux/kernel/sched.c
  	local_irq_save(flags);
  	ns = max(tsk->timestamp, task_rq(tsk)->timestamp_last_tick);
  	ns = tsk->sched_time + (sched_clock() - ns);
-@@ -2520,7 +3008,9 @@ void account_user_time(struct task_struc
+@@ -2520,7 +3007,9 @@ void account_user_time(struct task_struc
  
  	/* Add user time to cpustat. */
  	tmp = cputime_to_cputime64(cputime);
@@ -47440,7 +47474,7 @@ Index: linux/kernel/sched.c
  		cpustat->nice = cputime64_add(cpustat->nice, tmp);
  	else
  		cpustat->user = cputime64_add(cpustat->user, tmp);
-@@ -2547,6 +3037,8 @@ void account_system_time(struct task_str
+@@ -2547,6 +3036,8 @@ void account_system_time(struct task_str
  		cpustat->irq = cputime64_add(cpustat->irq, tmp);
  	else if (softirq_count())
  		cpustat->softirq = cputime64_add(cpustat->softirq, tmp);
@@ -47449,7 +47483,7 @@ Index: linux/kernel/sched.c
  	else if (p != rq->idle)
  		cpustat->system = cputime64_add(cpustat->system, tmp);
  	else if (atomic_read(&rq->nr_iowait) > 0)
-@@ -2592,6 +3084,8 @@ void scheduler_tick(void)
+@@ -2592,6 +3083,8 @@ void scheduler_tick(void)
  	task_t *p = current;
  	unsigned long long now = sched_clock();
  
@@ -47458,7 +47492,7 @@ Index: linux/kernel/sched.c
  	update_cpu_clock(p, rq, now);
  
  	rq->timestamp_last_tick = now;
-@@ -2615,11 +3109,17 @@ void scheduler_tick(void)
+@@ -2615,11 +3108,17 @@ void scheduler_tick(void)
  	 * priority until it either goes to sleep or uses up its
  	 * timeslice. This makes it possible for interactive tasks
  	 * to use up their timeslices at their highest priority levels.
@@ -47476,7 +47510,7 @@ Index: linux/kernel/sched.c
  		 */
  		if ((p->policy == SCHED_RR) && !--p->time_slice) {
  			p->time_slice = task_timeslice(p);
-@@ -2745,8 +3245,8 @@ static int dependent_sleeper(int this_cp
+@@ -2745,8 +3244,8 @@ static int dependent_sleeper(int this_cp
  	struct sched_domain *tmp, *sd = NULL;
  	cpumask_t sibling_map;
  	prio_array_t *array;
@@ -47487,7 +47521,7 @@ Index: linux/kernel/sched.c
  
  	for_each_domain(this_cpu, tmp)
  		if (tmp->flags & SD_SHARE_CPUPOWER)
-@@ -2808,6 +3308,12 @@ static int dependent_sleeper(int this_cp
+@@ -2808,6 +3307,12 @@ static int dependent_sleeper(int this_cp
  				!TASK_PREEMPTS_CURR(p, smt_rq) &&
  				smt_slice(smt_curr, sd) > task_timeslice(p))
  					ret = 1;
@@ -47500,7 +47534,7 @@ Index: linux/kernel/sched.c
  
  check_smt_task:
  		if ((!smt_curr->mm && smt_curr != smt_rq->idle) ||
-@@ -2838,6 +3344,8 @@ check_smt_task:
+@@ -2838,6 +3343,8 @@ check_smt_task:
  out_unlock:
  	for_each_cpu_mask(i, sibling_map)
  		spin_unlock(&cpu_rq(i)->lock);
@@ -47509,7 +47543,7 @@ Index: linux/kernel/sched.c
  	return ret;
  }
  #else
-@@ -2851,35 +3359,41 @@ static inline int dependent_sleeper(int 
+@@ -2851,35 +3358,41 @@ static inline int dependent_sleeper(int 
  }
  #endif
  
@@ -47574,7 +47608,7 @@ Index: linux/kernel/sched.c
  
  #endif
  
-@@ -2890,9 +3404,9 @@ static inline int interactive_sleep(enum
+@@ -2890,9 +3403,9 @@ static inline int interactive_sleep(enum
  }
  
  /*
@@ -47586,7 +47620,7 @@ Index: linux/kernel/sched.c
  {
  	long *switch_count;
  	task_t *prev, *next;
-@@ -2903,12 +3417,15 @@ asmlinkage void __sched schedule(void)
+@@ -2903,12 +3416,15 @@ asmlinkage void __sched schedule(void)
  	unsigned long run_time;
  	int cpu, idx, new_prio;
  
@@ -47602,7 +47636,7 @@ Index: linux/kernel/sched.c
  		printk(KERN_ERR "BUG: scheduling while atomic: "
  			"%s/0x%08x/%d\n",
  			current->comm, preempt_count(), current->pid);
-@@ -2916,11 +3433,9 @@ asmlinkage void __sched schedule(void)
+@@ -2916,11 +3432,9 @@ asmlinkage void __sched schedule(void)
  	}
  	profile_hit(SCHED_PROFILING, __builtin_return_address(0));
  
@@ -47615,7 +47649,7 @@ Index: linux/kernel/sched.c
  	rq = this_rq();
  
  	/*
-@@ -2928,7 +3443,7 @@ need_resched_nonpreemptible:
+@@ -2928,7 +3442,7 @@ need_resched_nonpreemptible:
  	 * Remove this check after it has been exercised a bit.
  	 */
  	if (unlikely(prev == rq->idle) && prev->state != TASK_RUNNING) {
@@ -47624,7 +47658,7 @@ Index: linux/kernel/sched.c
  		dump_stack();
  	}
  
-@@ -2947,25 +3462,42 @@ need_resched_nonpreemptible:
+@@ -2947,25 +3461,42 @@ need_resched_nonpreemptible:
  	 */
  	run_time /= (CURRENT_BONUS(prev) ? : 1);
  
@@ -47674,7 +47708,7 @@ Index: linux/kernel/sched.c
  	if (unlikely(!rq->nr_running)) {
  go_idle:
  		idle_balance(cpu, rq);
-@@ -3036,6 +3568,7 @@ switch_tasks:
+@@ -3036,6 +3567,7 @@ switch_tasks:
  	prefetch(next);
  	prefetch_stack(next);
  	clear_tsk_need_resched(prev);
@@ -47682,7 +47716,7 @@ Index: linux/kernel/sched.c
  	rcu_qsctr_inc(task_cpu(prev));
  
  	update_cpu_clock(prev, rq, now);
-@@ -3045,6 +3578,8 @@ switch_tasks:
+@@ -3045,6 +3577,8 @@ switch_tasks:
  		prev->sleep_avg = 0;
  	prev->timestamp = prev->last_ran = now;
  
@@ -47691,7 +47725,7 @@ Index: linux/kernel/sched.c
  	sched_info_switch(prev, next);
  	if (likely(prev != next)) {
  		next->timestamp = now;
-@@ -3055,26 +3590,80 @@ switch_tasks:
+@@ -3055,26 +3589,80 @@ switch_tasks:
  		prepare_task_switch(rq, next);
  		prev = context_switch(rq, prev, next);
  		barrier();
@@ -47780,7 +47814,7 @@ Index: linux/kernel/sched.c
  /*
   * this is is the entry point to schedule() from in-kernel preemption
   * off of preempt_enable.  Kernel preemptions off return from interrupt
-@@ -3087,6 +3676,8 @@ asmlinkage void __sched preempt_schedule
+@@ -3087,6 +3675,8 @@ asmlinkage void __sched preempt_schedule
  	struct task_struct *task = current;
  	int saved_lock_depth;
  #endif
@@ -47789,7 +47823,7 @@ Index: linux/kernel/sched.c
  	/*
  	 * If there is a non-zero preempt_count or interrupts are disabled,
  	 * we do not want to preempt the current task.  Just return..
-@@ -3095,6 +3686,7 @@ asmlinkage void __sched preempt_schedule
+@@ -3095,6 +3685,7 @@ asmlinkage void __sched preempt_schedule
  		return;
  
  need_resched:
@@ -47797,7 +47831,7 @@ Index: linux/kernel/sched.c
  	add_preempt_count(PREEMPT_ACTIVE);
  	/*
  	 * We keep the big kernel semaphore locked, but we
-@@ -3105,25 +3697,25 @@ need_resched:
+@@ -3105,25 +3696,25 @@ need_resched:
  	saved_lock_depth = task->lock_depth;
  	task->lock_depth = -1;
  #endif
@@ -47831,7 +47865,7 @@ Index: linux/kernel/sched.c
   */
  asmlinkage void __sched preempt_schedule_irq(void)
  {
-@@ -3132,10 +3724,17 @@ asmlinkage void __sched preempt_schedule
+@@ -3132,10 +3723,17 @@ asmlinkage void __sched preempt_schedule
  	struct task_struct *task = current;
  	int saved_lock_depth;
  #endif
@@ -47851,7 +47885,7 @@ Index: linux/kernel/sched.c
  	add_preempt_count(PREEMPT_ACTIVE);
  	/*
  	 * We keep the big kernel semaphore locked, but we
-@@ -3146,17 +3745,17 @@ need_resched:
+@@ -3146,17 +3744,17 @@ need_resched:
  	saved_lock_depth = task->lock_depth;
  	task->lock_depth = -1;
  #endif
@@ -47874,7 +47908,7 @@ Index: linux/kernel/sched.c
  		goto need_resched;
  }
  
-@@ -3166,7 +3765,7 @@ int default_wake_function(wait_queue_t *
+@@ -3166,7 +3764,7 @@ int default_wake_function(wait_queue_t *
  			  void *key)
  {
  	task_t *p = curr->private;
@@ -47883,7 +47917,7 @@ Index: linux/kernel/sched.c
  }
  
  EXPORT_SYMBOL(default_wake_function);
-@@ -3210,8 +3809,9 @@ void fastcall __wake_up(wait_queue_head_
+@@ -3210,8 +3808,9 @@ void fastcall __wake_up(wait_queue_head_
  	unsigned long flags;
  
  	spin_lock_irqsave(&q->lock, flags);
@@ -47894,7 +47928,7 @@ Index: linux/kernel/sched.c
  }
  
  EXPORT_SYMBOL(__wake_up);
-@@ -3262,8 +3862,9 @@ void fastcall complete(struct completion
+@@ -3262,8 +3861,9 @@ void fastcall complete(struct completion
  	spin_lock_irqsave(&x->wait.lock, flags);
  	x->done++;
  	__wake_up_common(&x->wait, TASK_UNINTERRUPTIBLE | TASK_INTERRUPTIBLE,
@@ -47905,7 +47939,7 @@ Index: linux/kernel/sched.c
  }
  EXPORT_SYMBOL(complete);
  
-@@ -3274,11 +3875,18 @@ void fastcall complete_all(struct comple
+@@ -3274,11 +3874,18 @@ void fastcall complete_all(struct comple
  	spin_lock_irqsave(&x->wait.lock, flags);
  	x->done += UINT_MAX/2;
  	__wake_up_common(&x->wait, TASK_UNINTERRUPTIBLE | TASK_INTERRUPTIBLE,
@@ -47925,7 +47959,7 @@ Index: linux/kernel/sched.c
  void fastcall __sched wait_for_completion(struct completion *x)
  {
  	might_sleep();
-@@ -3473,6 +4081,63 @@ long fastcall __sched sleep_on_timeout(w
+@@ -3473,6 +4080,63 @@ long fastcall __sched sleep_on_timeout(w
  
  EXPORT_SYMBOL(sleep_on_timeout);
  
@@ -47989,7 +48023,7 @@ Index: linux/kernel/sched.c
  void set_user_nice(task_t *p, long nice)
  {
  	unsigned long flags;
-@@ -3505,7 +4170,7 @@ void set_user_nice(task_t *p, long nice)
+@@ -3505,7 +4169,7 @@ void set_user_nice(task_t *p, long nice)
  	new_prio = NICE_TO_PRIO(nice);
  	delta = new_prio - old_prio;
  	p->static_prio = NICE_TO_PRIO(nice);
@@ -47998,7 +48032,7 @@ Index: linux/kernel/sched.c
  
  	if (array) {
  		enqueue_task(p, array);
-@@ -3634,16 +4299,61 @@ static void __setscheduler(struct task_s
+@@ -3634,16 +4298,61 @@ static void __setscheduler(struct task_s
  	BUG_ON(p->array);
  	p->policy = policy;
  	p->rt_priority = prio;
@@ -48067,7 +48101,7 @@ Index: linux/kernel/sched.c
  }
  
  /**
-@@ -3657,10 +4367,7 @@ int sched_setscheduler(struct task_struc
+@@ -3657,10 +4366,7 @@ int sched_setscheduler(struct task_struc
  		       struct sched_param *param)
  {
  	int retval;
@@ -48079,7 +48113,7 @@ Index: linux/kernel/sched.c
  
  recheck:
  	/* double check policy once rq lock held */
-@@ -3709,36 +4416,12 @@ recheck:
+@@ -3709,36 +4415,12 @@ recheck:
  	retval = security_task_setscheduler(p, policy, param);
  	if (retval)
  		return retval;
@@ -48119,7 +48153,7 @@ Index: linux/kernel/sched.c
  	return 0;
  }
  EXPORT_SYMBOL_GPL(sched_setscheduler);
-@@ -4036,10 +4719,11 @@ asmlinkage long sys_sched_yield(void)
+@@ -4036,10 +4718,11 @@ asmlinkage long sys_sched_yield(void)
  	 * no need to preempt or enable interrupts:
  	 */
  	__release(rq->lock);
@@ -48134,7 +48168,7 @@ Index: linux/kernel/sched.c
  
  	return 0;
  }
-@@ -4056,10 +4740,11 @@ static inline void __cond_resched(void)
+@@ -4056,10 +4739,11 @@ static inline void __cond_resched(void)
  	if (unlikely(system_state != SYSTEM_RUNNING))
  		return;
  	do {
@@ -48148,7 +48182,7 @@ Index: linux/kernel/sched.c
  }
  
  int __sched cond_resched(void)
-@@ -4081,43 +4766,121 @@ EXPORT_SYMBOL(cond_resched);
+@@ -4081,43 +4765,121 @@ EXPORT_SYMBOL(cond_resched);
   * operations here to prevent schedule() from being called twice (once via
   * spin_unlock(), once by hand).
   */
@@ -48278,7 +48312,7 @@ Index: linux/kernel/sched.c
  
  /**
   * yield - yield the current processor to other threads.
-@@ -4125,12 +4888,31 @@ EXPORT_SYMBOL(cond_resched_softirq);
+@@ -4125,12 +4887,31 @@ EXPORT_SYMBOL(cond_resched_softirq);
   * this is a shortcut for kernel-space yielding - it marks the
   * thread runnable and calls sys_sched_yield().
   */
@@ -48311,7 +48345,7 @@ Index: linux/kernel/sched.c
  EXPORT_SYMBOL(yield);
  
  /*
-@@ -4271,25 +5053,29 @@ static void show_task(task_t *p)
+@@ -4271,25 +5052,29 @@ static void show_task(task_t *p)
  	task_t *relative;
  	unsigned state;
  	unsigned long free = 0;
@@ -48345,7 +48379,7 @@ Index: linux/kernel/sched.c
  #ifdef CONFIG_DEBUG_STACK_USAGE
  	{
  		unsigned long *n = end_of_stack(p);
-@@ -4316,13 +5102,14 @@ static void show_task(task_t *p)
+@@ -4316,13 +5101,14 @@ static void show_task(task_t *p)
  	else
  		printk(" (NOTLB)\n");
  
@@ -48361,7 +48395,7 @@ Index: linux/kernel/sched.c
  
  #if (BITS_PER_LONG == 32)
  	printk("\n"
-@@ -4333,7 +5120,16 @@ void show_state(void)
+@@ -4333,7 +5119,16 @@ void show_state(void)
  	       "                                                       sibling\n");
  	printk("  task                 PC          pid father child younger older\n");
  #endif
@@ -48378,7 +48412,7 @@ Index: linux/kernel/sched.c
  	do_each_thread(g, p) {
  		/*
  		 * reset the NMI-timeout, listing all files on a slow
-@@ -4343,8 +5139,10 @@ void show_state(void)
+@@ -4343,8 +5138,10 @@ void show_state(void)
  		show_task(p);
  	} while_each_thread(g, p);
  
@@ -48390,7 +48424,7 @@ Index: linux/kernel/sched.c
  }
  
  /**
-@@ -4363,7 +5161,7 @@ void __devinit init_idle(task_t *idle, i
+@@ -4363,7 +5160,7 @@ void __devinit init_idle(task_t *idle, i
  	idle->timestamp = sched_clock();
  	idle->sleep_avg = 0;
  	idle->array = NULL;
@@ -48399,7 +48433,7 @@ Index: linux/kernel/sched.c
  	idle->state = TASK_RUNNING;
  	idle->cpus_allowed = cpumask_of_cpu(cpu);
  	set_task_cpu(idle, cpu);
-@@ -4376,7 +5174,9 @@ void __devinit init_idle(task_t *idle, i
+@@ -4376,7 +5173,9 @@ void __devinit init_idle(task_t *idle, i
  	spin_unlock_irqrestore(&rq->lock, flags);
  
  	/* Set the preempt count _outside_ the spinlocks! */
@@ -48410,7 +48444,7 @@ Index: linux/kernel/sched.c
  	task_thread_info(idle)->preempt_count = (idle->lock_depth >= 0);
  #else
  	task_thread_info(idle)->preempt_count = 0;
-@@ -4460,12 +5260,13 @@ EXPORT_SYMBOL_GPL(set_cpus_allowed);
+@@ -4460,12 +5259,13 @@ EXPORT_SYMBOL_GPL(set_cpus_allowed);
   * So we race with normal scheduler movements, but that's OK, as long
   * as the task is no longer on this CPU.
   */
@@ -48426,7 +48460,7 @@ Index: linux/kernel/sched.c
  
  	rq_src = cpu_rq(src_cpu);
  	rq_dest = cpu_rq(dest_cpu);
-@@ -4478,7 +5279,9 @@ static void __migrate_task(struct task_s
+@@ -4478,7 +5278,9 @@ static void __migrate_task(struct task_s
  	if (!cpu_isset(dest_cpu, p->cpus_allowed))
  		goto out;
  
@@ -48436,7 +48470,7 @@ Index: linux/kernel/sched.c
  	if (p->array) {
  		/*
  		 * Sync timestamp with rq_dest's before activating.
-@@ -4492,10 +5295,13 @@ static void __migrate_task(struct task_s
+@@ -4492,10 +5294,13 @@ static void __migrate_task(struct task_s
  		activate_task(p, rq_dest, 0);
  		if (TASK_PREEMPTS_CURR(p, rq_dest))
  			resched_task(rq_dest->curr);
@@ -48450,7 +48484,7 @@ Index: linux/kernel/sched.c
  }
  
  /*
-@@ -4690,9 +5496,9 @@ static void migrate_dead(unsigned int de
+@@ -4690,9 +5495,9 @@ static void migrate_dead(unsigned int de
  	 * that's OK.  No task can be added to this CPU, so iteration is
  	 * fine.
  	 */
@@ -48462,7 +48496,7 @@ Index: linux/kernel/sched.c
  
  	put_task_struct(tsk);
  }
-@@ -6132,6 +6938,7 @@ void __init sched_init(void)
+@@ -6132,6 +6937,7 @@ void __init sched_init(void)
  
  		for (j = 0; j < 2; j++) {
  			array = rq->arrays + j;
@@ -48470,7 +48504,7 @@ Index: linux/kernel/sched.c
  			for (k = 0; k < MAX_PRIO; k++) {
  				INIT_LIST_HEAD(array->queue + k);
  				__clear_bit(k, array->bitmap);
-@@ -6147,6 +6954,9 @@ void __init sched_init(void)
+@@ -6147,6 +6953,9 @@ void __init sched_init(void)
  	atomic_inc(&init_mm.mm_count);
  	enter_lazy_tlb(&init_mm, current);
  
@@ -48480,7 +48514,7 @@ Index: linux/kernel/sched.c
  	/*
  	 * Make us the idle thread. Technically, schedule() should not be
  	 * called from this thread, however somewhere below it might be,
-@@ -6156,7 +6966,7 @@ void __init sched_init(void)
+@@ -6156,7 +6965,7 @@ void __init sched_init(void)
  	init_idle(current, smp_processor_id());
  }
  
@@ -48489,7 +48523,7 @@ Index: linux/kernel/sched.c
  void __might_sleep(char *file, int line)
  {
  #if defined(in_atomic)
-@@ -6164,13 +6974,17 @@ void __might_sleep(char *file, int line)
+@@ -6164,13 +6973,17 @@ void __might_sleep(char *file, int line)
  
  	if ((in_atomic() || irqs_disabled()) &&
  	    system_state == SYSTEM_RUNNING && !oops_in_progress) {
@@ -48510,7 +48544,7 @@ Index: linux/kernel/sched.c
  		dump_stack();
  	}
  #endif
-@@ -6183,7 +6997,7 @@ void normalize_rt_tasks(void)
+@@ -6183,7 +6996,7 @@ void normalize_rt_tasks(void)
  {
  	struct task_struct *p;
  	prio_array_t *array;
@@ -48519,7 +48553,7 @@ Index: linux/kernel/sched.c
  	runqueue_t *rq;
  
  	read_lock_irq(&tasklist_lock);
-@@ -6191,6 +7005,7 @@ void normalize_rt_tasks(void)
+@@ -6191,6 +7004,7 @@ void normalize_rt_tasks(void)
  		if (!rt_task(p))
  			continue;
  
@@ -48527,7 +48561,7 @@ Index: linux/kernel/sched.c
  		rq = task_rq_lock(p, &flags);
  
  		array = p->array;
-@@ -6203,6 +7018,7 @@ void normalize_rt_tasks(void)
+@@ -6203,6 +7017,7 @@ void normalize_rt_tasks(void)
  		}
  
  		task_rq_unlock(rq, &flags);
@@ -48535,7 +48569,7 @@ Index: linux/kernel/sched.c
  	}
  	read_unlock_irq(&tasklist_lock);
  }
-@@ -6252,3 +7068,23 @@ void set_curr_task(int cpu, task_t *p)
+@@ -6252,3 +7067,23 @@ void set_curr_task(int cpu, task_t *p)
  }
  
  #endif
@@ -52411,7 +52445,7 @@ Index: linux/lib/Kconfig.debug
 +	bool "Latency tracing"
 +	default n
 +	depends on LATENCY_TIMING
-+	select USE_FRAME_POINTER
++	select FRAME_POINTER
 +	help
 +	  This option enables a kernel tracing mechanism that will track
 +	  precise function-call granularity kernel execution during
@@ -52430,26 +52464,6 @@ Index: linux/lib/Kconfig.debug
 +
  config DEBUG_KOBJECT
  	bool "kobject debugging"
- 	depends on DEBUG_KERNEL
-@@ -179,6 +365,7 @@ config DEBUG_VM
- config FRAME_POINTER
- 	bool "Compile the kernel with frame pointers"
- 	depends on DEBUG_KERNEL && (X86 || CRIS || M68K || M68KNOMMU || FRV || UML)
-+	depends on !MCOUNT
- 	default y if DEBUG_INFO && UML
- 	help
- 	  If you say Y here the resulting kernel image will be slightly larger
-@@ -210,6 +397,11 @@ config FORCED_INLINING
- 	  become the default in the future, until then this option is there to
- 	  test gcc for this.
- 
-+config FRAME_POINTER
-+	bool
-+	depends on USE_FRAME_POINTER || MCOUNT
-+	default y
-+
- config RCU_TORTURE_TEST
- 	tristate "torture tests for RCU"
  	depends on DEBUG_KERNEL
 Index: linux/lib/Makefile
 ===================================================================
