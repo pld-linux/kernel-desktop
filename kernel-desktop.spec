@@ -41,7 +41,7 @@
 %define		_oprofile_ver		0.9
 %define		_udev_ver		071
 
-%define		_rel			0.1
+%define		_rel			0.1.1
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -79,6 +79,7 @@ Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_r
 #Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
+Source5:	kernel-desktop-module-build.pl
 
 Source20:	kernel-desktop-common.config
 Source21:	kernel-desktop-i386.config
@@ -956,6 +957,9 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{ver}/include/linux
 install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/autoconf.h
 install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/config.h
 
+# collect module-build files and directories
+perl %{SOURCE5} %{_prefix}/src/linux-%{ver} $KERNEL_BUILD_DIR
+
 %if %{with up} || %{with smp}
 # ghosted initrd
 touch $RPM_BUILD_ROOT/boot/initrd-%{ver_rel}{,smp}.gz
@@ -1297,24 +1301,14 @@ fi
 %{_prefix}/src/linux-%{ver}/config-up
 %{?with_up:%{_prefix}/src/linux-%{ver}/Module.symvers-up}
 
-%files module-build
+%files module-build -f aux_files
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{ver}/Kbuild
-%{_prefix}/src/linux-%{ver}/Makefile
 %{_prefix}/src/linux-%{ver}/localversion
-%dir %{_prefix}/src/linux-%{ver}/arch
-%dir %{_prefix}/src/linux-%{ver}/arch/*
-%{_prefix}/src/linux-%{ver}/arch/*/Makefile*
-%{_prefix}/src/linux-%{ver}/*/Kconfig*
-%{_prefix}/src/linux-%{ver}/*/*/Kconfig*
-%{_prefix}/src/linux-%{ver}/*/*/*/Kconfig*
-%{_prefix}/src/linux-%{ver}/*/*/*/*/Kconfig*
-%{_prefix}/src/linux-%{ver}/*/*/*/*/*/Kconfig*
-%dir %{_prefix}/src/linux-%{ver}/arch/*/kernel
-%{_prefix}/src/linux-%{ver}/arch/*/kernel/Makefile
 %{_prefix}/src/linux-%{ver}/arch/*/kernel/asm-offsets.*
 %{_prefix}/src/linux-%{ver}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{ver}/scripts
+%dir %{_prefix}/src/linux-%{ver}/scripts/kconfig
 %{_prefix}/src/linux-%{ver}/scripts/Kbuild.include
 %{_prefix}/src/linux-%{ver}/scripts/Makefile*
 %{_prefix}/src/linux-%{ver}/scripts/basic
@@ -1330,17 +1324,12 @@ fi
 %{_prefix}/src/linux-%{ver}/Documentation
 
 %if %{with source}
-%files source
+%files source -f aux_files_exc
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{ver}/arch/*/[!Mk]*
 %{_prefix}/src/linux-%{ver}/arch/*/kernel/[!M]*
 %exclude %{_prefix}/src/linux-%{ver}/arch/*/kernel/asm-offsets.*
 %exclude %{_prefix}/src/linux-%{ver}/arch/*/kernel/sigframe.h
-%exclude %{_prefix}/src/linux-%{ver}/*/Kconfig*
-%exclude %{_prefix}/src/linux-%{ver}/*/*/Kconfig*
-%exclude %{_prefix}/src/linux-%{ver}/*/*/*/Kconfig*
-%exclude %{_prefix}/src/linux-%{ver}/*/*/*/*/Kconfig*
-%exclude %{_prefix}/src/linux-%{ver}/*/*/*/*/*/Kconfig*
 %{_prefix}/src/linux-%{ver}/block
 %{_prefix}/src/linux-%{ver}/crypto
 %{_prefix}/src/linux-%{ver}/drivers
