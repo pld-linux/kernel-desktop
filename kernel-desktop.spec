@@ -693,7 +693,7 @@ Documentation.
 
 #%%patch60 -p1
 
-#%%patch300 -p1
+%patch300 -p1
 
 %if %{with grsec_minimal}
 %patch1000 -p1
@@ -971,16 +971,24 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz
-ln -sf System.map-%{ver_rel} /boot/System.map
+mv -f /boot/vmlinuz-%{_alt_kernel} /boot/vmlinuz-%{_alt_kernel}.old 2> /dev/null > /dev/null
+mv -f /boot/System.map-%{_alt_kernel} /boot/System.map.old-%{_alt_kernel} 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz-%{_alt_kernel}
+ln -sf System.map-%{ver_rel} /boot/System.map-%{_alt_kernel}
+if [ ! -e /boot/vmlinuz ]; then
+	mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+	mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+	ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz
+	ln -sf System.map-%{_alt_kernel} /boot/System.map
+	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
+	ln -sf %{initrd_dir}/initrd-%{_alt_kernel} %{initrd_dir}/initrd
+fi
 
 %depmod %{ver_rel}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{ver_rel}.gz %{ver_rel}
-mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-ln -sf initrd-%{ver_rel}.gz %{initrd_dir}/initrd
+mv -f %{initrd_dir}/initrd-%{_alt_kernel} %{initrd_dir}/initrd.old-%{_alt_kernel} 2> /dev/null > /dev/null
+ln -sf initrd-%{ver_rel}.gz %{initrd_dir}/initrd-%{_alt_kernel}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -997,8 +1005,8 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{ver_rel} /boot/vmlinux
+mv -f /boot/vmlinux-%{_alt_kernel} /boot/vmlinux.old-%{_alt_kernel} 2> /dev/null > /dev/null
+ln -sf vmlinux-%{ver_rel} /boot/vmlinux-%{_alt_kernel}
 
 %post drm
 %depmod %{ver_rel}
@@ -1031,16 +1039,24 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post smp
-mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{ver_rel}smp /boot/vmlinuz
-ln -sf System.map-%{ver_rel}smp /boot/System.map
+mv -f /boot/vmlinuz-%{_alt_kernel} /boot/vmlinuz.old-%{_alt_kernel} 2> /dev/null > /dev/null
+mv -f /boot/System.map-%{_alt_kernel} /boot/System.map.old-%{_alt_kernel} 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{ver_rel}smp /boot/vmlinuz-%{_alt_kernel}
+ln -sf System.map-%{ver_rel}smp /boot/System.map-%{_alt_kernel}
+if [ ! -e /boot/vmlinuz ]; then
+	mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
+	mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+	ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz
+	ln -sf System.map-%{ver_rel} /boot/System.map
+	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
+	ln -sf %{initrd_dir}/initrd-%{_alt_kernel} %{initrd_dir}/initrd
+fi
 
 %depmod %{ver_rel}smp
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{ver_rel}smp.gz %{ver_rel}smp
-mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-ln -sf initrd-%{ver_rel}smp.gz %{initrd_dir}/initrd
+mv -f %{initrd_dir}/initrd-%{_alt_kernel} %{initrd_dir}/initrd.old-%{_alt_kernel} 2> /dev/null > /dev/null
+ln -sf initrd-%{ver_rel}smp.gz %{initrd_dir}/initrd-%{_alt_kernel}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1057,8 +1073,8 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post smp-vmlinux
-mv -f /boot/vmlinux /boot/vmlinux.old 2> /dev/null > /dev/null
-ln -sf vmlinux-%{ver_rel}smp /boot/vmlinux
+mv -f /boot/vmlinux-%{_alt_kernel} /boot/vmlinux.old-%{_alt_kernel} 2> /dev/null > /dev/null
+ln -sf vmlinux-%{ver_rel}smp /boot/vmlinux-%{_alt_kernel}
 
 %post smp-drm
 %depmod %{ver_rel}smp
