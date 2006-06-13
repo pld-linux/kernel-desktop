@@ -25,23 +25,7 @@ diff -ur linux-2.6.16.11/arch/powerpc/kernel/ppc_ksyms.c linux-2.6.16.11.ppcfixe
 diff -ur linux-2.6.16.11/arch/powerpc/kernel/time.c linux-2.6.16.11.ppcfixed/arch/powerpc/kernel/time.c
 --- linux-2.6.16.11/arch/powerpc/kernel/time.c	2006-05-01 20:29:25.000000000 +0000
 +++ linux-2.6.16.11.ppcfixed/arch/powerpc/kernel/time.c	2006-05-01 20:22:52.000000000 +0000
-@@ -203,6 +203,7 @@
- /*
-  * This version of gettimeofday has microsecond resolution.
-  */
-+#if 0
- static inline void __do_gettimeofday(struct timeval *tv, u64 tb_val)
- {
- 	unsigned long sec, usec;
-@@ -252,6 +253,7 @@
- 	}
- 	__do_gettimeofday(tv, get_tb());
- }
-+#endif
- 
- EXPORT_SYMBOL(do_gettimeofday);
- 
-@@ -432,7 +434,7 @@
+@@ -432,7 +432,7 @@
   * timer_interrupt - gets called when the decrementer overflows,
   * with interrupts disabled.
   */
