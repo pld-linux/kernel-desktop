@@ -36,11 +36,3 @@ close F_OUT and print "aux_files created\n";
 open F_OUT, "> $fileoutdir/aux_files_exc" or die "Can't create aux_files_exc: $!\n";
 print F_OUT map {"\%exclude $_"} @toprint;
 close F_OUT and print "aux_files_exc created\n";
-
-open F_OUT, "| sort | uniq > $fileoutdir/aux_files_sh" or die "Can't create aux_files: $!\n";
-print F_OUT @tosort;
-close F_OUT and print "aux_files created\n";
-
-open F_OUT, "| sort | uniq > $fileoutdir/aux_files_exc_sh" or die "Can't create aux_files_exc: $!\n";
-print F_OUT map {"\%exclude $_"} @toprint;
-close F_OUT and print "aux_files_exc created\n";
