@@ -2844,8 +2844,21 @@ Index: linux/arch/arm/kernel/process.c
 ===================================================================
 --- linux.orig/arch/arm/kernel/process.c
 +++ linux/arch/arm/kernel/process.c
-@@ -124,8 +124,8 @@ void cpu_idle(void)
- 		while (!need_resched())
+@@ -90,7 +90,7 @@ static void default_idle(void)
+ 		cpu_relax();
+ 	else {
+ 		local_irq_disable();
+-		if (!need_resched()) {
++		if (!need_resched() && !need_resched_delayed()) {
+ 			timer_dyn_reprogram();
+ 			arch_idle();
+ 		}
+@@ -121,11 +121,11 @@ void cpu_idle(void)
+ 		if (!idle)
+ 			idle = default_idle;
+ 		leds_event(led_idle_start);
+-		while (!need_resched())
++		while (!need_resched() && !need_resched_delayed())
  			idle();
  		leds_event(led_idle_end);
 -		preempt_enable_no_resched();
@@ -3675,6 +3688,19 @@ Index: linux/arch/arm/mach-omap1/board-osk.c
  
  #include <linux/mtd/mtd.h>
  #include <linux/mtd/partitions.h>
+Index: linux/arch/arm/mach-omap1/pm.c
+===================================================================
+--- linux.orig/arch/arm/mach-omap1/pm.c
++++ linux/arch/arm/mach-omap1/pm.c
+@@ -118,7 +118,7 @@ void omap_pm_idle(void)
+ 
+ 	local_irq_disable();
+ 	local_fiq_disable();
+-	if (need_resched()) {
++	if (need_resched() || need_resched_delayed()) {
+ 		local_fiq_enable();
+ 		local_irq_enable();
+ 		return;
 Index: linux/arch/arm/mach-omap1/serial.c
 ===================================================================
 --- linux.orig/arch/arm/mach-omap1/serial.c
@@ -3687,6 +3713,19 @@ Index: linux/arch/arm/mach-omap1/serial.c
  #include <linux/delay.h>
  #include <linux/serial.h>
  #include <linux/tty.h>
+Index: linux/arch/arm/mach-omap2/pm.c
+===================================================================
+--- linux.orig/arch/arm/mach-omap2/pm.c
++++ linux/arch/arm/mach-omap2/pm.c
+@@ -45,7 +45,7 @@ void omap2_pm_idle(void)
+ {
+ 	local_irq_disable();
+ 	local_fiq_disable();
+-	if (need_resched()) {
++	if (need_resched() || need_resched_delayed()) {
+ 		local_fiq_enable();
+ 		local_irq_enable();
+ 		return;
 Index: linux/arch/arm/mach-pxa/idp.c
 ===================================================================
 --- linux.orig/arch/arm/mach-pxa/idp.c
@@ -4221,6 +4260,19 @@ Index: linux/arch/arm/plat-omap/mux.c
  
  	unsigned long flags;
  	struct pin_config *cfg;
+Index: linux/arch/arm/plat-omap/pm.c
+===================================================================
+--- linux.orig/arch/arm/plat-omap/pm.c
++++ linux/arch/arm/plat-omap/pm.c
+@@ -84,7 +84,7 @@ void omap_pm_idle(void)
+ 
+ 	local_irq_disable();
+ 	local_fiq_disable();
+-	if (need_resched()) {
++	if (need_resched() || need_resched_delayed()) {
+ 		local_fiq_enable();
+ 		local_irq_enable();
+ 		return;
 Index: linux/arch/arm26/boot/compressed/misc.c
 ===================================================================
 --- linux.orig/arch/arm26/boot/compressed/misc.c
@@ -39347,7 +39399,7 @@ Index: linux/kernel/irq/proc.c
  	}
  #endif
  }
-@@ -151,10 +115,104 @@ void register_irq_proc(unsigned int irq)
+@@ -151,10 +115,96 @@ void register_irq_proc(unsigned int irq)
  
  void unregister_handler_proc(unsigned int irq, struct irqaction *action)
  {
@@ -39356,12 +39408,8 @@ Index: linux/kernel/irq/proc.c
  	if (action->dir)
 -		remove_proc_entry(action->dir->name, irq_dir[irq]);
 +		remove_proc_entry(action->dir->name, irq_desc[irq].dir);
-+}
-+
-+#ifndef CONFIG_PREEMPT_RT
-+
-+#ifndef CONFIG_PREEMPT_RT
-+
+ }
+ 
 +#ifndef CONFIG_PREEMPT_RT
 +
 +static int threaded_read_proc(char *page, char **start, off_t off,
@@ -39369,8 +39417,8 @@ Index: linux/kernel/irq/proc.c
 +{
 +	return sprintf(page, "%c\n",
 +		((struct irqaction *)data)->flags & SA_NODELAY ? '0' : '1');
- }
- 
++}
++
 +static int threaded_write_proc(struct file *file, const char __user *buffer,
 +			       unsigned long count, void *data)
 +{
@@ -39395,10 +39443,6 @@ Index: linux/kernel/irq/proc.c
 +
 +	return 1;
 +}
-+
-+#endif
-+
-+#endif
 +
 +#endif
 +
@@ -39453,7 +39497,7 @@ Index: linux/kernel/irq/proc.c
  void init_irq_proc(void)
  {
  	int i;
-@@ -164,6 +222,9 @@ void init_irq_proc(void)
+@@ -164,6 +214,9 @@ void init_irq_proc(void)
  	if (!root_irq_dir)
  		return;
  
