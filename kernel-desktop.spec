@@ -72,11 +72,11 @@ Release:	%{_rel}
 Epoch:		0
 License:	GPL v2
 Group:		Base/Kernel
-#define		_rc	%{nil}
-%define		_rc	-rc6
-Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-# Source0-md5:	0113d3639b88dc2095df331c57dfaa9c
-#Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}%{_rc}.tar.bz2
+%define		_rc	%{nil}
+#define		_rc	-rc6
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+# Source0-md5:	37ddefe96625502161f075b9d907f21e
 Source1:	kernel-autoconf.h
 Source2:	kernel-config.h
 Source5:	kernel-desktop-module-build.pl
