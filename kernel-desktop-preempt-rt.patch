@@ -3925,17 +3925,7 @@ Index: linux/arch/arm/mach-versatile/core.c
  
  #include <asm/system.h>
  #include <asm/hardware.h>
-@@ -114,8 +115,7 @@ void __init versatile_init_irq(void)
- 
- 	vic_init(VA_VIC_BASE, IRQ_VIC_START, ~(1 << 31));
- 
--	set_irq_handler(IRQ_VICSOURCE31, sic_handle_irq);
--	enable_irq(IRQ_VICSOURCE31);
-+	set_irq_chained_handler(IRQ_VICSOURCE31, sic_handle_irq);
- 
- 	/* Do second interrupt controller */
- 	writel(~0, VA_SIC_BASE + SIC_IRQ_ENABLE_CLEAR);
-@@ -813,46 +813,6 @@ void __init versatile_init(void)
+@@ -812,46 +813,6 @@ void __init versatile_init(void)
  #endif
  
  /*
@@ -3982,7 +3972,7 @@ Index: linux/arch/arm/mach-versatile/core.c
   * IRQ handler for the timer
   */
  static irqreturn_t versatile_timer_interrupt(int irq, void *dev_id, struct pt_regs *regs)
-@@ -915,5 +875,36 @@ static void __init versatile_timer_init(
+@@ -914,5 +875,36 @@ static void __init versatile_timer_init(
  
  struct sys_timer versatile_timer = {
  	.init		= versatile_timer_init,
@@ -6541,7 +6531,7 @@ Index: linux/arch/i386/kernel/setup.c
 ===================================================================
 --- linux.orig/arch/i386/kernel/setup.c
 +++ linux/arch/i386/kernel/setup.c
-@@ -1580,6 +1580,7 @@ void __init setup_arch(char **cmdline_p)
+@@ -1583,6 +1583,7 @@ void __init setup_arch(char **cmdline_p)
  	conswitchp = &dummy_con;
  #endif
  #endif
@@ -14624,7 +14614,7 @@ Index: linux/arch/powerpc/platforms/pseries/setup.c
 ===================================================================
 --- linux.orig/arch/powerpc/platforms/pseries/setup.c
 +++ linux/arch/powerpc/platforms/pseries/setup.c
-@@ -434,7 +434,8 @@ static void pseries_dedicated_idle_sleep
+@@ -442,7 +442,8 @@ static void pseries_dedicated_idle_sleep
  		set_thread_flag(TIF_POLLING_NRFLAG);
  
  		while (get_tb() < start_snooze) {
@@ -14634,7 +14624,7 @@ Index: linux/arch/powerpc/platforms/pseries/setup.c
  				goto out;
  			ppc64_runlatch_off();
  			HMT_low();
-@@ -445,7 +446,8 @@ static void pseries_dedicated_idle_sleep
+@@ -453,7 +454,8 @@ static void pseries_dedicated_idle_sleep
  		clear_thread_flag(TIF_POLLING_NRFLAG);
  		smp_mb();
  		local_irq_disable();
@@ -16720,7 +16710,7 @@ Index: linux/arch/x86_64/kernel/io_apic.c
  
  static void mask_IO_APIC_irq (unsigned int irq)
  {
-@@ -837,30 +838,27 @@ next:
+@@ -857,30 +858,27 @@ next:
  }
  
  extern void (*interrupt[NR_IRQS])(void);
@@ -16766,7 +16756,7 @@ Index: linux/arch/x86_64/kernel/io_apic.c
  }
  
  static void __init setup_IO_APIC_irqs(void)
-@@ -961,7 +959,7 @@ static void __init setup_ExtINT_IRQ0_pin
+@@ -981,7 +979,7 @@ static void __init setup_ExtINT_IRQ0_pin
  	 * The timer IRQ doesn't have to know that behind the
  	 * scene we have a 8259A-master in AEOI mode ...
  	 */
@@ -16775,7 +16765,7 @@ Index: linux/arch/x86_64/kernel/io_apic.c
  
  	/*
  	 * Add it to the IO-APIC irq-routing table:
-@@ -1476,7 +1474,7 @@ static int __init timer_irq_works(void)
+@@ -1496,7 +1494,7 @@ static int __init timer_irq_works(void)
   * an edge even if it isn't on the 8259A...
   */
  
@@ -16784,7 +16774,7 @@ Index: linux/arch/x86_64/kernel/io_apic.c
  {
  	int was_pending = 0;
  	unsigned long flags;
-@@ -1493,86 +1491,21 @@ static unsigned int startup_edge_ioapic_
+@@ -1513,86 +1511,21 @@ static unsigned int startup_edge_ioapic_
  	return was_pending;
  }
  
@@ -16875,7 +16865,7 @@ Index: linux/arch/x86_64/kernel/io_apic.c
  {
  	int irq = vector_to_irq(vector);
  
-@@ -1589,7 +1522,15 @@ static void set_ioapic_affinity_vector (
+@@ -1609,7 +1542,15 @@ static void set_ioapic_affinity_vector (
  	set_ioapic_affinity_irq(irq, cpu_mask);
  }
  #endif // CONFIG_SMP
@@ -16892,7 +16882,7 @@ Index: linux/arch/x86_64/kernel/io_apic.c
  
  /*
   * Level and edge triggered IO-APIC interrupts need different handling,
-@@ -1600,30 +1541,22 @@ static void set_ioapic_affinity_vector (
+@@ -1620,30 +1561,22 @@ static void set_ioapic_affinity_vector (
   * races.
   */
  
@@ -16936,7 +16926,7 @@ Index: linux/arch/x86_64/kernel/io_apic.c
  };
  
  static inline void init_IO_APIC_traps(void)
-@@ -1658,42 +1591,32 @@ static inline void init_IO_APIC_traps(vo
+@@ -1678,42 +1611,32 @@ static inline void init_IO_APIC_traps(vo
  				make_8259A_irq(irq);
  			else
  				/* Strange. Oh, well.. */
@@ -16989,7 +16979,7 @@ Index: linux/arch/x86_64/kernel/io_apic.c
  };
  
  static void setup_nmi (void)
-@@ -1875,7 +1798,7 @@ static inline void check_timer(void)
+@@ -1895,7 +1818,7 @@ static inline void check_timer(void)
  	apic_printk(APIC_VERBOSE, KERN_INFO "...trying to set up timer as Virtual Wire IRQ...");
  
  	disable_8259A_irq(0);
@@ -34711,7 +34701,7 @@ Index: linux/kernel/exit.c
  	if (unlikely(in_interrupt()))
  		panic("Aiee, killing interrupt handler!");
  	if (unlikely(!tsk->pid))
-@@ -938,9 +945,18 @@ fastcall NORET_TYPE void do_exit(long co
+@@ -930,9 +937,18 @@ fastcall NORET_TYPE void do_exit(long co
  	tsk->mempolicy = NULL;
  #endif
  	/*
@@ -34730,7 +34720,7 @@ Index: linux/kernel/exit.c
  
  	if (tsk->io_context)
  		exit_io_context();
-@@ -949,14 +965,18 @@ fastcall NORET_TYPE void do_exit(long co
+@@ -941,14 +957,18 @@ fastcall NORET_TYPE void do_exit(long co
  		__free_pipe_info(tsk->splice_pipe);
  
  	/* PF_DEAD causes final put_task_struct after we schedule. */
@@ -34754,7 +34744,7 @@ Index: linux/kernel/exit.c
  }
  
  EXPORT_SYMBOL_GPL(do_exit);
-@@ -1451,6 +1471,7 @@ repeat:
+@@ -1443,6 +1463,7 @@ repeat:
  		list_for_each(_p,&tsk->children) {
  			p = list_entry(_p,struct task_struct,sibling);
  
@@ -37612,7 +37602,7 @@ Index: linux/kernel/irq/chip.c
 ===================================================================
 --- /dev/null
 +++ linux/kernel/irq/chip.c
-@@ -0,0 +1,562 @@
+@@ -0,0 +1,548 @@
 +/*
 + * linux/kernel/irq/chip.c
 + *
@@ -37823,15 +37813,8 @@ Index: linux/kernel/irq/chip.c
 +
 +	spin_lock(&desc->lock);
 +
-+	if (unlikely(desc->status & IRQ_INPROGRESS)) {
-+		static int once = 0;
-+		if (!once) {
-+			once = 1;
-+			printk(KERN_WARNING "handle_simple_irq reentered while "
-+			       "processing irq %d\n", irq);
-+		}
++	if (unlikely(desc->status & IRQ_INPROGRESS))
 +		goto out_unlock;
-+	}
 +	desc->status &= ~(IRQ_REPLAY | IRQ_WAITING);
 +	kstat_cpu(cpu).irqs[irq]++;
 +
@@ -37878,15 +37861,8 @@ Index: linux/kernel/irq/chip.c
 +	spin_lock(&desc->lock);
 +	mask_ack_irq(desc, irq);
 +
-+	if (unlikely(desc->status & IRQ_INPROGRESS)) {
-+		static int once = 0;
-+		if (!once) {
-+			once = 1;
-+			printk(KERN_WARNING "handle_level_irq reentered while "
-+			       "processing irq %d\n", irq);
-+		}
++	if (unlikely(desc->status & IRQ_INPROGRESS))
 +		goto out;
-+	}
 +	desc->status &= ~(IRQ_REPLAY | IRQ_WAITING);
 +	kstat_cpu(cpu).irqs[irq]++;
 +
@@ -42662,7 +42638,7 @@ Index: linux/kernel/posix-cpu-timers.c
  	}
  
  	if (error)
-@@ -562,7 +564,7 @@ static void arm_timer(struct k_itimer *t
+@@ -559,7 +561,7 @@ static void arm_timer(struct k_itimer *t
  		p->cpu_timers : p->signal->cpu_timers);
  	head += CPUCLOCK_WHICH(timer->it_clock);
  
@@ -42671,7 +42647,7 @@ Index: linux/kernel/posix-cpu-timers.c
  	spin_lock(&p->sighand->siglock);
  
  	listpos = head;
-@@ -719,7 +721,7 @@ int posix_cpu_timer_set(struct k_itimer 
+@@ -716,7 +718,7 @@ int posix_cpu_timer_set(struct k_itimer 
  	/*
  	 * Disarm any old timer after extracting its expiry time.
  	 */
@@ -42680,16 +42656,7 @@ Index: linux/kernel/posix-cpu-timers.c
  
  	ret = 0;
  	spin_lock(&p->sighand->siglock);
-@@ -1196,7 +1198,7 @@ static void check_process_timers(struct 
- 
- 			do {
- 				t = next_thread(t);
--			} while (unlikely(t->flags & PF_EXITING));
-+			} while ((t != tsk) && unlikely(t->flags & PF_EXITING));
- 		} while (t != tsk);
- 	}
- }
-@@ -1271,12 +1273,11 @@ out:
+@@ -1267,12 +1269,11 @@ out:
   * already updated our counts.  We need to check if any timers fire now.
   * Interrupts are disabled.
   */
@@ -42703,7 +42670,7 @@ Index: linux/kernel/posix-cpu-timers.c
  
  #define UNEXPIRED(clock) \
  		(cputime_eq(tsk->it_##clock##_expires, cputime_zero) || \
-@@ -1339,6 +1340,169 @@ void run_posix_cpu_timers(struct task_st
+@@ -1335,6 +1336,169 @@ void run_posix_cpu_timers(struct task_st
  	}
  }
  
@@ -42873,7 +42840,7 @@ Index: linux/kernel/posix-cpu-timers.c
  /*
   * Set one of the process-wide special case CPU timers.
   * The tasklist_lock and tsk->sighand->siglock must be held by the caller.
-@@ -1565,6 +1729,12 @@ static __init int init_posix_cpu_timers(
+@@ -1561,6 +1725,12 @@ static __init int init_posix_cpu_timers(
  		.timer_create = thread_cpu_timer_create,
  		.nsleep = thread_cpu_nsleep,
  	};
@@ -49687,7 +49654,7 @@ Index: linux/kernel/spinlock.c
  		if (!(lock)->break_lock)				\
  			(lock)->break_lock = 1;				\
 -		while (!op##_can_lock(lock) && (lock)->break_lock)	\
-+		while (!__raw_op##_can_lock(lock) &&			\
++		while (!__raw_##op##_can_lock(&(lock)->raw_lock) &&	\
 +			       		(lock)->break_lock)		\
  			cpu_relax();					\
  	}								\
