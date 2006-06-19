@@ -9,8 +9,15 @@
 %bcond_without	suspend2	# don't build software suspend support
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_without	grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
+%bcond_with	test_build	# don't patch with preemptrt nor any patch depending no it
 
 %{?debug:%define with_verbose 1}
+
+%if %{with test_build}
+%undefine	with_preemptrt
+%undefine	with_suspend2
+%undefine	with_grsec_minimal
+%endif
 
 %ifarch ppc
 %undefine	with_suspend2
@@ -629,7 +636,7 @@ Documentation.
 %prep
 %setup -q -n linux-%{version}%{_rc} 
 
-%patch0	-p1
+%{!?with_test_build:%patch0 -p1}
 
 %if %{with suspend2}
 %patch1 -p1
@@ -639,7 +646,7 @@ Documentation.
 
 %patch3 -p1
 
-%patch4 -p1
+%{!?with_test_build:%patch4 -p1}
 
 #%%ifarch %{ix86}
 # broken on amd64 ?
@@ -694,10 +701,12 @@ Documentation.
 
 #%%patch60 -p1
 
+%if !%{with test_build}
 %patch300 -p1
 
 %if %{with grsec_minimal}
 %patch1000 -p1
+%endif
 %endif
 
 # Fix EXTRAVERSION in main Makefile
