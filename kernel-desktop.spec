@@ -84,8 +84,8 @@ Group:		Base/Kernel
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
-Source1:	kernel-autoconf.h
-Source2:	kernel-config.h
+Source1:	kernel-desktop-autoconf.h
+Source2:	kernel-desktop-config.h
 Source5:	kernel-desktop-module-build.pl
 
 Source20:	kernel-desktop-common.config
@@ -99,10 +99,10 @@ Source26:	kernel-desktop-ppc-smp.config
 Source40:	kernel-desktop-preempt-common.config
 Source41:	kernel-desktop-preempt-rt.config
 Source42:	kernel-desktop-preempt-nopreempt.config
-Source43:	kernel-suspend2.config
+Source43:	kernel-desktop-suspend2.config
 Source44:	kernel-desktop-patches.config
 Source45:	kernel-desktop-netfilter.config
-Source46:	kernel-grsec.config
+Source46:	kernel-desktop-grsec.config
 
 ###
 #	Patches
@@ -114,71 +114,57 @@ Patch1:		kernel-desktop-suspend2.patch
 
 Patch2:		kernel-desktop-reiser4.patch
 
-# tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
-Patch3:		tahoe9xx-2.6.11.5.patch
+Patch3:		kernel-desktop-tahoe9xx.patch
 
-#	http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.16.patch
 Patch4:		kernel-desktop-fbsplash.patch
-Patch5:		linux-2.6-vesafb-tng.patch
+Patch5:		kernel-desktop-vesafb-tng.patch
 
-# directly from http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.0.tar.gz
-#		from linux-2.6.15
-Patch6:		squashfs%{squashfs_version}-patch
+Patch6:		kernel-desktop-squashfs.patch
 
-Patch8:		linux-fbcon-margins.patch
-Patch9:		linux-static-dev.patch
+Patch8:		kernel-desktop-fbcon-margins.patch
+Patch9:		kernel-desktop-static-dev.patch
 
 ########	netfilter snap
 ## base
-Patch10:	pom-ng-IPV4OPTSSTRIP-%{_netfilter_snap}.patch
-Patch11:	pom-ng-connlimit-%{_netfilter_snap}.patch
-Patch12:	pom-ng-expire-%{_netfilter_snap}.patch
-Patch13:	pom-ng-fuzzy-%{_netfilter_snap}.patch
-Patch14:	pom-ng-ipv4options-%{_netfilter_snap}.patch
-Patch15:	pom-ng-nth-%{_netfilter_snap}.patch
-Patch16:	pom-ng-osf-%{_netfilter_snap}.patch
-Patch17:	pom-ng-psd-%{_netfilter_snap}.patch
-Patch18:	pom-ng-quota-%{_netfilter_snap}.patch
-Patch19:	pom-ng-random-%{_netfilter_snap}.patch
-Patch20:	pom-ng-set-%{_netfilter_snap}.patch
-Patch21:	pom-ng-time-%{_netfilter_snap}.patch
-Patch22:	pom-ng-u32-%{_netfilter_snap}.patch
+Patch10:	kernel-desktop-pom-ng-IPV4OPTSSTRIP.patch
+Patch11:	kernel-desktop-pom-ng-connlimit.patch
+Patch12:	kernel-desktop-pom-ng-expire.patch
+Patch13:	kernel-desktop-pom-ng-fuzzy.patch
+Patch14:	kernel-desktop-pom-ng-ipv4options.patch
+Patch15:	kernel-desktop-pom-ng-nth.patch
+Patch16:	kernel-desktop-pom-ng-osf.patch
+Patch17:	kernel-desktop-pom-ng-psd.patch
+Patch18:	kernel-desktop-pom-ng-quota.patch
+Patch19:	kernel-desktop-pom-ng-random.patch
+Patch20:	kernel-desktop-pom-ng-set.patch
+Patch21:	kernel-desktop-pom-ng-time.patch
+Patch22:	kernel-desktop-pom-ng-u32.patch
 
 ## extra
-Patch30:	pom-ng-ACCOUNT-%{_netfilter_snap}.patch
-Patch31:	pom-ng-IPMARK-%{_netfilter_snap}.patch
-Patch32:	pom-ng-ROUTE-%{_netfilter_snap}.patch
-Patch33:	pom-ng-TARPIT-%{_netfilter_snap}.patch
-Patch34:	pom-ng-account-%{_netfilter_snap}.patch
-Patch35:	pom-ng-ipp2p-%{_netfilter_snap}.patch
-Patch36:	pom-ng-rpc-%{_netfilter_snap}.patch
+Patch30:	kernel-desktop-pom-ng-ACCOUNT.patch
+Patch31:	kernel-desktop-pom-ng-IPMARK.patch
+Patch32:	kernel-desktop-pom-ng-ROUTE.patch
+Patch33:	kernel-desktop-pom-ng-TARPIT.patch
+Patch34:	kernel-desktop-pom-ng-account.patch
+Patch35:	kernel-desktop-pom-ng-ipp2p.patch
+Patch36:	kernel-desktop-pom-ng-rpc.patch
 ########	End netfilter
 
-# from http://www.linuximq.net/patchs/linux-2.6.16-imq2.diff
-Patch50:	linux-2.6.16-imq2.diff
+Patch50:	kernel-desktop-imq2.patch
 
-# from http://bluetooth-alsa.sourceforge.net/sco-mtu.patch
-Patch51:	sco-mtu.patch
+Patch51:	kernel-desktop-sco-mtu.patch
 
-# support for HDAPS (Hard Disk Active Protection System)
-# that can be found in IBM/Lenovo ThinkPad laptops
-# from: http://www.dresco.co.uk/hdaps/hdaps_protect.20060326.patch
-Patch52:	linux-hdaps_protect.patch
+Patch52:	kernel-desktop-hdaps_protect.patch
 
-# esfq
-# from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
-Patch53:	esfq-kernel.patch
+Patch53:	kernel-desktop-esfq.patch
 
-Patch54:	linux-iforce-trust_ffrm.patch
-# by Baggins request:
-# derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
-Patch55:	linux-2.6-atm-vbr.patch
-Patch56:	linux-2.6-atmdd.patch
+Patch54:	kernel-desktop-small_fixes.patch
+Patch55:	kernel-desktop-atm-vbr.patch
+Patch56:	kernel-desktop-atmdd.patch
 
-Patch57:	linux-2.6-cpuset_virtualization.patch
+Patch57:	kernel-desktop-cpuset_virtualization.patch
 
-# Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_31.tar.bz2
-Patch60:	linux-2.6-sk98lin-8.31.2.3.patch
+Patch60:	kernel-desktop-sk98lin.patch
 
 Patch300:	kernel-desktop-preempt_ppc_fix.patch
 
