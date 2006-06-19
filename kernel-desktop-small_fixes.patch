@@ -67,3 +67,13 @@ diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.
  # define TIMER_FREQ 1000000000ULL
  #elif defined(CONFIG_IA64)
  # define TIMER_FREQ ((unsigned long long)local_cpu_data->itc_freq)
+--- linux-2.6.17/mm/readahead.c~	2006-06-18 03:49:35.000000000 +0200
++++ linux-2.6.17/mm/readahead.c	2006-06-19 22:09:12.000000000 +0200
+@@ -573,6 +573,7 @@
+ 	ra->flags &= ~RA_FLAG_INCACHE;
+ 	ra->cache_hit = 0;
+ }
++EXPORT_SYMBOL(handle_ra_miss);
+ 
+ /*
+  * Given a desired number of PAGE_CACHE_SIZE readahead pages, return a
