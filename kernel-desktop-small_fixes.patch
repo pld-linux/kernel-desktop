@@ -54,3 +54,16 @@ diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.
  				spin_unlock(&(cachep->nodelists[nodeid])->
  					    list_lock);
  			}
+--- linux-2.6.17/drivers/char/hangcheck-timer.c~	2006-06-19 22:03:01.000000000 +0200
++++ linux-2.6.17/drivers/char/hangcheck-timer.c	2006-06-19 22:02:21.000000000 +0200
+@@ -118,7 +118,9 @@
+ #endif /* not MODULE */
+ 
+ #if defined(CONFIG_X86_64) || defined(CONFIG_S390)
+-# define HAVE_MONOTONIC
++# if defined(CONFIG_S390)
++#  define HAVE_MONOTONIC
++# endif
+ # define TIMER_FREQ 1000000000ULL
+ #elif defined(CONFIG_IA64)
+ # define TIMER_FREQ ((unsigned long long)local_cpu_data->itc_freq)
