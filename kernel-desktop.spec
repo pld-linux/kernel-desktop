@@ -48,7 +48,7 @@
 %define		_oprofile_ver		0.9
 %define		_udev_ver		071
 
-%define		_rel			0.1.1
+%define		_rel			0.2
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -680,7 +680,7 @@ Documentation.
 %patch55 -p1
 %patch56 -p1
 
-%patch57 -p1
+#%%patch57 -p1
 
 %patch60 -p1
 
