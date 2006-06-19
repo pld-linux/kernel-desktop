@@ -1,7 +1,7 @@
-diff -ur linux-2.6.14.3/arch/i386/kernel/cpu/proc.c linux-2.6.14.3-cpusetvirt/arch/i386/kernel/cpu/proc.c
---- linux-2.6.14.3/arch/i386/kernel/cpu/proc.c	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/arch/i386/kernel/cpu/proc.c	2005-11-25 19:28:28.088979320 +0100
-@@ -3,6 +3,7 @@
+diff -Nur linux-2.6.17/arch/i386/kernel/cpu/proc.c linux-2.6.17.cpuset_virt/arch/i386/kernel/cpu/proc.c
+--- linux-2.6.17/arch/i386/kernel/cpu/proc.c	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.cpuset_virt/arch/i386/kernel/cpu/proc.c	2006-06-19 13:51:54.000000000 +0000
+@@ -4,6 +4,7 @@
  #include <asm/semaphore.h>
  #include <linux/seq_file.h>
  #include <linux/cpufreq.h>
@@ -9,7 +9,7 @@ diff -ur linux-2.6.14.3/arch/i386/kernel/cpu/proc.c linux-2.6.14.3-cpusetvirt/ar
  
  /*
   *	Get CPU information for use by the procfs.
-@@ -69,12 +70,20 @@
+@@ -80,12 +81,20 @@
  	if (!cpu_online(n))
  		return 0;
  #endif
@@ -30,19 +30,19 @@ diff -ur linux-2.6.14.3/arch/i386/kernel/cpu/proc.c linux-2.6.14.3-cpusetvirt/ar
  		c->x86_vendor_id[0] ? c->x86_vendor_id : "unknown",
  		c->x86,
  		c->x86_model,
-diff -ur linux-2.6.14.3/arch/ia64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/ia64/kernel/setup.c
---- linux-2.6.14.3/arch/ia64/kernel/setup.c	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/arch/ia64/kernel/setup.c	2005-11-25 19:28:28.090979016 +0100
-@@ -43,6 +43,7 @@
- #include <linux/platform.h>
+diff -Nur linux-2.6.17/arch/ia64/kernel/setup.c linux-2.6.17.cpuset_virt/arch/ia64/kernel/setup.c
+--- linux-2.6.17/arch/ia64/kernel/setup.c	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.cpuset_virt/arch/ia64/kernel/setup.c	2006-06-19 13:51:54.000000000 +0000
+@@ -44,6 +44,7 @@
+ #include <linux/initrd.h>
  #include <linux/pm.h>
  #include <linux/cpufreq.h>
 +#include <linux/cpuset.h>
  
  #include <asm/ia32.h>
  #include <asm/machvec.h>
-@@ -476,6 +477,11 @@
- 	unsigned long mask;
+@@ -515,6 +516,11 @@
+ 	unsigned long proc_freq;
  	int i;
  
 +#ifdef CONFIG_CPUSETS
@@ -53,7 +53,7 @@ diff -ur linux-2.6.14.3/arch/ia64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/
  	mask = c->features;
  
  	switch (c->family) {
-@@ -520,7 +526,12 @@
+@@ -563,7 +569,12 @@
  		   "cpu MHz    : %lu.%06lu\n"
  		   "itc MHz    : %lu.%06lu\n"
  		   "BogoMIPS   : %lu.%02lu\n",
@@ -65,20 +65,20 @@ diff -ur linux-2.6.14.3/arch/ia64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/
 +#endif
 +		   c->vendor, family, c->model, c->revision, c->archrev,
  		   features, c->ppn, c->number,
- 		   c->proc_freq / 1000000, c->proc_freq % 1000000,
+ 		   proc_freq / 1000, proc_freq % 1000,
  		   c->itc_freq / 1000000, c->itc_freq % 1000000,
-diff -ur linux-2.6.14.3/arch/x86_64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arch/x86_64/kernel/setup.c
---- linux-2.6.14.3/arch/x86_64/kernel/setup.c	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/arch/x86_64/kernel/setup.c	2005-11-25 19:37:48.755745016 +0100
-@@ -42,6 +42,7 @@
+diff -Nur linux-2.6.17/arch/x86_64/kernel/setup.c linux-2.6.17.cpuset_virt/arch/x86_64/kernel/setup.c
+--- linux-2.6.17/arch/x86_64/kernel/setup.c	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.cpuset_virt/arch/x86_64/kernel/setup.c	2006-06-19 13:52:23.000000000 +0000
+@@ -46,6 +46,7 @@
  #include <linux/cpufreq.h>
  #include <linux/dmi.h>
  #include <linux/dma-mapping.h>
 +#include <linux/cpuset.h>
+ #include <linux/ctype.h>
  
  #include <asm/mtrr.h>
- #include <asm/uaccess.h>
-@@ -1249,13 +1250,20 @@
+@@ -1332,13 +1333,20 @@
  	if (!cpu_online(c-cpu_data))
  		return 0;
  #endif
@@ -100,10 +100,10 @@ diff -ur linux-2.6.14.3/arch/x86_64/kernel/setup.c linux-2.6.14.3-cpusetvirt/arc
  		     c->x86_vendor_id[0] ? c->x86_vendor_id : "unknown",
  		     c->x86,
  		     (int)c->x86_model,
-diff -ur linux-2.6.14.3/fs/proc/proc_misc.c linux-2.6.14.3-cpusetvirt/fs/proc/proc_misc.c
---- linux-2.6.14.3/fs/proc/proc_misc.c	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/fs/proc/proc_misc.c	2005-11-25 19:28:28.092978712 +0100
-@@ -44,6 +44,7 @@
+diff -Nur linux-2.6.17/fs/proc/proc_misc.c linux-2.6.17.cpuset_virt/fs/proc/proc_misc.c
+--- linux-2.6.17/fs/proc/proc_misc.c	2006-06-19 13:41:22.000000000 +0000
++++ linux-2.6.17.cpuset_virt/fs/proc/proc_misc.c	2006-06-19 13:54:23.000000000 +0000
+@@ -45,6 +45,7 @@
  #include <linux/jiffies.h>
  #include <linux/sysrq.h>
  #include <linux/vmalloc.h>
@@ -111,8 +111,8 @@ diff -ur linux-2.6.14.3/fs/proc/proc_misc.c linux-2.6.14.3-cpusetvirt/fs/proc/pr
  #include <linux/crash_dump.h>
  #include <asm/uaccess.h>
  #include <asm/pgtable.h>
-@@ -353,6 +354,10 @@
- 	for_each_cpu(i) {
+@@ -468,6 +469,10 @@
+ 	for_each_possible_cpu(i) {
  		int j;
  
 +#ifdef CONFIG_CPUSETS
@@ -122,8 +122,8 @@ diff -ur linux-2.6.14.3/fs/proc/proc_misc.c linux-2.6.14.3-cpusetvirt/fs/proc/pr
  		user = cputime64_add(user, kstat_cpu(i).cpustat.user);
  		nice = cputime64_add(nice, kstat_cpu(i).cpustat.nice);
  		system = cputime64_add(system, kstat_cpu(i).cpustat.system);
-@@ -376,6 +381,10 @@
- 		(unsigned long long)cputime64_to_clock_t(steal));
+@@ -499,6 +504,10 @@
+ 
  	for_each_online_cpu(i) {
  
 +#ifdef CONFIG_CPUSETS
@@ -131,12 +131,12 @@ diff -ur linux-2.6.14.3/fs/proc/proc_misc.c linux-2.6.14.3-cpusetvirt/fs/proc/pr
 +			continue;
 +#endif
  		/* Copy values here to work around gcc-2.95.3, gcc-2.96 */
- 		user = kstat_cpu(i).cpustat.user;
- 		nice = kstat_cpu(i).cpustat.nice;
-@@ -386,7 +395,11 @@
+ 		user_rt = kstat_cpu(i).cpustat.user_rt;
+ 		system_rt = kstat_cpu(i).cpustat.system_rt;
+@@ -511,7 +520,11 @@
  		softirq = kstat_cpu(i).cpustat.softirq;
  		steal = kstat_cpu(i).cpustat.steal;
- 		seq_printf(p, "cpu%d %llu %llu %llu %llu %llu %llu %llu %llu\n",
+ 		seq_printf(p, "cpu%d %llu %llu %llu %llu %llu %llu %llu %llu %llu %llu\n",
 +#ifdef CONFIG_CPUSETS
 +			cpuid_in_cpuset(i, current->cpuset),
 +#else
@@ -145,54 +145,54 @@ diff -ur linux-2.6.14.3/fs/proc/proc_misc.c linux-2.6.14.3-cpusetvirt/fs/proc/pr
  			(unsigned long long)cputime64_to_clock_t(user),
  			(unsigned long long)cputime64_to_clock_t(nice),
  			(unsigned long long)cputime64_to_clock_t(system),
-diff -ur linux-2.6.14.3/include/linux/cpuset.h linux-2.6.14.3-cpusetvirt/include/linux/cpuset.h
---- linux-2.6.14.3/include/linux/cpuset.h	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/include/linux/cpuset.h	2005-11-25 19:28:28.093978560 +0100
-@@ -28,6 +28,9 @@
- extern struct file_operations proc_cpuset_operations;
- extern char *cpuset_task_status_allowed(struct task_struct *task, char *buffer);
+diff -Nur linux-2.6.17/include/linux/cpuset.h linux-2.6.17.cpuset_virt/include/linux/cpuset.h
+--- linux-2.6.17/include/linux/cpuset.h	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.cpuset_virt/include/linux/cpuset.h	2006-06-19 13:51:54.000000000 +0000
+@@ -63,6 +63,9 @@
+ 	return current->flags & PF_SPREAD_SLAB;
+ }
  
 +int cpu_visible_in_cpuset(int cpu, struct cpuset * cs);
 +int cpuid_in_cpuset(int cpu, struct cpuset * cs);
 +
  #else /* !CONFIG_CPUSETS */
  
- static inline int cpuset_init(void) { return 0; }
-diff -ur linux-2.6.14.3/include/linux/init_task.h linux-2.6.14.3-cpusetvirt/include/linux/init_task.h
---- linux-2.6.14.3/include/linux/init_task.h	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/include/linux/init_task.h	2005-11-25 19:28:28.079980688 +0100
-@@ -88,6 +88,7 @@
- 	.static_prio	= MAX_PRIO-20,					\
+ static inline int cpuset_init_early(void) { return 0; }
+diff -Nur linux-2.6.17/include/linux/init_task.h linux-2.6.17.cpuset_virt/include/linux/init_task.h
+--- linux-2.6.17/include/linux/init_task.h	2006-06-19 13:41:23.000000000 +0000
++++ linux-2.6.17.cpuset_virt/include/linux/init_task.h	2006-06-19 13:51:54.000000000 +0000
+@@ -91,6 +91,7 @@
+ 	.normal_prio	= MAX_PRIO-20,					\
  	.policy		= SCHED_NORMAL,					\
  	.cpus_allowed	= CPU_MASK_ALL,					\
 +	.cpus_virt_allowed	= CPU_MASK_ALL,				\
  	.mm		= NULL,						\
  	.active_mm	= &init_mm,					\
  	.run_list	= LIST_HEAD_INIT(tsk.run_list),			\
-diff -ur linux-2.6.14.3/include/linux/sched.h linux-2.6.14.3-cpusetvirt/include/linux/sched.h
---- linux-2.6.14.3/include/linux/sched.h	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/include/linux/sched.h	2005-11-25 19:28:28.081980384 +0100
-@@ -808,6 +808,7 @@
- 	struct mempolicy *mempolicy;
+diff -Nur linux-2.6.17/include/linux/sched.h linux-2.6.17.cpuset_virt/include/linux/sched.h
+--- linux-2.6.17/include/linux/sched.h	2006-06-19 13:41:26.000000000 +0000
++++ linux-2.6.17.cpuset_virt/include/linux/sched.h	2006-06-19 13:51:54.000000000 +0000
+@@ -1062,6 +1062,7 @@
+   	struct mempolicy *mempolicy;
  	short il_next;
  #endif
 +	cpumask_t cpus_virt_allowed;
  #ifdef CONFIG_CPUSETS
  	struct cpuset *cpuset;
  	nodemask_t mems_allowed;
-diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.c
---- linux-2.6.14.3/kernel/cpuset.c	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/kernel/cpuset.c	2005-11-25 19:28:28.084979928 +0100
-@@ -83,6 +83,7 @@
+diff -Nur linux-2.6.17/kernel/cpuset.c linux-2.6.17.cpuset_virt/kernel/cpuset.c
+--- linux-2.6.17/kernel/cpuset.c	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.cpuset_virt/kernel/cpuset.c	2006-06-19 13:51:54.000000000 +0000
+@@ -106,6 +106,7 @@
  	CS_CPU_EXCLUSIVE,
  	CS_MEM_EXCLUSIVE,
  	CS_MEMORY_MIGRATE,
 +	CS_VIRTUALIZED,
  	CS_REMOVED,
- 	CS_NOTIFY_ON_RELEASE
- } cpuset_flagbits_t;
-@@ -98,6 +99,10 @@
- 	return !!test_bit(CS_MEM_EXCLUSIVE, &cs->flags);
+ 	CS_NOTIFY_ON_RELEASE,
+ 	CS_SPREAD_PAGE,
+@@ -123,6 +124,10 @@
+ 	return test_bit(CS_MEM_EXCLUSIVE, &cs->flags);
  }
  
 +static inline int is_virtualized(const struct cpuset *cs)
@@ -201,8 +201,8 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 +}
  static inline int is_removed(const struct cpuset *cs)
  {
- 	return !!test_bit(CS_REMOVED, &cs->flags);
-@@ -590,6 +595,145 @@
+ 	return test_bit(CS_REMOVED, &cs->flags);
+@@ -699,6 +704,145 @@
  		is_mem_exclusive(p) <= is_mem_exclusive(q);
  }
  
@@ -348,7 +348,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
  /*
   * validate_change() - Used to validate that any proposed cpuset change
   *		       follows the structural rules for cpusets.
-@@ -624,6 +768,11 @@
+@@ -733,6 +877,11 @@
  	if ((par = cur->parent) == NULL)
  		return 0;
  
@@ -360,7 +360,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
  	/* We must be a subset of our parent cpuset */
  	if (!is_cpuset_subset(trial, par))
  		return -EACCES;
-@@ -818,11 +967,29 @@
+@@ -1216,11 +1365,29 @@
  		return -ESRCH;
  	}
  	atomic_inc(&cs->count);
@@ -392,15 +392,15 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
  
  	from = oldcs->mems_allowed;
  	to = cs->mems_allowed;
-@@ -839,6 +1006,7 @@
+@@ -1252,6 +1419,7 @@
  	FILE_MEMLIST,
  	FILE_CPU_EXCLUSIVE,
  	FILE_MEM_EXCLUSIVE,
 +	FILE_VIRTUALIZE,
  	FILE_NOTIFY_ON_RELEASE,
- 	FILE_TASKLIST,
- } cpuset_filetype_t;
-@@ -887,6 +1055,9 @@
+ 	FILE_MEMORY_PRESSURE_ENABLED,
+ 	FILE_MEMORY_PRESSURE,
+@@ -1304,6 +1472,9 @@
  	case FILE_MEM_EXCLUSIVE:
  		retval = update_flag(CS_MEM_EXCLUSIVE, cs, buffer);
  		break;
@@ -410,7 +410,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
  	case FILE_NOTIFY_ON_RELEASE:
  		retval = update_flag(CS_NOTIFY_ON_RELEASE, cs, buffer);
  		break;
-@@ -987,6 +1158,9 @@
+@@ -1421,6 +1592,9 @@
  	case FILE_MEM_EXCLUSIVE:
  		*s++ = is_mem_exclusive(cs) ? '1' : '0';
  		break;
@@ -420,7 +420,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
  	case FILE_NOTIFY_ON_RELEASE:
  		*s++ = notify_on_release(cs) ? '1' : '0';
  		break;
-@@ -1310,6 +1484,11 @@
+@@ -1782,6 +1956,11 @@
  	.private = FILE_MEM_EXCLUSIVE,
  };
  
@@ -432,7 +432,7 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
  static struct cftype cft_notify_on_release = {
  	.name = "notify_on_release",
  	.private = FILE_NOTIFY_ON_RELEASE,
-@@ -1327,6 +1506,8 @@
+@@ -1824,6 +2003,8 @@
  		return err;
  	if ((err = cpuset_add_file(cs_dentry, &cft_mem_exclusive)) < 0)
  		return err;
@@ -440,11 +440,11 @@ diff -ur linux-2.6.14.3/kernel/cpuset.c linux-2.6.14.3-cpusetvirt/kernel/cpuset.
 +		return err;
  	if ((err = cpuset_add_file(cs_dentry, &cft_notify_on_release)) < 0)
  		return err;
- 	if ((err = cpuset_add_file(cs_dentry, &cft_tasks)) < 0)
-diff -ur linux-2.6.14.3/kernel/kthread.c linux-2.6.14.3-cpusetvirt/kernel/kthread.c
---- linux-2.6.14.3/kernel/kthread.c	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/kernel/kthread.c	2005-11-25 19:28:28.094978408 +0100
-@@ -160,6 +160,15 @@
+ 	if ((err = cpuset_add_file(cs_dentry, &cft_memory_migrate)) < 0)
+diff -Nur linux-2.6.17/kernel/kthread.c linux-2.6.17.cpuset_virt/kernel/kthread.c
+--- linux-2.6.17/kernel/kthread.c	2006-06-19 13:41:25.000000000 +0000
++++ linux-2.6.17.cpuset_virt/kernel/kthread.c	2006-06-19 13:51:54.000000000 +0000
+@@ -241,6 +241,15 @@
  	wait_task_inactive(k);
  	set_task_cpu(k, cpu);
  	k->cpus_allowed = cpumask_of_cpu(cpu);
@@ -460,10 +460,10 @@ diff -ur linux-2.6.14.3/kernel/kthread.c linux-2.6.14.3-cpusetvirt/kernel/kthrea
  }
  EXPORT_SYMBOL(kthread_bind);
  
-diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
---- linux-2.6.14.3/kernel/sched.c	2005-11-24 23:10:21.000000000 +0100
-+++ linux-2.6.14.3-cpusetvirt/kernel/sched.c	2005-11-25 19:28:28.087979472 +0100
-@@ -3798,11 +3798,15 @@
+diff -Nur linux-2.6.17/kernel/sched.c linux-2.6.17.cpuset_virt/kernel/sched.c
+--- linux-2.6.17/kernel/sched.c	2006-06-19 13:41:25.000000000 +0000
++++ linux-2.6.17.cpuset_virt/kernel/sched.c	2006-06-19 13:51:54.000000000 +0000
+@@ -4539,11 +4539,15 @@
  	return retval;
  }
  
@@ -480,7 +480,7 @@ diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
  
  	lock_cpu_hotplug();
  	read_lock(&tasklist_lock);
-@@ -3827,9 +3827,11 @@
+@@ -4568,9 +4572,11 @@
  			!capable(CAP_SYS_NICE))
  		goto out_unlock;
  
@@ -495,7 +495,7 @@ diff -ur linux-2.6.14.3/kernel/sched.c linux-2.6.14.3-cpusetvirt/kernel/sched.c
  
  out_unlock:
  	put_task_struct(p);
-@@ -3897,7 +3904,12 @@
+@@ -4637,7 +4643,12 @@
  		goto out_unlock;
  
  	retval = 0;
