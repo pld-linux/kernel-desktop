@@ -634,10 +634,7 @@ Documentation.
 
 %{!?with_test_build:%patch4 -p1}
 
-#%%ifarch %{ix86}
-# broken on amd64 ?
 %patch5 -p1
-#%%endif
 
 %patch6 -p1
 
@@ -674,7 +671,7 @@ Documentation.
 
 %patch51 -p1
 
-#%%patch52 -p1
+%patch52 -p1
 
 %patch53 -p1
 
@@ -683,9 +680,9 @@ Documentation.
 %patch55 -p1
 %patch56 -p1
 
-#%%patch57 -p1
+%patch57 -p1
 
-#%%patch60 -p1
+%patch60 -p1
 
 %if !%{with test_build}
 %patch300 -p1
