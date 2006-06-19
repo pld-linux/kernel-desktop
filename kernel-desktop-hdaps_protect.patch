@@ -1,7 +1,7 @@
-diff -urN linux-2.6.16.original/block/ll_rw_blk.c linux-2.6.16.hdaps/block/ll_rw_blk.c
---- linux-2.6.16.original/block/ll_rw_blk.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/block/ll_rw_blk.c	2006-03-28 20:39:03.000000000 +0100
-@@ -39,6 +39,8 @@
+diff -Nur linux-2.6.17/block/ll_rw_blk.c linux-2.6.17.hdaps/block/ll_rw_blk.c
+--- linux-2.6.17/block/ll_rw_blk.c	2006-06-19 13:22:00.000000000 +0000
++++ linux-2.6.17.hdaps/block/ll_rw_blk.c	2006-06-19 13:31:59.000000000 +0000
+@@ -43,6 +43,8 @@
  static void drive_stat_acct(struct request *rq, int nr_sectors, int new_io);
  static void init_request_from_bio(struct request *req, struct bio *bio);
  static int __make_request(request_queue_t *q, struct bio *bio);
@@ -10,7 +10,7 @@ diff -urN linux-2.6.16.original/block/ll_rw_blk.c linux-2.6.16.hdaps/block/ll_rw
  
  /*
   * For the allocated request tables
-@@ -359,6 +361,18 @@
+@@ -363,6 +365,18 @@
  
  EXPORT_SYMBOL(blk_queue_issue_flush_fn);
  
@@ -29,7 +29,7 @@ diff -urN linux-2.6.16.original/block/ll_rw_blk.c linux-2.6.16.hdaps/block/ll_rw
  /*
   * Cache flushing for ordered writes handling
   */
-@@ -3817,6 +3831,7 @@
+@@ -3943,6 +3957,7 @@
  		return ret;
  	}
  
@@ -37,14 +37,15 @@ diff -urN linux-2.6.16.original/block/ll_rw_blk.c linux-2.6.16.hdaps/block/ll_rw
  	return 0;
  }
  
-@@ -3825,9 +3840,119 @@
+@@ -3951,6 +3966,7 @@
  	request_queue_t *q = disk->queue;
  
  	if (q && q->request_fn) {
 +		blk_protect_unregister(q);
  		elv_unregister_queue(q);
  
- 		kobject_unregister(&q->kobj);
+ 		kobject_uevent(&q->kobj, KOBJ_REMOVE);
+@@ -3958,3 +3974,113 @@
  		kobject_put(&disk->kobj);
  	}
  }
@@ -157,10 +158,11 @@ diff -urN linux-2.6.16.original/block/ll_rw_blk.c linux-2.6.16.hdaps/block/ll_rw
 +	sysfs_remove_file(&q->kobj,&queue_protect_entry.attr);
 +	kobject_put(&q->kobj);
 +}
-diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/drivers/ide/ide-disk.c
---- linux-2.6.16.original/drivers/ide/ide-disk.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/ide/ide-disk.c	2006-04-30 13:24:35.000000000 +0100
-@@ -71,6 +71,10 @@
++
+diff -Nur linux-2.6.17/drivers/ide/ide-disk.c linux-2.6.17.hdaps/drivers/ide/ide-disk.c
+--- linux-2.6.17/drivers/ide/ide-disk.c	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.hdaps/drivers/ide/ide-disk.c	2006-06-19 13:29:09.000000000 +0000
+@@ -73,6 +73,10 @@
  #include <asm/io.h>
  #include <asm/div64.h>
  
@@ -171,7 +173,7 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/driver
  struct ide_disk_obj {
  	ide_drive_t	*drive;
  	ide_driver_t	*driver;
-@@ -727,6 +731,154 @@
+@@ -731,6 +735,154 @@
  }
  
  /*
@@ -326,7 +328,7 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/driver
   * This is tightly woven into the driver->do_special can not touch.
   * DON'T do it again until a total personality rewrite is committed.
   */
-@@ -984,6 +1136,9 @@
+@@ -986,6 +1138,9 @@
  		drive->wcache = 1;
  
  	write_cache(drive, 1);
@@ -336,10 +338,10 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-disk.c linux-2.6.16.hdaps/driver
  }
  
  static void ide_cacheflush_p(ide_drive_t *drive)
-diff -urN linux-2.6.16.original/drivers/ide/ide-io.c linux-2.6.16.hdaps/drivers/ide/ide-io.c
---- linux-2.6.16.original/drivers/ide/ide-io.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/ide/ide-io.c	2006-03-26 15:10:44.000000000 +0100
-@@ -1180,6 +1180,17 @@
+diff -Nur linux-2.6.17/drivers/ide/ide-io.c linux-2.6.17.hdaps/drivers/ide/ide-io.c
+--- linux-2.6.17/drivers/ide/ide-io.c	2006-06-19 13:21:59.000000000 +0000
++++ linux-2.6.17.hdaps/drivers/ide/ide-io.c	2006-06-19 13:29:09.000000000 +0000
+@@ -1237,6 +1237,17 @@
  		}
  
  		/*
@@ -357,7 +359,7 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-io.c linux-2.6.16.hdaps/drivers/
  		 * Sanity: don't accept a request that isn't a PM request
  		 * if we are currently power managed. This is very important as
  		 * blk_stop_queue() doesn't prevent the elv_next_request()
-@@ -1660,6 +1671,9 @@
+@@ -1716,6 +1727,9 @@
  		where = ELEVATOR_INSERT_FRONT;
  		rq->flags |= REQ_PREEMPT;
  	}
@@ -367,10 +369,10 @@ diff -urN linux-2.6.16.original/drivers/ide/ide-io.c linux-2.6.16.hdaps/drivers/
  	__elv_add_request(drive->queue, rq, where, 0);
  	ide_do_request(hwgroup, IDE_NO_IRQ);
  	spin_unlock_irqrestore(&ide_lock, flags);
-diff -urN linux-2.6.16.original/drivers/scsi/libata-core.c linux-2.6.16.hdaps/drivers/scsi/libata-core.c
---- linux-2.6.16.original/drivers/scsi/libata-core.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/scsi/libata-core.c	2006-04-30 13:25:24.000000000 +0100
-@@ -78,6 +78,10 @@
+diff -Nur linux-2.6.17/drivers/scsi/libata-core.c linux-2.6.17.hdaps/drivers/scsi/libata-core.c
+--- linux-2.6.17/drivers/scsi/libata-core.c	2006-06-19 13:21:59.000000000 +0000
++++ linux-2.6.17.hdaps/drivers/scsi/libata-core.c	2006-06-19 13:32:47.000000000 +0000
+@@ -73,6 +73,10 @@
  static unsigned int ata_unique_id = 1;
  static struct workqueue_struct *ata_wq;
  
@@ -378,24 +380,13 @@ diff -urN linux-2.6.16.original/drivers/scsi/libata-core.c linux-2.6.16.hdaps/dr
 +module_param_named(protect_method, libata_protect_method, int, 0444);
 +MODULE_PARM_DESC(protect_method, "hdaps disk protection method (0=autodetect, 1=unload, 2=standby)");
 +
- int atapi_enabled = 0;
+ int atapi_enabled = 1;
  module_param(atapi_enabled, int, 0444);
  MODULE_PARM_DESC(atapi_enabled, "Enable discovery of ATAPI devices (0=off, 1=on)");
-diff -urN linux-2.6.16.original/drivers/scsi/libata.h linux-2.6.16.hdaps/drivers/scsi/libata.h
---- linux-2.6.16.original/drivers/scsi/libata.h	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/scsi/libata.h	2006-04-30 13:25:33.000000000 +0100
-@@ -40,6 +40,7 @@
- };
- 
- /* libata-core.c */
-+extern int libata_protect_method;
- extern int atapi_enabled;
- extern int libata_fua;
- extern struct ata_queued_cmd *ata_qc_new_init(struct ata_port *ap,
-diff -urN linux-2.6.16.original/drivers/scsi/libata-scsi.c linux-2.6.16.hdaps/drivers/scsi/libata-scsi.c
---- linux-2.6.16.original/drivers/scsi/libata-scsi.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/scsi/libata-scsi.c	2006-04-30 13:24:56.000000000 +0100
-@@ -662,6 +662,42 @@
+diff -Nur linux-2.6.17/drivers/scsi/libata-scsi.c linux-2.6.17.hdaps/drivers/scsi/libata-scsi.c
+--- linux-2.6.17/drivers/scsi/libata-scsi.c	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.hdaps/drivers/scsi/libata-scsi.c	2006-06-19 13:29:09.000000000 +0000
+@@ -694,6 +694,42 @@
  	}
  }
  
@@ -438,22 +429,33 @@ diff -urN linux-2.6.16.original/drivers/scsi/libata-scsi.c linux-2.6.16.hdaps/dr
  /**
   *	ata_scsi_slave_config - Set SCSI device attributes
   *	@sdev: SCSI device to examine
-@@ -712,6 +748,8 @@
- 			blk_queue_max_hw_segments(q, q->max_hw_segments - 1);
- 		}
+@@ -721,6 +757,8 @@
+ 
+ 		ata_scsi_dev_config(sdev, dev);
  	}
 +	blk_queue_issue_protect_fn(sdev->request_queue, ata_scsi_issue_protect_fn);	
 +	blk_queue_issue_unprotect_fn(sdev->request_queue, ata_scsi_issue_unprotect_fn);	
  
  	return 0;	/* scsi layer doesn't check return value, sigh */
  }
-diff -urN linux-2.6.16.original/drivers/scsi/scsi_lib.c linux-2.6.16.hdaps/drivers/scsi/scsi_lib.c
---- linux-2.6.16.original/drivers/scsi/scsi_lib.c	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/drivers/scsi/scsi_lib.c	2006-03-26 15:10:44.000000000 +0100
-@@ -2307,3 +2307,189 @@
- 	return 1;
+diff -Nur linux-2.6.17/drivers/scsi/libata.h linux-2.6.17.hdaps/drivers/scsi/libata.h
+--- linux-2.6.17/drivers/scsi/libata.h	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.hdaps/drivers/scsi/libata.h	2006-06-19 13:29:09.000000000 +0000
+@@ -40,6 +40,7 @@
+ };
+ 
+ /* libata-core.c */
++extern int libata_protect_method;
+ extern int atapi_enabled;
+ extern int libata_fua;
+ extern struct ata_queued_cmd *ata_qc_new_init(struct ata_port *ap,
+diff -Nur linux-2.6.17/drivers/scsi/scsi_lib.c linux-2.6.17.hdaps/drivers/scsi/scsi_lib.c
+--- linux-2.6.17/drivers/scsi/scsi_lib.c	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.hdaps/drivers/scsi/scsi_lib.c	2006-06-19 13:34:02.000000000 +0000
+@@ -2363,3 +2363,189 @@
+ 		device_for_each_child(dev, NULL, target_unblock);
  }
- EXPORT_SYMBOL_GPL(scsi_execute_in_process_context);
+ EXPORT_SYMBOL_GPL(scsi_target_unblock);
 +
 +/*
 + * As per scsi_wait_req_end_io(), which was removed in 2.6.15
@@ -640,21 +642,21 @@ diff -urN linux-2.6.16.original/drivers/scsi/scsi_lib.c linux-2.6.16.hdaps/drive
 +	return rc;
 +}
 +EXPORT_SYMBOL_GPL(scsi_protect_queue);
-diff -urN linux-2.6.16.original/include/linux/ata.h linux-2.6.16.hdaps/include/linux/ata.h
---- linux-2.6.16.original/include/linux/ata.h	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/include/linux/ata.h	2006-03-26 14:26:24.000000000 +0100
-@@ -250,6 +250,7 @@
- #define ata_id_is_sata(id)	((id)[93] == 0)
+diff -Nur linux-2.6.17/include/linux/ata.h linux-2.6.17.hdaps/include/linux/ata.h
+--- linux-2.6.17/include/linux/ata.h	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.hdaps/include/linux/ata.h	2006-06-19 13:34:34.000000000 +0000
+@@ -253,6 +253,7 @@
  #define ata_id_rahead_enabled(id) ((id)[85] & (1 << 6))
  #define ata_id_wcache_enabled(id) ((id)[85] & (1 << 5))
+ #define ata_id_hpa_enabled(id)	((id)[85] & (1 << 10))
 +#define ata_id_has_unload(id) ((id)[84] & (1 << 13))
  #define ata_id_has_fua(id)	((id)[84] & (1 << 6))
  #define ata_id_has_flush(id)	((id)[83] & (1 << 12))
  #define ata_id_has_flush_ext(id) ((id)[83] & (1 << 13))
-diff -urN linux-2.6.16.original/include/linux/blkdev.h linux-2.6.16.hdaps/include/linux/blkdev.h
---- linux-2.6.16.original/include/linux/blkdev.h	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/include/linux/blkdev.h	2006-03-26 14:26:24.000000000 +0100
-@@ -293,6 +293,8 @@
+diff -Nur linux-2.6.17/include/linux/blkdev.h linux-2.6.17.hdaps/include/linux/blkdev.h
+--- linux-2.6.17/include/linux/blkdev.h	2006-06-18 01:49:35.000000000 +0000
++++ linux-2.6.17.hdaps/include/linux/blkdev.h	2006-06-19 13:29:09.000000000 +0000
+@@ -302,6 +302,8 @@
  typedef int (issue_flush_fn) (request_queue_t *, struct gendisk *, sector_t *);
  typedef void (prepare_flush_fn) (request_queue_t *, struct request *);
  typedef void (softirq_done_fn)(struct request *);
@@ -663,7 +665,7 @@ diff -urN linux-2.6.16.original/include/linux/blkdev.h linux-2.6.16.hdaps/includ
  
  enum blk_queue_state {
  	Queue_down,
-@@ -335,6 +337,8 @@
+@@ -344,6 +346,8 @@
  	issue_flush_fn		*issue_flush_fn;
  	prepare_flush_fn	*prepare_flush_fn;
  	softirq_done_fn		*softirq_done_fn;
@@ -672,7 +674,7 @@ diff -urN linux-2.6.16.original/include/linux/blkdev.h linux-2.6.16.hdaps/includ
  
  	/*
  	 * Dispatch queue sorting
-@@ -715,6 +719,8 @@
+@@ -728,6 +732,8 @@
  extern unsigned blk_ordered_cur_seq(request_queue_t *);
  extern unsigned blk_ordered_req_seq(struct request *);
  extern void blk_ordered_complete_seq(request_queue_t *, unsigned, int);
@@ -681,10 +683,10 @@ diff -urN linux-2.6.16.original/include/linux/blkdev.h linux-2.6.16.hdaps/includ
  
  extern int blk_rq_map_sg(request_queue_t *, struct request *, struct scatterlist *);
  extern void blk_dump_rq_flags(struct request *, char *);
-diff -urN linux-2.6.16.original/include/linux/ide.h linux-2.6.16.hdaps/include/linux/ide.h
---- linux-2.6.16.original/include/linux/ide.h	2006-03-20 05:53:29.000000000 +0000
-+++ linux-2.6.16.hdaps/include/linux/ide.h	2006-03-26 14:26:24.000000000 +0100
-@@ -1081,6 +1081,7 @@
+diff -Nur linux-2.6.17/include/linux/ide.h linux-2.6.17.hdaps/include/linux/ide.h
+--- linux-2.6.17/include/linux/ide.h	2006-06-19 13:21:59.000000000 +0000
++++ linux-2.6.17.hdaps/include/linux/ide.h	2006-06-19 13:29:09.000000000 +0000
+@@ -1085,6 +1085,7 @@
   */
  typedef enum {
  	ide_wait,	/* insert rq at end of list, and wait for it */
