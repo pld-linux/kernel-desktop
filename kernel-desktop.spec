@@ -72,20 +72,25 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel-%{_alt_kernel}
-#define		_postver	.18
-%define		_postver	%{nil}
-Version:	2.6.17%{_postver}
+%define		_basever	2.6.17
+%define		_postver	.1
+#define		_postver	%{nil}
+Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		0
 License:	GPL v2
 Group:		Base/Kernel
 %define		_rc	%{nil}
 #define		_rc	-rc6
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{version}%{_rc}.tar.bz2
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{version}.tar.bz2
+#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{_basever}%{_rc}.tar.bz2
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
-Source1:	kernel-desktop-autoconf.h
-Source2:	kernel-desktop-config.h
+%if "%{_postver}" != "%{nil}"
+Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
+# Source1-md5:	f7197c29beb5bd28b6f566b58260ece8
+%endif
+Source3:	kernel-desktop-autoconf.h
+Source4:	kernel-desktop-config.h
 Source5:	kernel-desktop-module-build.pl
 
 Source20:	kernel-desktop-common.config
@@ -621,7 +626,11 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 Documentation.
 
 %prep
-%setup -q -n linux-%{version}%{_rc} 
+%setup -q -n linux-%{_basever}%{_rc} 
+
+%if "%{_postver}" != "%{nil}"
+bzcat %{SOURCE1} | patch -p1
+%endif
 
 %if !%{with test_build}
 %patch0 -p1
@@ -950,8 +959,8 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{ver}/include/linux
 
 %{__make} $CrossOpts mrproper
 %{__make} $CrossOpts include/linux/version.h
-install %{SOURCE1} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/autoconf.h
-install %{SOURCE2} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/config.h
+install %{SOURCE3} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/autoconf.h
+install %{SOURCE4} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/config.h
 
 # collect module-build files and directories
 perl %{SOURCE5} %{_prefix}/src/linux-%{ver} $KERNEL_BUILD_DIR
