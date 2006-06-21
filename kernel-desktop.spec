@@ -109,17 +109,18 @@ Source46:	kernel-desktop-grsec.config
 ###
 
 Patch0:		kernel-desktop-preempt-rt.patch
+Patch1:		kernel-desktop-fcache.patch
 
-Patch1:		kernel-desktop-suspend2.patch
+Patch2:		kernel-desktop-suspend2.patch
 
-Patch2:		kernel-desktop-reiser4.patch
+Patch3:		kernel-desktop-reiser4.patch
 
-Patch3:		kernel-desktop-tahoe9xx.patch
+Patch4:		kernel-desktop-tahoe9xx.patch
 
-Patch4:		kernel-desktop-fbsplash.patch
-Patch5:		kernel-desktop-vesafb-tng.patch
+Patch5:		kernel-desktop-fbsplash.patch
+Patch6:		kernel-desktop-vesafb-tng.patch
 
-Patch6:		kernel-desktop-squashfs.patch
+Patch7:		kernel-desktop-squashfs.patch
 
 Patch8:		kernel-desktop-fbcon-margins.patch
 Patch9:		kernel-desktop-static-dev.patch
@@ -622,21 +623,24 @@ Documentation.
 %prep
 %setup -q -n linux-%{version}%{_rc} 
 
-%{!?with_test_build:%patch0 -p1}
+%if !%{with test_build}
+%patch0 -p1
+%patch1 -p1
 
 %if %{with suspend2}
-%patch1 -p1
-%endif
-
 %patch2 -p1
+%endif
+%endif
 
 %patch3 -p1
 
-%{!?with_test_build:%patch4 -p1}
+%patch4 -p1
 
-%patch5 -p1
+%{!?with_test_build:%patch5 -p1}
 
 %patch6 -p1
+
+%patch7 -p1
 
 %patch8 -p1
 %patch9 -p1
