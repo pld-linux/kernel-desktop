@@ -7,8 +7,9 @@
 
 %bcond_without	preemptrt	# don't build preemptive kernel
 %bcond_without	suspend2	# don't build software suspend support
-%bcond_with	verbose		# verbose build (V=1)
 %bcond_without	grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
+%bcond_with	laptop		# build with HZ=100
+%bcond_with	verbose		# verbose build (V=1)
 %bcond_with	test_build	# don't patch with preemptrt nor any patch depending no it
 
 %{?debug:%define with_verbose 1}
@@ -48,7 +49,6 @@
 %define		_oprofile_ver		0.9
 %define		_udev_ver		071
 
-%define		_rel			0.2
 
 %define		_netfilter_snap		20060504
 %define		_nf_hipac_ver		0.9.1
@@ -74,7 +74,7 @@ Summary(pl):	J±dro Linuksa
 Name:		kernel-%{_alt_kernel}
 %define		_basever	2.6.17
 %define		_postver	.1
-#define		_postver	%{nil}
+%define		_rel		0.3
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		0
@@ -795,6 +795,13 @@ BuildConfig() {
 
 %if %{with grsec_minimal}
 	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with laptop}
+	sed -e "s:CONFIG_HZ_1000=y:# CONFIG_HZ_1000 is not set:"	\
+		-e "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:"	\
+		-e "s:CONFIG_HZ=1000:CONFIG_HZ=100:"			\
+		-i arch/%{_target_base_arch}/defconfig
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
