@@ -8,6 +8,7 @@
 %bcond_without	preemptrt	# don't build preemptive kernel
 %bcond_without	suspend2	# don't build software suspend support
 %bcond_without	grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
+%bcond_with	bootsplash	# build with bootsplash instead of fbsplash
 %bcond_with	laptop		# build with HZ=100
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	test_build	# don't patch with preemptrt nor any patch depending no it
@@ -169,6 +170,8 @@ Patch55:	kernel-desktop-atm-vbr.patch
 Patch56:	kernel-desktop-atmdd.patch
 
 Patch57:	kernel-desktop-cpuset_virtualization.patch
+
+Patch58:	kernel-desktop-bootsplash.patch
 
 Patch60:	kernel-desktop-sk98lin.patch
 
@@ -645,7 +648,11 @@ bzcat %{SOURCE1} | patch -p1
 
 %patch4 -p1
 
+%if !%{with bootsplash}
 %{!?with_test_build:%patch5 -p1}
+%else
+%patch58 -p1
+%endif
 
 %patch6 -p1
 
@@ -801,6 +808,12 @@ BuildConfig() {
 	sed -e "s:CONFIG_HZ_1000=y:# CONFIG_HZ_1000 is not set:"	\
 		-e "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:"	\
 		-e "s:CONFIG_HZ=1000:CONFIG_HZ=100:"			\
+		-i arch/%{_target_base_arch}/defconfig
+%endif
+
+%if %{with bootsplash}
+	sed -e 's:CONFIG_FB_SPLASH:CONFIG_BOOTSPLASH:'		\
+		-e 's:CONFIG_LOGO=y:# CONFIG_LOGO is not set:'	\
 		-i arch/%{_target_base_arch}/defconfig
 %endif
 
