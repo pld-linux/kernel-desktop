@@ -64,3 +64,16 @@ diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.
  
  /*
   * Given a desired number of PAGE_CACHE_SIZE readahead pages, return a
+--- linux-2.6.17/include/asm-powerpc/io.h~	2006-06-18 03:49:35.000000000 +0200
++++ linux-2.6.17/include/asm-powerpc/io.h	2006-06-22 02:10:00.000000000 +0200
+@@ -252,6 +252,10 @@
+  */
+ #define page_to_phys(page)	(page_to_pfn(page) << PAGE_SHIFT)
+ 
++#define isa_virt_to_bus virt_to_phys
++#define isa_page_to_bus page_to_phys
++#define isa_bus_to_virt phys_to_virt
++
+ /* We do NOT want virtual merging, it would put too much pressure on
+  * our iommu allocator. Instead, we want drivers to be smart enough
+  * to coalesce sglists that happen to have been mapped in a contiguous
