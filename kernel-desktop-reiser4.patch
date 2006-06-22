@@ -80758,3 +80758,14 @@ diff -puN mm/page-writeback.c~reiser4-for-2.6.16-3 mm/page-writeback.c
  
  /**
   * balance_dirty_pages_ratelimited - balance dirty memory state
+diff -puN mm/readahead.c~reiser4-for-2.6.16-3 mm/readahead.c
+--- linux-2.6.16-3/mm/readahead.c~reiser4-for-2.6.16-3	2006-05-30 18:51:50.016556750 +0400
++++ linux-2.6.16-3-vs/mm/readahead.c	2006-05-30 19:18:38.561084500 +0400
+@@ -558,6 +558,7 @@ void handle_ra_miss(struct address_space
+ 	ra->flags &= ~RA_FLAG_INCACHE;
+ 	ra->cache_hit = 0;
+ }
++EXPORT_SYMBOL_GPL(handle_ra_miss);
+ 
+ /*
+  * Given a desired number of PAGE_CACHE_SIZE readahead pages, return a
