@@ -1,0 +1,38 @@
+--- linux-2.6.17-rc6/kernel/softirq.c	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/kernel/softirq.c	2006-06-12 16:40:44.000000000 +0000
+@@ -585,7 +585,7 @@
+ 	param.sched_priority = 1;
+ 	sys_sched_setscheduler(current->pid, SCHED_FIFO, &param);
+ //	set_user_nice(current, -10);
+-	current->flags |= PF_NOFREEZE | PF_SOFTIRQ;
++	current->flags |= /*PF_NOFREEZE |*/ PF_SOFTIRQ;
+ 
+ #ifdef CONFIG_PREEMPT_SOFTIRQS
+ 	init_waitqueue_head(&data->wait);
+@@ -737,7 +737,7 @@
+ 		for (i = 0; i < MAX_SOFTIRQ; i++) {
+ 			per_cpu(ksoftirqd[i].nr, hotcpu) = i;
+ 			per_cpu(ksoftirqd[i].cpu, hotcpu) = hotcpu;
+-			p = kthread_create(ksoftirqd, &per_cpu(ksoftirqd[i], hotcpu),
++			p = kthread_nofreeze_create(ksoftirqd, &per_cpu(ksoftirqd[i], hotcpu),
+ 					   "softirq-%s/%d", softirq_names[i], hotcpu);
+ 			if (IS_ERR(p)) {
+ 				printk("ksoftirqd %d for %i failed\n", i, hotcpu);
+--- linux-2.6.17-rc6/include/linux/workqueue.h	2006-06-12 16:22:32.000000000 +0000
++++ linux-2.6.17-rc6.suspend2/include/linux/workqueue.h	2006-06-12 16:36:42.000000000 +0000
+@@ -55,9 +55,12 @@
+ 	} while (0)
+ 
+ extern struct workqueue_struct *__create_workqueue(const char *name,
+-						    int singlethread);
+-#define create_workqueue(name) __create_workqueue((name), 0)
+-#define create_singlethread_workqueue(name) __create_workqueue((name), 1)
++ 						    int singlethread,
++ 						    unsigned long freezer_flag);
++#define create_workqueue(name) __create_workqueue((name), 0, 0)
++#define create_nofreeze_workqueue(name) __create_workqueue((name), 0, PF_NOFREEZE)
++#define create_singlethread_workqueue(name) __create_workqueue((name), 1, 0)
++#define create_nofreeze_singlethread_workqueue(name) __create_workqueue((name), 1, PF_NOFREEZE)
+ extern void set_workqueue_prio(struct workqueue_struct *wq, int policy,
+ 				int rt_priority, int nice);
+ 
