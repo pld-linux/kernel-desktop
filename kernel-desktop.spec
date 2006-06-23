@@ -3,23 +3,15 @@
 %bcond_without	smp		# don't build SMP kernel
 %bcond_without	up		# don't build UP kernel
 %bcond_without	source		# don't build kernel-source package
-%bcond_without	pcmcia		# don't build pcmcia
 
-%bcond_without	preemptrt	# don't build preemptive kernel
+%bcond_with	preemptrt	# use realtime-preempt patch
 %bcond_without	ck		# don't use Con Kolivas patchset
 %bcond_without	grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
 %bcond_with	bootsplash	# build with bootsplash instead of fbsplash
 %bcond_with	laptop		# build with HZ=100
 %bcond_with	verbose		# verbose build (V=1)
-%bcond_with	test_build	# don't patch with preemptrt nor any patch depending no it
 
 %{?debug:%define with_verbose 1}
-
-%if %{with test_build}
-%undefine	with_preemptrt
-%undefine	with_suspend2
-%undefine	with_grsec_minimal
-%endif
 
 %ifarch %{ix86} ppc
 %define		have_isa	1
@@ -1177,7 +1169,6 @@ fi
 %dir /lib/modules/%{ver_rel}/kernel/sound
 /lib/modules/%{ver_rel}/kernel/sound/soundcore.*
 %dir /lib/modules/%{ver_rel}/misc
-%if %{with pcmcia}
 %exclude /lib/modules/%{ver_rel}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{ver_rel}/kernel/drivers/*/pcmcia
 %exclude /lib/modules/%{ver_rel}/kernel/drivers/bluetooth/*_cs.ko*
@@ -1189,7 +1180,6 @@ fi
 %exclude /lib/modules/%{ver_rel}/kernel/drivers/serial/serial_cs.ko*
 %exclude /lib/modules/%{ver_rel}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{ver_rel}/kernel/drivers/usb/host/sl811_cs.ko*
-%endif
 /lib/modules/%{ver_rel}/build
 %ghost /lib/modules/%{ver_rel}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{ver_rel}
@@ -1207,7 +1197,6 @@ fi
 /lib/modules/%{ver_rel}/kernel/net/netfilter
 /lib/modules/%{ver_rel}/kernel/net/*/netfilter
 
-%if %{with pcmcia}
 %files pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}/kernel/drivers/pcmcia
@@ -1221,7 +1210,6 @@ fi
 /lib/modules/%{ver_rel}/kernel/drivers/serial/serial_cs.ko*
 /lib/modules/%{ver_rel}/kernel/drivers/telephony/ixj_pcmcia.ko*
 /lib/modules/%{ver_rel}/kernel/drivers/usb/host/sl811_cs.ko*
-%endif
 
 %files sound-alsa
 %defattr(644,root,root,755)
@@ -1264,7 +1252,6 @@ fi
 %dir /lib/modules/%{ver_rel}smp/kernel/sound
 /lib/modules/%{ver_rel}smp/kernel/sound/soundcore.*
 %dir /lib/modules/%{ver_rel}smp/misc
-%if %{with pcmcia}
 %exclude /lib/modules/%{ver_rel}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{ver_rel}smp/kernel/drivers/*/pcmcia
 %exclude /lib/modules/%{ver_rel}smp/kernel/drivers/bluetooth/*_cs.ko*
@@ -1276,7 +1263,6 @@ fi
 %exclude /lib/modules/%{ver_rel}smp/kernel/drivers/serial/serial_cs.ko*
 %exclude /lib/modules/%{ver_rel}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{ver_rel}smp/kernel/drivers/usb/host/sl811_cs.ko*
-%endif
 /lib/modules/%{ver_rel}smp/build
 %ghost /lib/modules/%{ver_rel}smp/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{ver_rel}smp
@@ -1294,7 +1280,6 @@ fi
 /lib/modules/%{ver_rel}smp/kernel/net/netfilter
 /lib/modules/%{ver_rel}smp/kernel/net/*/netfilter
 
-%if %{with pcmcia}
 %files smp-pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}smp/kernel/drivers/pcmcia
@@ -1308,7 +1293,6 @@ fi
 /lib/modules/%{ver_rel}smp/kernel/drivers/serial/serial_cs.ko*
 /lib/modules/%{ver_rel}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
 /lib/modules/%{ver_rel}smp/kernel/drivers/usb/host/sl811_cs.ko*
-%endif
 
 %files smp-sound-alsa
 %defattr(644,root,root,755)
