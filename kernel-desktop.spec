@@ -98,9 +98,8 @@ Source24:	kernel-desktop-x86_64-smp.config
 Source25:	kernel-desktop-ppc.config
 Source26:	kernel-desktop-ppc-smp.config
 
-Source40:	kernel-desktop-preempt-common.config
 Source41:	kernel-desktop-preempt-rt.config
-Source42:	kernel-desktop-preempt-nopreempt.config
+Source42:	kernel-desktop-preempt-nort.config
 Source43:	kernel-desktop-suspend2.config
 Source44:	kernel-desktop-patches.config
 Source45:	kernel-desktop-netfilter.config
@@ -797,7 +796,6 @@ BuildConfig() {
 	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
 
 	# preempt
-	cat %{SOURCE40} >> arch/%{_target_base_arch}/defconfig
 %if %{with preemptrt}	
 	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
 %else
