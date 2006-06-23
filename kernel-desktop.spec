@@ -114,14 +114,14 @@ Patch0:		kernel-desktop-preempt-rt.patch
 Patch1:		kernel-desktop-preempt_ppc_fix.patch
 Patch2:		kernel-desktop-nopreempt-compat.patch
 
-# Con Kolivas patchset
-Patch3:		kernel-desktop-fcache.patch
-Patch4:		kernel-desktop-ck.patch
-Patch5:		kernel-desktop-nock-compat.patch
+Patch3:		kernel-desktop-suspend2.patch
+Patch4:		kernel-desktop-suspend2-rt.patch
+Patch5:		kernel-desktop-suspend2-nort.patch
 
-Patch6:		kernel-desktop-suspend2.patch
-Patch7:		kernel-desktop-suspend2-rt.patch
-Patch8:		kernel-desktop-suspend2-nort.patch
+# Con Kolivas patchset
+Patch6:		kernel-desktop-fcache.patch
+Patch7:		kernel-desktop-ck.patch
+Patch8:		kernel-desktop-nock-compat.patch
 
 Patch9:		kernel-desktop-grsec-minimal.patch
 
@@ -644,21 +644,21 @@ Documentation.
 %patch2 -p1
 %endif
 
-# Con Kolivas patchset
-%if %{with ck}
-%if %{with preemptrt}
+# suspend 2
 %patch3 -p1
-%else
+%if %{with preemptrt}
 %patch4 -p1
-%endif
 %else
 %patch5 -p1
 %endif
 
-# suspend 2
-%patch6 -p1
+# Con Kolivas patchset
+%if %{with ck}
 %if %{with preemptrt}
+%patch6 -p1
+%else
 %patch7 -p1
+%endif
 %else
 %patch8 -p1
 %endif
@@ -804,9 +804,7 @@ BuildConfig() {
 	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
 %endif
 
-%if %{with suspend2}
 	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
-%endif
 
 	# fbsplash, vesafb-tng, squashfs, imq, tahoe, atm, reiser4
 	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
