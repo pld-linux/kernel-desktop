@@ -1,0 +1,22 @@
+--- linux.orig/include/linux/sysctl.h
++++ linux/include/linux/sysctl.h
+@@ -148,6 +148,7 @@ enum
+ 	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
+ 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
+ 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
++	KERN_MAX_LOCK_DEPTH=80,
+ };
+ 
+ 
+--- /dev/null
++++ linux/include/asm-arm/hw_irq.h
+@@ -0,0 +1,9 @@
++/*
++ * Nothing to see here yet
++ */
++#ifndef _ARCH_ARM_HW_IRQ_H
++#define _ARCH_ARM_HW_IRQ_H
++
++#include <asm/mach/irq.h>
++
++#endif
