@@ -6,7 +6,7 @@
 %bcond_without	pcmcia		# don't build pcmcia
 
 %bcond_without	preemptrt	# don't build preemptive kernel
-%bcond_without	suspend2	# don't build software suspend support
+%bcond_without	ck		# don't use Con Kolivas patchset
 %bcond_without	grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
 %bcond_with	bootsplash	# build with bootsplash instead of fbsplash
 %bcond_with	laptop		# build with HZ=100
@@ -111,69 +111,74 @@ Source46:	kernel-desktop-grsec.config
 ###
 
 Patch0:		kernel-desktop-preempt-rt.patch
-Patch1:		kernel-desktop-fcache.patch
+Patch1:		kernel-desktop-preempt_ppc_fix.patch
+Patch2:		kernel-desktop-nopreempt-compat.patch
 
-Patch2:		kernel-desktop-suspend2.patch
+# Con Kolivas patchset
+Patch3:		kernel-desktop-fcache.patch
+Patch4:		kernel-desktop-ck.patch
+Patch5:		kernel-desktop-nock-compat.patch
 
-Patch3:		kernel-desktop-reiser4.patch
+Patch6:		kernel-desktop-suspend2.patch
+Patch7:		kernel-desktop-suspend2-rt.patch
+Patch8:		kernel-desktop-suspend2-nort.patch
 
-Patch4:		kernel-desktop-tahoe9xx.patch
+Patch9:		kernel-desktop-grsec-minimal.patch
 
-Patch5:		kernel-desktop-fbsplash.patch
-Patch6:		kernel-desktop-vesafb-tng.patch
+# filesystems
+Patch10:	kernel-desktop-reiser4.patch
+Patch11:	kernel-desktop-squashfs.patch
 
-Patch7:		kernel-desktop-squashfs.patch
+# hadrware
+Patch20:	kernel-desktop-tahoe9xx.patch
+Patch21:	kernel-desktop-sk98lin.patch
+Patch22:	kernel-desktop-vesafb-tng.patch
+Patch23:	kernel-desktop-hdaps_protect.patch
 
-Patch8:		kernel-desktop-fbcon-margins.patch
-Patch9:		kernel-desktop-static-dev.patch
+# console
+Patch30:	kernel-desktop-bootsplash.patch
+Patch31:	kernel-desktop-fbsplash.patch
 
 ########	netfilter snap
 ## base
-Patch10:	kernel-desktop-pom-ng-IPV4OPTSSTRIP.patch
-Patch11:	kernel-desktop-pom-ng-connlimit.patch
-Patch12:	kernel-desktop-pom-ng-expire.patch
-Patch13:	kernel-desktop-pom-ng-fuzzy.patch
-Patch14:	kernel-desktop-pom-ng-ipv4options.patch
-Patch15:	kernel-desktop-pom-ng-nth.patch
-Patch16:	kernel-desktop-pom-ng-osf.patch
-Patch17:	kernel-desktop-pom-ng-psd.patch
-Patch18:	kernel-desktop-pom-ng-quota.patch
-Patch19:	kernel-desktop-pom-ng-random.patch
-Patch20:	kernel-desktop-pom-ng-set.patch
-Patch21:	kernel-desktop-pom-ng-time.patch
-Patch22:	kernel-desktop-pom-ng-u32.patch
+Patch40:	kernel-desktop-pom-ng-IPV4OPTSSTRIP.patch
+Patch41:	kernel-desktop-pom-ng-connlimit.patch
+Patch42:	kernel-desktop-pom-ng-expire.patch
+Patch43:	kernel-desktop-pom-ng-fuzzy.patch
+Patch44:	kernel-desktop-pom-ng-ipv4options.patch
+Patch45:	kernel-desktop-pom-ng-nth.patch
+Patch46:	kernel-desktop-pom-ng-osf.patch
+Patch47:	kernel-desktop-pom-ng-psd.patch
+Patch48:	kernel-desktop-pom-ng-quota.patch
+Patch49:	kernel-desktop-pom-ng-random.patch
+Patch50:	kernel-desktop-pom-ng-set.patch
+Patch51:	kernel-desktop-pom-ng-time.patch
+Patch52:	kernel-desktop-pom-ng-u32.patch
 
 ## extra
-Patch30:	kernel-desktop-pom-ng-ACCOUNT.patch
-Patch31:	kernel-desktop-pom-ng-IPMARK.patch
-Patch32:	kernel-desktop-pom-ng-ROUTE.patch
-Patch33:	kernel-desktop-pom-ng-TARPIT.patch
-Patch34:	kernel-desktop-pom-ng-account.patch
-Patch35:	kernel-desktop-pom-ng-ipp2p.patch
-Patch36:	kernel-desktop-pom-ng-rpc.patch
+Patch60:	kernel-desktop-pom-ng-ACCOUNT.patch
+Patch61:	kernel-desktop-pom-ng-IPMARK.patch
+Patch62:	kernel-desktop-pom-ng-ROUTE.patch
+Patch63:	kernel-desktop-pom-ng-TARPIT.patch
+Patch64:	kernel-desktop-pom-ng-account.patch
+Patch65:	kernel-desktop-pom-ng-ipp2p.patch
+Patch66:	kernel-desktop-pom-ng-rpc.patch
 ########	End netfilter
 
-Patch50:	kernel-desktop-imq2.patch
+# net software
+Patch70:	kernel-desktop-imq2.patch
+Patch71:	kernel-desktop-esfq.patch
+Patch72:	kernel-desktop-atm-vbr.patch
+Patch73:	kernel-desktop-atmdd.patch
 
-Patch51:	kernel-desktop-sco-mtu.patch
+# ?
+Patch85:	kernel-desktop-cpuset_virtualization.patch
 
-Patch52:	kernel-desktop-hdaps_protect.patch
-
-Patch53:	kernel-desktop-esfq.patch
-
-Patch54:	kernel-desktop-small_fixes.patch
-Patch55:	kernel-desktop-atm-vbr.patch
-Patch56:	kernel-desktop-atmdd.patch
-
-Patch57:	kernel-desktop-cpuset_virtualization.patch
-
-Patch58:	kernel-desktop-bootsplash.patch
-
-Patch60:	kernel-desktop-sk98lin.patch
-
-Patch300:	kernel-desktop-preempt_ppc_fix.patch
-
-Patch1000:	kernel-desktop-grsec-minimal.patch
+# fixes
+Patch90:	kernel-desktop-sco-mtu.patch
+Patch91:	kernel-desktop-fbcon-margins.patch
+Patch92:	kernel-desktop-static-dev.patch
+Patch100:	kernel-desktop-small_fixes.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -628,85 +633,98 @@ Documentation.
 %setup -q -n linux-%{_basever}%{_rc} 
 
 %if "%{_postver}" != "%{nil}"
-bzcat %{SOURCE1} | patch -p1
+%{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
-%if !%{with test_build}
+
+%if %{with preemptrt}
 %patch0 -p1
 %patch1 -p1
-
-%if %{with suspend2}
+%else
 %patch2 -p1
 %endif
-%endif
 
+# Con Kolivas patchset
+%if %{with ck}
+%if %{with preemptrt}
 %patch3 -p1
-
-%patch4 -p1
-
-%if !%{with bootsplash}
-%{!?with_test_build:%patch5 -p1}
 %else
-%patch58 -p1
+%patch4 -p1
+%endif
+%else
+%patch5 -p1
 %endif
 
+# suspend 2
 %patch6 -p1
-
+%if %{with preemptrt}
 %patch7 -p1
-
+%else
 %patch8 -p1
-%patch9 -p1
+%endif
 
-### netfilter
-# base
+# grsecurity
+%if %{with grsec_minimal}
+%patch9 -p1
+%endif
+
+# filesystems
 %patch10 -p1
 %patch11 -p1
-%patch12 -p1
-%patch13 -p1
-%patch14 -p1
-%patch15 -p1
-%patch16 -p1
-%patch17 -p1
-%patch18 -p1
-%patch19 -p1
+
+# hardware
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
+%patch23 -p1
 
-## extra
+# console
+%if %{with bootsplash}
 %patch30 -p1
+%else
 %patch31 -p1
-%patch32 -p1
-%patch33 -p1
-%patch34 -p1
-%patch35 -p1
-%patch36 -p1
-### end of netfilter
+%endif
 
+### netfilter
+# base
+%patch40 -p1
+%patch41 -p1
+%patch42 -p1
+%patch43 -p1
+%patch44 -p1
+%patch45 -p1
+%patch46 -p1
+%patch47 -p1
+%patch48 -p1
+%patch49 -p1
 %patch50 -p1
-
 %patch51 -p1
-
 %patch52 -p1
 
-%patch53 -p1
-
-%patch54 -p1
-
-%patch55 -p1
-%patch56 -p1
-
-#%%patch57 -p1
-
+## extra
 %patch60 -p1
+%patch61 -p1
+%patch62 -p1
+%patch63 -p1
+%patch64 -p1
+%patch65 -p1
+%patch66 -p1
+### end of netfilter
 
-%if !%{with test_build}
-%patch300 -p1
+# net software
+%patch70 -p1
+%patch71 -p1
+%patch72 -p1
+%patch73 -p1
 
-%if %{with grsec_minimal}
-%patch1000 -p1
-%endif
-%endif
+#%%patch80 -p1
+
+# fixes
+%patch90 -p1
+%patch91 -p1
+%patch92 -p1
+%patch100 -p1
+
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{_alt_kernel}#g' Makefile
