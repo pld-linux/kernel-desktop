@@ -74,7 +74,7 @@ Name:		kernel-%{_alt_kernel}
 %define		_rel		0.3
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
-Epoch:		0
+Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 %define		_rc	%{nil}
