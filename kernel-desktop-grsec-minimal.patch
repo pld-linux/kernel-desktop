@@ -1081,9 +1081,9 @@ diff -Nur linux-2.6.17-rc6/include/linux/sysctl.h linux-2.6.17-rc6.grsec_minimal
 --- linux-2.6.17-rc6/include/linux/sysctl.h	2006-06-13 22:16:34.000000000 +0000
 +++ linux-2.6.17-rc6.grsec_minimal/include/linux/sysctl.h	2006-06-13 22:18:32.000000000 +0000
 @@ -150,6 +150,9 @@
- 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
- 	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
- 	KERN_MAX_LOCK_DEPTH=80,
+ 	KERN_INTERACTIVE=83,	/* interactive tasks can have cpu bursts */
+ 	KERN_COMPUTE=84,	/* adjust timeslices for a compute server */
+ 	KERN_ISO_CPU=85,	/* percent cpu SCHED_ISO tasks run SCHED_RR */
 +#ifdef CONFIG_GRKERNSEC
 +	KERN_GRSECURITY=98,	/* grsecurity */
 +#endif
