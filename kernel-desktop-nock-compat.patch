@@ -1,10 +1,22 @@
---- linux-2.6.17/include/linux/bio.h	2006-06-18 03:49:35.000000000 +0200
-+++ linux-2.6.17.fcache/include/linux/bio.h	2006-06-21 15:58:45.000000000 +0200
-@@ -124,6 +124,7 @@
- #define BIO_BOUNCED	5	/* bio is a bounce bio */
+--- linux-2.6.17-ck1.orig/include/linux/sysctl.h	2006-06-18 15:32:49.000000000 +1000
++++ linux-2.6.17-ck1/include/linux/sysctl.h	2006-06-18 15:34:43.000000000 +1000
+@@ -148,6 +148,9 @@ enum
+ 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
+ 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
+	KERN_MAX_LOCK_DEPTH=80,
++	KERN_INTERACTIVE=83,	/* interactive tasks can have cpu bursts */
++	KERN_COMPUTE=84,	/* adjust timeslices for a compute server */
++	KERN_ISO_CPU=85,	/* percent cpu SCHED_ISO tasks run SCHED_RR */
+ };
+ 
+ 
+--- linux-2.6.17-ck1.orig/include/linux/bio.h	2006-03-20 20:11:41.000000000 +1100
++++ linux-2.6.17-ck1/include/linux/bio.h	2006-06-18 15:34:44.000000000 +1000
+@@ -124,6 +124,7 @@ struct bio {
  #define BIO_USER_MAPPED 6	/* contains user pages */
  #define BIO_EOPNOTSUPP	7	/* not supported */
-+#define BIO_NOMERGE	8	/* bio not mergeable */
+ #define BIO_SUSPEND2	8	/* Suspend2 bio - for corruption checking */
++#define BIO_NOMERGE	9	/* bio not mergeable */
  #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
  
  /*
