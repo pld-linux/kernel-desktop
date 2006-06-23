@@ -21,10 +21,6 @@
 %undefine	with_grsec_minimal
 %endif
 
-%ifarch ppc
-%undefine	with_suspend2
-%endif
-
 %ifarch %{ix86} ppc
 %define		have_isa	1
 %else
