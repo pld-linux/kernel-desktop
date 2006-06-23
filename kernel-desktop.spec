@@ -54,13 +54,13 @@
 
 %define		xen_version		3.0.2
 
-%define		_alt_kernel	desktop
+%define		alt_kernel	desktop
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
-Name:		kernel-%{_alt_kernel}
+Name:		kernel-%{alt_kernel}
 %define		_basever	2.6.17
 %define		_postver	.1
 %define		_rel		0.3
@@ -214,8 +214,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define		initrd_dir	/boot
 
-%define		ver		%{version}_%{_alt_kernel}
-%define		ver_rel		%{version}_%{_alt_kernel}-%{release}
+%define		ver		%{version}_%{alt_kernel}
+%define		ver_rel		%{version}_%{alt_kernel}-%{release}
 
 %description
 This package contains the Linux kernel that is used to boot and run
@@ -718,7 +718,7 @@ Documentation.
 
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{_alt_kernel}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
@@ -948,7 +948,7 @@ for i in "" smp ; do
 	fi
 done
 
-ln -sf linux-%{ver} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{_alt_kernel}
+ln -sf linux-%{ver} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{alt_kernel}
 
 find . -maxdepth 1 ! -name "build-done" ! -name "." -exec cp -a "{}" "$RPM_BUILD_ROOT/usr/src/linux-%{ver}/" ";"
 
@@ -1002,24 +1002,24 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post
-mv -f /boot/vmlinuz-%{_alt_kernel} /boot/vmlinuz-%{_alt_kernel}.old 2> /dev/null > /dev/null
-mv -f /boot/System.map-%{_alt_kernel} /boot/System.map.old-%{_alt_kernel} 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz-%{_alt_kernel}
-ln -sf System.map-%{ver_rel} /boot/System.map-%{_alt_kernel}
+mv -f /boot/vmlinuz-%{alt_kernel} /boot/vmlinuz-%{alt_kernel}.old 2> /dev/null > /dev/null
+mv -f /boot/System.map-%{alt_kernel} /boot/System.map.old-%{alt_kernel} 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz-%{alt_kernel}
+ln -sf System.map-%{ver_rel} /boot/System.map-%{alt_kernel}
 if [ ! -e /boot/vmlinuz ]; then
 	mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 	mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 	ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz
-	ln -sf System.map-%{_alt_kernel} /boot/System.map
+	ln -sf System.map-%{alt_kernel} /boot/System.map
 	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-	ln -sf %{initrd_dir}/initrd-%{_alt_kernel} %{initrd_dir}/initrd
+	ln -sf %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd
 fi
 
 %depmod %{ver_rel}
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{ver_rel}.gz %{ver_rel}
-mv -f %{initrd_dir}/initrd-%{_alt_kernel} %{initrd_dir}/initrd.old-%{_alt_kernel} 2> /dev/null > /dev/null
-ln -sf initrd-%{ver_rel}.gz %{initrd_dir}/initrd-%{_alt_kernel}
+mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd.old-%{alt_kernel} 2> /dev/null > /dev/null
+ln -sf initrd-%{ver_rel}.gz %{initrd_dir}/initrd-%{alt_kernel}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1028,7 +1028,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	title="$title %{_alt_kernel}"
+	title="$title %{alt_kernel}"
 
 	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{ver_rel}.gz --install %{ver_rel} --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
@@ -1036,8 +1036,8 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-mv -f /boot/vmlinux-%{_alt_kernel} /boot/vmlinux.old-%{_alt_kernel} 2> /dev/null > /dev/null
-ln -sf vmlinux-%{ver_rel} /boot/vmlinux-%{_alt_kernel}
+mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux.old-%{alt_kernel} 2> /dev/null > /dev/null
+ln -sf vmlinux-%{ver_rel} /boot/vmlinux-%{alt_kernel}
 
 %post drm
 %depmod %{ver_rel}
@@ -1070,24 +1070,24 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post smp
-mv -f /boot/vmlinuz-%{_alt_kernel} /boot/vmlinuz.old-%{_alt_kernel} 2> /dev/null > /dev/null
-mv -f /boot/System.map-%{_alt_kernel} /boot/System.map.old-%{_alt_kernel} 2> /dev/null > /dev/null
-ln -sf vmlinuz-%{ver_rel}smp /boot/vmlinuz-%{_alt_kernel}
-ln -sf System.map-%{ver_rel}smp /boot/System.map-%{_alt_kernel}
+mv -f /boot/vmlinuz-%{alt_kernel} /boot/vmlinuz.old-%{alt_kernel} 2> /dev/null > /dev/null
+mv -f /boot/System.map-%{alt_kernel} /boot/System.map.old-%{alt_kernel} 2> /dev/null > /dev/null
+ln -sf vmlinuz-%{ver_rel}smp /boot/vmlinuz-%{alt_kernel}
+ln -sf System.map-%{ver_rel}smp /boot/System.map-%{alt_kernel}
 if [ ! -e /boot/vmlinuz ]; then
 	mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
 	mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
 	ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz
 	ln -sf System.map-%{ver_rel} /boot/System.map
 	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-	ln -sf %{initrd_dir}/initrd-%{_alt_kernel} %{initrd_dir}/initrd
+	ln -sf %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd
 fi
 
 %depmod %{ver_rel}smp
 
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{ver_rel}smp.gz %{ver_rel}smp
-mv -f %{initrd_dir}/initrd-%{_alt_kernel} %{initrd_dir}/initrd.old-%{_alt_kernel} 2> /dev/null > /dev/null
-ln -sf initrd-%{ver_rel}smp.gz %{initrd_dir}/initrd-%{_alt_kernel}
+mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd.old-%{alt_kernel} 2> /dev/null > /dev/null
+ln -sf initrd-%{ver_rel}smp.gz %{initrd_dir}/initrd-%{alt_kernel}
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
@@ -1096,7 +1096,7 @@ if [ -x /sbin/new-kernel-pkg ]; then
 		title='PLD Linux'
 	fi
 
-	title="$title %{_alt_kernel}"
+	title="$title %{alt_kernel}"
 
 	/sbin/new-kernel-pkg --initrdfile=%{initrd_dir}/initrd-%{ver_rel}smp.gz --install %{ver_rel}smp --banner "$title"
 elif [ -x /sbin/rc-boot ]; then
@@ -1104,8 +1104,8 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post smp-vmlinux
-mv -f /boot/vmlinux-%{_alt_kernel} /boot/vmlinux.old-%{_alt_kernel} 2> /dev/null > /dev/null
-ln -sf vmlinux-%{ver_rel}smp /boot/vmlinux-%{_alt_kernel}
+mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux.old-%{alt_kernel} 2> /dev/null > /dev/null
+ln -sf vmlinux-%{ver_rel}smp /boot/vmlinux-%{alt_kernel}
 
 %post smp-drm
 %depmod %{ver_rel}smp
@@ -1132,14 +1132,14 @@ ln -sf vmlinux-%{ver_rel}smp /boot/vmlinux-%{_alt_kernel}
 %depmod %{ver_rel}smp
 
 %post headers
-rm -f /usr/src/linux-%{_alt_kernel}
-ln -snf linux-%{ver} /usr/src/linux-%{_alt_kernel}
+rm -f /usr/src/linux-%{alt_kernel}
+ln -snf linux-%{ver} /usr/src/linux-%{alt_kernel}
 
 %postun headers
 if [ "$1" = "0" ]; then
-	if [ -L %{_prefix}/src/linux-%{_alt_kernel} ]; then
-		if [ "`ls -l %{_prefix}/src/linux-%{_alt_kernel} | awk '{ print $10 }'`" = "linux-%{ver}" ]; then
-			rm -f %{_prefix}/src/linux-%{_alt_kernel}
+	if [ -L %{_prefix}/src/linux-%{alt_kernel} ]; then
+		if [ "`ls -l %{_prefix}/src/linux-%{alt_kernel} | awk '{ print $10 }'`" = "linux-%{ver}" ]; then
+			rm -f %{_prefix}/src/linux-%{alt_kernel}
 		fi
 	fi
 fi
