@@ -2268,10 +2268,10 @@ diff -Nur linux-2.6.17-rc6/include/linux/bio.h linux-2.6.17-rc6.suspend2/include
 --- linux-2.6.17-rc6/include/linux/bio.h	2006-06-06 00:57:02.000000000 +0000
 +++ linux-2.6.17-rc6.suspend2/include/linux/bio.h	2006-06-12 16:42:12.000000000 +0000
 @@ -124,6 +124,7 @@
+ #define BIO_BOUNCED	5	/* bio is a bounce bio */
  #define BIO_USER_MAPPED 6	/* contains user pages */
  #define BIO_EOPNOTSUPP	7	/* not supported */
- #define BIO_NOMERGE	8	/* bio not mergeable */
-+#define BIO_SUSPEND2	9	/* Suspend2 bio - for corruption checking */
++#define BIO_SUSPEND2	8	/* Suspend2 bio - for corruption checking */
  #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
  
  /*
