@@ -1020,7 +1020,7 @@ if [ ! -e /boot/vmlinuz ]; then
 	ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz
 	ln -sf System.map-%{alt_kernel} /boot/System.map
 	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-	ln -sf %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd
+	ln -sf initrd-%{alt_kernel} %{initrd_dir}/initrd
 fi
 
 %depmod %{ver_rel}
@@ -1088,7 +1088,7 @@ if [ ! -e /boot/vmlinuz ]; then
 	ln -sf vmlinuz-%{ver_rel} /boot/vmlinuz
 	ln -sf System.map-%{ver_rel} /boot/System.map
 	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
-	ln -sf %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd
+	ln -sf initrd-%{alt_kernel} %{initrd_dir}/initrd
 fi
 
 %depmod %{ver_rel}smp
