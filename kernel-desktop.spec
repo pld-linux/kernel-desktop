@@ -10,6 +10,7 @@
 %bcond_with	bootsplash	# build with bootsplash instead of fbsplash
 %bcond_with	laptop		# build with HZ=100
 %bcond_with	verbose		# verbose build (V=1)
+%bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 
 %{?debug:%define with_verbose 1}
 
@@ -725,6 +726,11 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 %build
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
+	pae=
+	[ "$2" = "yes" ] && pae=yes
+	%if %{with pae}
+		pae=yes
+	%endif
 	%ifnarch i386
 	sed -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' $1
 	%endif
@@ -747,8 +753,10 @@ TuneUpConfigForIX86 () {
 	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
 	%endif
 	%ifarch i686 athlon pentium3 pentium4
-	sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
-	sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
+	if [ "$pae" = "yes" ]; then
+		sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
+		sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
+	fi
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
 	%endif
 %endif
@@ -785,7 +793,7 @@ BuildConfig() {
 	cat %{SOURCE20} > arch/%{_target_base_arch}/defconfig
 	cat $RPM_SOURCE_DIR/kernel-desktop-$Config.config >> arch/%{_target_base_arch}/defconfig
 
-	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig
+	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig "$smp"
 
 	# preempt
 %if %{with preemptrt}	
