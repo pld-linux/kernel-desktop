@@ -952,7 +952,7 @@ for i in "" smp ; do
 		rm -f $RPM_BUILD_ROOT/lib/modules/%{ver_rel}$i/build
 		ln -sf %{_prefix}/src/linux-%{ver} \
 			$RPM_BUILD_ROOT/lib/modules/%{ver_rel}$i/build
-		install -d $RPM_BUILD_ROOT/lib/modules/%{ver_rel}$i/misc
+		install -d $RPM_BUILD_ROOT/lib/modules/%{ver_rel}$i/{cluster,misc}
 	fi
 done
 
