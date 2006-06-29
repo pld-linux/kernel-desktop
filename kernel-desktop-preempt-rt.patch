@@ -30379,6 +30379,19 @@ Index: linux/include/linux/kernel_stat.h
  };
  
  struct kernel_stat {
+Index: linux/include/linux/kprobes.h
+===================================================================
+--- linux.orig/include/linux/kprobes.h
++++ linux/include/linux/kprobes.h
+@@ -152,7 +152,7 @@ struct kretprobe_instance {
+ 	struct task_struct *task;
+ };
+ 
+-extern spinlock_t kretprobe_lock;
++extern raw_spinlock_t kretprobe_lock;
+ extern struct mutex kprobe_mutex;
+ extern int arch_prepare_kprobe(struct kprobe *p);
+ extern void arch_arm_kprobe(struct kprobe *p);
 Index: linux/include/linux/ktime.h
 ===================================================================
 --- linux.orig/include/linux/ktime.h
@@ -39799,6 +39812,23 @@ Index: linux/kernel/itimer.c
  			goto again;
  		}
  		tsk->signal->it_real_incr =
+Index: linux/kernel/kprobes.c
+===================================================================
+--- linux.orig/kernel/kprobes.c
++++ linux/kernel/kprobes.c
+@@ -49,7 +49,11 @@ static struct hlist_head kprobe_table[KP
+ static struct hlist_head kretprobe_inst_table[KPROBE_TABLE_SIZE];
+ 
+ DEFINE_MUTEX(kprobe_mutex);		/* Protects kprobe_table */
+-DEFINE_SPINLOCK(kretprobe_lock);	/* Protects kretprobe_inst_table */
++/*
++ * It is acquired from finish_task_switch() with preemption disbaled.
++ * Needs to be raw.
++ */
++DEFINE_RAW_SPINLOCK(kretprobe_lock);	/* Protects kretprobe_inst_table */
+ static DEFINE_PER_CPU(struct kprobe *, kprobe_instance) = NULL;
+ 
+ #ifdef __ARCH_WANT_KPROBES_INSN_SLOT
 Index: linux/kernel/latency.c
 ===================================================================
 --- /dev/null
