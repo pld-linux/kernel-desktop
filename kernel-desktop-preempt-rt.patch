@@ -1403,6 +1403,254 @@ Index: linux/arch/arm/boot/compressed/misc.c
  #include "../../../../lib/inflate.c"
  
  #ifndef STANDALONE_DEBUG
+Index: linux/arch/arm/common/dmabounce.c
+===================================================================
+--- linux.orig/arch/arm/common/dmabounce.c
++++ linux/arch/arm/common/dmabounce.c
+@@ -77,6 +77,8 @@ struct dmabounce_device_info {
+ #endif
+ 	struct dmabounce_pool	small;
+ 	struct dmabounce_pool	large;
++
++	rwlock_t lock;
+ };
+ 
+ static LIST_HEAD(dmabounce_devs);
+@@ -116,6 +118,7 @@ alloc_safe_buffer(struct dmabounce_devic
+ 	struct safe_buffer *buf;
+ 	struct dmabounce_pool *pool;
+ 	struct device *dev = device_info->dev;
++	unsigned long flags;
+ 
+ 	dev_dbg(dev, "%s(ptr=%p, size=%d, dir=%d)\n",
+ 		__func__, ptr, size, dir);
+@@ -163,8 +166,12 @@ alloc_safe_buffer(struct dmabounce_devic
+ 		print_alloc_stats(device_info);
+ #endif
+ 
++	write_lock_irqsave(&device_info->lock, flags);
++
+ 	list_add(&buf->node, &device_info->safe_buffers);
+ 
++	write_unlock_irqrestore(&device_info->lock, flags);
++
+ 	return buf;
+ }
+ 
+@@ -172,22 +179,32 @@ alloc_safe_buffer(struct dmabounce_devic
+ static inline struct safe_buffer *
+ find_safe_buffer(struct dmabounce_device_info *device_info, dma_addr_t safe_dma_addr)
+ {
+-	struct safe_buffer *b;
++	struct safe_buffer *b = NULL;
++	unsigned long flags;
++
++	read_lock_irqsave(&device_info->lock, flags);
+ 
+ 	list_for_each_entry(b, &device_info->safe_buffers, node)
+ 		if (b->safe_dma_addr == safe_dma_addr)
+-			return b;
++			break;
+ 
+-	return NULL;
++	read_unlock_irqrestore(&device_info->lock, flags);
++	return b;
+ }
+ 
+ static inline void
+ free_safe_buffer(struct dmabounce_device_info *device_info, struct safe_buffer *buf)
+ {
++	unsigned long flags;
++
+ 	dev_dbg(device_info->dev, "%s(buf=%p)\n", __func__, buf);
+ 
++	write_lock_irqsave(&device_info->lock, flags);
++
+ 	list_del(&buf->node);
+ 
++	write_unlock_irqrestore(&device_info->lock, flags);
++
+ 	if (buf->pool)
+ 		dma_pool_free(buf->pool->pool, buf->safe, buf->safe_dma_addr);
+ 	else
+@@ -396,7 +413,6 @@ dma_addr_t
+ dma_map_single(struct device *dev, void *ptr, size_t size,
+ 		enum dma_data_direction dir)
+ {
+-	unsigned long flags;
+ 	dma_addr_t dma_addr;
+ 
+ 	dev_dbg(dev, "%s(ptr=%p,size=%d,dir=%x)\n",
+@@ -404,12 +420,8 @@ dma_map_single(struct device *dev, void 
+ 
+ 	BUG_ON(dir == DMA_NONE);
+ 
+-	local_irq_save(flags);
+-
+ 	dma_addr = map_single(dev, ptr, size, dir);
+ 
+-	local_irq_restore(flags);
+-
+ 	return dma_addr;
+ }
+ 
+@@ -424,25 +436,18 @@ void
+ dma_unmap_single(struct device *dev, dma_addr_t dma_addr, size_t size,
+ 			enum dma_data_direction dir)
+ {
+-	unsigned long flags;
+-
+ 	dev_dbg(dev, "%s(ptr=%p,size=%d,dir=%x)\n",
+ 		__func__, (void *) dma_addr, size, dir);
+ 
+ 	BUG_ON(dir == DMA_NONE);
+ 
+-	local_irq_save(flags);
+-
+ 	unmap_single(dev, dma_addr, size, dir);
+-
+-	local_irq_restore(flags);
+ }
+ 
+ int
+ dma_map_sg(struct device *dev, struct scatterlist *sg, int nents,
+ 		enum dma_data_direction dir)
+ {
+-	unsigned long flags;
+ 	int i;
+ 
+ 	dev_dbg(dev, "%s(sg=%p,nents=%d,dir=%x)\n",
+@@ -450,8 +455,6 @@ dma_map_sg(struct device *dev, struct sc
+ 
+ 	BUG_ON(dir == DMA_NONE);
+ 
+-	local_irq_save(flags);
+-
+ 	for (i = 0; i < nents; i++, sg++) {
+ 		struct page *page = sg->page;
+ 		unsigned int offset = sg->offset;
+@@ -462,8 +465,6 @@ dma_map_sg(struct device *dev, struct sc
+ 			map_single(dev, ptr, length, dir);
+ 	}
+ 
+-	local_irq_restore(flags);
+-
+ 	return nents;
+ }
+ 
+@@ -471,7 +472,6 @@ void
+ dma_unmap_sg(struct device *dev, struct scatterlist *sg, int nents,
+ 		enum dma_data_direction dir)
+ {
+-	unsigned long flags;
+ 	int i;
+ 
+ 	dev_dbg(dev, "%s(sg=%p,nents=%d,dir=%x)\n",
+@@ -479,55 +479,38 @@ dma_unmap_sg(struct device *dev, struct 
+ 
+ 	BUG_ON(dir == DMA_NONE);
+ 
+-	local_irq_save(flags);
+-
+ 	for (i = 0; i < nents; i++, sg++) {
+ 		dma_addr_t dma_addr = sg->dma_address;
+ 		unsigned int length = sg->length;
+ 
+ 		unmap_single(dev, dma_addr, length, dir);
+ 	}
+-
+-	local_irq_restore(flags);
+ }
+ 
+ void
+ dma_sync_single_for_cpu(struct device *dev, dma_addr_t dma_addr, size_t size,
+ 				enum dma_data_direction dir)
+ {
+-	unsigned long flags;
+-
+ 	dev_dbg(dev, "%s(ptr=%p,size=%d,dir=%x)\n",
+ 		__func__, (void *) dma_addr, size, dir);
+ 
+-	local_irq_save(flags);
+-
+ 	sync_single(dev, dma_addr, size, dir);
+-
+-	local_irq_restore(flags);
+ }
+ 
+ void
+ dma_sync_single_for_device(struct device *dev, dma_addr_t dma_addr, size_t size,
+ 				enum dma_data_direction dir)
+ {
+-	unsigned long flags;
+-
+ 	dev_dbg(dev, "%s(ptr=%p,size=%d,dir=%x)\n",
+ 		__func__, (void *) dma_addr, size, dir);
+ 
+-	local_irq_save(flags);
+-
+ 	sync_single(dev, dma_addr, size, dir);
+-
+-	local_irq_restore(flags);
+ }
+ 
+ void
+ dma_sync_sg_for_cpu(struct device *dev, struct scatterlist *sg, int nents,
+ 			enum dma_data_direction dir)
+ {
+-	unsigned long flags;
+ 	int i;
+ 
+ 	dev_dbg(dev, "%s(sg=%p,nents=%d,dir=%x)\n",
+@@ -535,23 +518,18 @@ dma_sync_sg_for_cpu(struct device *dev, 
+ 
+ 	BUG_ON(dir == DMA_NONE);
+ 
+-	local_irq_save(flags);
+-
+ 	for (i = 0; i < nents; i++, sg++) {
+ 		dma_addr_t dma_addr = sg->dma_address;
+ 		unsigned int length = sg->length;
+ 
+ 		sync_single(dev, dma_addr, length, dir);
+ 	}
+-
+-	local_irq_restore(flags);
+ }
+ 
+ void
+ dma_sync_sg_for_device(struct device *dev, struct scatterlist *sg, int nents,
+ 			enum dma_data_direction dir)
+ {
+-	unsigned long flags;
+ 	int i;
+ 
+ 	dev_dbg(dev, "%s(sg=%p,nents=%d,dir=%x)\n",
+@@ -559,16 +537,12 @@ dma_sync_sg_for_device(struct device *de
+ 
+ 	BUG_ON(dir == DMA_NONE);
+ 
+-	local_irq_save(flags);
+-
+ 	for (i = 0; i < nents; i++, sg++) {
+ 		dma_addr_t dma_addr = sg->dma_address;
+ 		unsigned int length = sg->length;
+ 
+ 		sync_single(dev, dma_addr, length, dir);
+ 	}
+-
+-	local_irq_restore(flags);
+ }
+ 
+ static int
+@@ -622,6 +596,7 @@ dmabounce_register_dev(struct device *de
+ 
+ 	device_info->dev = dev;
+ 	INIT_LIST_HEAD(&device_info->safe_buffers);
++	rwlock_init(&device_info->lock);
+ 
+ #ifdef STATS
+ 	device_info->total_allocs = 0;
 Index: linux/arch/arm/common/gic.c
 ===================================================================
 --- linux.orig/arch/arm/common/gic.c
@@ -12066,29 +12314,26 @@ Index: linux/arch/mips/Kconfig
  	select HW_HAS_PCI
  	select IRQ_CPU
  	select IRQ_CPU_RM7K
-@@ -797,12 +798,21 @@ source "arch/mips/cobalt/Kconfig"
+@@ -797,6 +798,7 @@ source "arch/mips/cobalt/Kconfig"
  
  endmenu
  
-+source "kernel/Kconfig.preempt"
 +
  config RWSEM_GENERIC_SPINLOCK
  	bool
-+	depends on PREEMPT_RT
  	default y
- 
+@@ -804,6 +806,10 @@ config RWSEM_GENERIC_SPINLOCK
  config RWSEM_XCHGADD_ALGORITHM
  	bool
-+	depends on !PREEMPT_RT
-+
+ 
 +config ASM_SEMAPHORES
 +	bool
-+#	depends on !PREEMPT_RT
 +	default y
- 
++
  config GENERIC_FIND_NEXT_BIT
  	bool
-@@ -849,6 +859,9 @@ config DMA_NEED_PCI_MAP_STATE
+ 	default y
+@@ -849,6 +855,9 @@ config DMA_NEED_PCI_MAP_STATE
  config OWN_DMA
  	bool
  
@@ -12098,7 +12343,7 @@ Index: linux/arch/mips/Kconfig
  config EARLY_PRINTK
  	bool
  
-@@ -1580,6 +1593,11 @@ config GENERIC_IRQ_PROBE
+@@ -1580,6 +1589,11 @@ config GENERIC_IRQ_PROBE
  	bool
  	default y
  
@@ -12110,14 +12355,24 @@ Index: linux/arch/mips/Kconfig
  #
  # - Highmem only makes sense for the 32-bit kernel.
  # - The current highmem code will only work properly on physically indexed
-@@ -1669,10 +1687,6 @@ config MIPS_INSANE_LARGE
+@@ -1667,12 +1681,17 @@ config MIPS_INSANE_LARGE
+ 	  This will result in additional memory usage, so it is not
+ 	  recommended for normal users.
  
- endmenu
- 
--config RWSEM_GENERIC_SPINLOCK
--	bool
--	default y
+-endmenu
 -
+-config RWSEM_GENERIC_SPINLOCK
++config GENERIC_TIME
+ 	bool
+ 	default y
+ 
++source "kernel/time/Kconfig"
++
++config CPU_SPEED
++	int "CPU speed used for clocksource/clockevent calculations"
++	default 600
++endmenu
++
  source "init/Kconfig"
  
  menu "Bus options (PCI, PCMCIA, EISA, ISA, TC)"
@@ -12385,7 +12640,7 @@ Index: linux/arch/mips/kernel/entry.S
  #else
  	.macro	preempt_stop
 -	local_irq_disable
-+	mips_raw_local_irq_disable
++	raw_local_irq_disable
  	.endm
  #define resume_kernel	restore_all
  #endif
@@ -12394,7 +12649,7 @@ Index: linux/arch/mips/kernel/entry.S
  
  resume_userspace:
 -	local_irq_disable		# make sure we dont miss an
-+	mips_raw_local_irq_disable	# make sure we dont miss an
++	raw_local_irq_disable	# make sure we dont miss an
  					# interrupt setting need_resched
  					# between sampling and return
  	LONG_L	a2, TI_FLAGS($28)	# current->work
@@ -12403,22 +12658,32 @@ Index: linux/arch/mips/kernel/entry.S
  #ifdef CONFIG_PREEMPT
  resume_kernel:
 -	local_irq_disable
-+	mips_local_irq_disable
++	raw_local_irq_disable
 +	lw	t0, kernel_preemption
 +	beqz	t0, restore_all
  	lw	t0, TI_PRE_COUNT($28)
  	bnez	t0, restore_all
  need_resched:
-@@ -69,7 +71,7 @@ FEXPORT(ret_from_fork)
+@@ -61,7 +63,9 @@ need_resched:
+ 	LONG_L	t0, PT_STATUS(sp)		# Interrupts off?
+ 	andi	t0, 1
+ 	beqz	t0, restore_all
++	raw_local_irq_disable
+ 	jal	preempt_schedule_irq
++	sw      zero, TI_PRE_COUNT($28)
+ 	b	need_resched
+ #endif
+ 
+@@ -69,7 +73,7 @@ FEXPORT(ret_from_fork)
  	jal	schedule_tail		# a0 = task_t *prev
  
  FEXPORT(syscall_exit)
 -	local_irq_disable		# make sure need_resched and
-+	mips_raw_local_irq_disable	# make sure need_resched and
++	raw_local_irq_disable	# make sure need_resched and
  					# signals dont change between
  					# sampling and return
  	LONG_L	a2, TI_FLAGS($28)	# current->work
-@@ -119,19 +121,21 @@ FEXPORT(restore_partial)		# restore part
+@@ -119,19 +123,21 @@ FEXPORT(restore_partial)		# restore part
  	.set	at
  
  work_pending:
@@ -12427,11 +12692,11 @@ Index: linux/arch/mips/kernel/entry.S
 +	andi	t0, a2, (_TIF_NEED_RESCHED|_TIF_NEED_RESCHED_DELAYED)
  	beqz	t0, work_notifysig
  work_resched:
-+	mips_raw_local_irq_enable  t0
++	raw_local_irq_enable  t0
  	jal	schedule
  
 -	local_irq_disable		# make sure need_resched and
-+	mips_raw_local_irq_disable	# make sure need_resched and
++	raw_local_irq_disable	# make sure need_resched and
  					# signals dont change between
  					# sampling and return
  	LONG_L	a2, TI_FLAGS($28)
@@ -12443,12 +12708,12 @@ Index: linux/arch/mips/kernel/entry.S
  	bnez	t0, work_resched
  
  work_notifysig:				# deal with pending signals and
-@@ -147,7 +151,7 @@ syscall_exit_work:
+@@ -147,7 +153,7 @@ syscall_exit_work:
  	li	t0, _TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT
  	and	t0, a2			# a2 is preloaded with TI_FLAGS
  	beqz	t0, work_pending	# trace bit set?
 -	local_irq_enable		# could let do_syscall_trace()
-+	mips_raw_local_irq_enable	# could let do_syscall_trace()
++	raw_local_irq_enable	# could let do_syscall_trace()
  					# call schedule() instead
  	move	a0, sp
  	li	a1, 1
@@ -12483,21 +12748,6 @@ Index: linux/arch/mips/kernel/i8259.c
  	}
  
  	setup_irq(2, &irq2);
-Index: linux/arch/mips/kernel/init_task.c
-===================================================================
---- linux.orig/arch/mips/kernel/init_task.c
-+++ linux/arch/mips/kernel/init_task.c
-@@ -9,8 +9,8 @@
- #include <asm/uaccess.h>
- #include <asm/pgtable.h>
- 
--static struct fs_struct init_fs = INIT_FS;
--static struct files_struct init_files = INIT_FILES;
-+static struct fs_struct init_fs = INIT_FS(init_fs);
-+static struct files_struct init_files = INIT_FILES(init_files);
- static struct signal_struct init_signals = INIT_SIGNALS(init_signals);
- static struct sighand_struct init_sighand = INIT_SIGHAND(init_sighand);
- struct mm_struct init_mm = INIT_MM(init_mm);
 Index: linux/arch/mips/kernel/irq-msc01.c
 ===================================================================
 --- linux.orig/arch/mips/kernel/irq-msc01.c
@@ -12628,12 +12878,8 @@ Index: linux/arch/mips/kernel/process.c
 ===================================================================
 --- linux.orig/arch/mips/kernel/process.c
 +++ linux/arch/mips/kernel/process.c
-@@ -53,17 +53,19 @@ extern void smtc_idle_loop_hook(void);
-  */
- ATTRIB_NORET void cpu_idle(void)
+@@ -55,16 +55,18 @@ ATTRIB_NORET void cpu_idle(void)
  {
-+	local_irq_enable();
-+
  	/* endless idle loop with no priority at all */
  	while (1) {
 -		while (!need_resched()) {
@@ -12646,11 +12892,14 @@ Index: linux/arch/mips/kernel/process.c
  		}
 -		preempt_enable_no_resched();
 -		schedule();
++		local_irq_disable();
 +		__preempt_enable_no_resched();
 +		__schedule();
  		preempt_disable();
++		local_irq_enable();
  	}
  }
+ 
 Index: linux/arch/mips/kernel/scall32-o32.S
 ===================================================================
 --- linux.orig/arch/mips/kernel/scall32-o32.S
@@ -12660,10 +12909,49 @@ Index: linux/arch/mips/kernel/scall32-o32.S
  
  o32_syscall_exit:
 -	local_irq_disable		# make sure need_resched and
-+	mips_raw_local_irq_disable	# make sure need_resched and
++	raw_local_irq_disable	# make sure need_resched and
  					# signals dont change between
  					# sampling and return
  	lw	a2, TI_FLAGS($28)	# current->work
+Index: linux/arch/mips/kernel/scall64-64.S
+===================================================================
+--- linux.orig/arch/mips/kernel/scall64-64.S
++++ linux/arch/mips/kernel/scall64-64.S
+@@ -71,7 +71,7 @@ NESTED(handle_sys64, PT_SIZE, sp)
+ 1:	sd	v0, PT_R2(sp)		# result
+ 
+ n64_syscall_exit:
+-	local_irq_disable		# make sure need_resched and
++	raw_local_irq_disable		# make sure need_resched and
+ 					# signals dont change between
+ 					# sampling and return
+ 	LONG_L	a2, TI_FLAGS($28)	# current->work
+Index: linux/arch/mips/kernel/scall64-n32.S
+===================================================================
+--- linux.orig/arch/mips/kernel/scall64-n32.S
++++ linux/arch/mips/kernel/scall64-n32.S
+@@ -68,7 +68,7 @@ NESTED(handle_sysn32, PT_SIZE, sp)
+ 	sd	v0, PT_R0(sp)		# set flag for syscall restarting
+ 1:	sd	v0, PT_R2(sp)		# result
+ 
+-	local_irq_disable		# make sure need_resched and
++	raw_local_irq_disable		# make sure need_resched and
+ 					# signals dont change between
+ 					# sampling and return
+ 	LONG_L  a2, TI_FLAGS($28)	# current->work
+Index: linux/arch/mips/kernel/scall64-o32.S
+===================================================================
+--- linux.orig/arch/mips/kernel/scall64-o32.S
++++ linux/arch/mips/kernel/scall64-o32.S
+@@ -97,7 +97,7 @@ NESTED(handle_sys, PT_SIZE, sp)
+ 1:	sd	v0, PT_R2(sp)		# result
+ 
+ o32_syscall_exit:
+-	local_irq_disable		# make need_resched and
++	raw_local_irq_disable		# make need_resched and
+ 					# signals dont change between
+ 					# sampling and return
+ 	LONG_L	a2, TI_FLAGS($28)
 Index: linux/arch/mips/kernel/semaphore.c
 ===================================================================
 --- linux.orig/arch/mips/kernel/semaphore.c
@@ -12725,12 +13013,18 @@ Index: linux/arch/mips/kernel/semaphore.c
  {
  	int retval = 0;
  	struct task_struct *tsk = current;
-@@ -165,4 +165,4 @@ int __sched __down_interruptible(struct 
+@@ -165,4 +165,10 @@ int __sched __down_interruptible(struct 
  	return retval;
  }
  
 -EXPORT_SYMBOL(__down_interruptible);
 +EXPORT_SYMBOL(__compat_down_interruptible);
++
++int fastcall compat_sem_is_locked(struct compat_semaphore *sem)
++{
++	return (int) atomic_read(&sem->count) < 0;
++}
++EXPORT_SYMBOL(compat_sem_is_locked);
 Index: linux/arch/mips/kernel/signal.c
 ===================================================================
 --- linux.orig/arch/mips/kernel/signal.c
@@ -12852,55 +13146,171 @@ Index: linux/arch/mips/kernel/time.c
 ===================================================================
 --- linux.orig/arch/mips/kernel/time.c
 +++ linux/arch/mips/kernel/time.c
-@@ -12,6 +12,7 @@
+@@ -10,8 +10,14 @@
+  * under  the terms of  the GNU General  Public License as published by the
+  * Free Software Foundation;  either version 2 of the  License, or (at your
   * option) any later version.
++ *
++ * This implementation of High Res Timers uses two timers. One is the system
++ * timer. The second is used for the high res timers. The high res timers 
++ * require the CPU to have count/compare registers. The mips_set_next_event()
++ * function schedules the next high res timer interrupt. 
   */
  #include <linux/config.h>
 +#include <linux/clocksource.h>
  #include <linux/types.h>
  #include <linux/kernel.h>
  #include <linux/init.h>
-@@ -50,7 +51,7 @@
+@@ -24,6 +30,7 @@
+ #include <linux/spinlock.h>
+ #include <linux/interrupt.h>
+ #include <linux/module.h>
++#include <linux/clockchips.h>
+ 
+ #include <asm/bootinfo.h>
+ #include <asm/cache.h>
+@@ -50,7 +57,27 @@
   */
  extern volatile unsigned long wall_jiffies;
  
 -DEFINE_SPINLOCK(rtc_lock);
++/* any missed timer interrupts */
++int missed_timer_count;
++
 +DEFINE_RAW_SPINLOCK(rtc_lock);
++
++#ifdef CONFIG_HIGH_RES_TIMERS
++static void mips_set_next_event(unsigned long evt);
++static void mips_set_mode(int mode, void *priv);
++
++static struct clock_event lapic_clockevent = {
++	.name = "mips clockevent interface",
++	.capabilities = CLOCK_CAP_NEXTEVT | CLOCK_CAP_PROFILE |
++			CLOCK_HAS_IRQHANDLER
++#ifdef CONFIG_SMP
++			| CLOCK_CAP_UPDATE
++#endif
++	,
++	.shift = 32,
++	.set_next_event = mips_set_next_event,
++};
++#endif
  
  /*
   * By default we provide the null RTC ops
-@@ -60,6 +61,13 @@ static unsigned long null_rtc_get_time(v
- 	return mktime(2000, 1, 1, 0, 0, 0);
- }
+@@ -69,6 +96,12 @@ unsigned long (*rtc_mips_get_time)(void)
+ int (*rtc_mips_set_time)(unsigned long) = null_rtc_set_time;
+ int (*rtc_mips_set_mmss)(unsigned long);
  
 +u64 read_persistent_clock(void)
 +{
 +	unsigned long sec;
-+	sec =  rtc_get_time();
++	sec =  rtc_mips_get_time();
 +	return (u64)sec * NSEC_PER_SEC;
 +}
+ 
+ /* usecs per counter cycle, shifted to left by 32 bits */
+ static unsigned int sll32_usecs_per_cycle;
+@@ -76,18 +109,30 @@ static unsigned int sll32_usecs_per_cycl
+ /* how many counter cycles in a jiffy */
+ static unsigned long cycles_per_jiffy __read_mostly;
+ 
++static unsigned long hrt_cycles_per_jiffy __read_mostly;
 +
- static int null_rtc_set_time(unsigned long sec)
++
+ /* Cycle counter value at the previous timer interrupt.. */
+ static unsigned int timerhi, timerlo;
+ 
+ /* expirelo is the count value for next CPU timer interrupt */
+ static unsigned int expirelo;
+ 
+-
+ /*
+  * Null timer ack for systems not needing one (e.g. i8254).
+  */
+ static void null_timer_ack(void) { /* nothing */ }
+ 
++#ifdef CONFIG_HIGH_RES_TIMERS
++/*
++ * Set the next event
++ */
++static void mips_set_next_event(unsigned long evt)
++{
++	write_c0_compare(read_c0_count() + evt);
++}
++#endif
++
+ /*
+  * Null high precision timer functions for systems lacking one.
+  */
+@@ -101,7 +146,6 @@ static void null_hpt_init(unsigned int c
+ 	/* nothing */
+ }
+ 
+-
+ /*
+  * Timer ack for an R4k-compatible timer of a known frequency.
+  */
+@@ -111,14 +155,15 @@ static void c0_timer_ack(void)
+ 
+ #ifndef CONFIG_SOC_PNX8550	/* pnx8550 resets to zero */
+ 	/* Ack this timer interrupt and set the next one.  */
+-	expirelo += cycles_per_jiffy;
++	expirelo += hrt_cycles_per_jiffy;
+ #endif
+ 	write_c0_compare(expirelo);
+ 
+ 	/* Check to see if we have missed any timer interrupts.  */
+-	while (((count = read_c0_count()) - expirelo) < 0x7fffffff) {
+-		/* missed_timer_count++; */
+-		expirelo = count + cycles_per_jiffy;
++	count = read_c0_count();
++	if ((count - expirelo) < 0x7fffffff) {
++		/* missed_timer_count++;  */
++		expirelo = count + hrt_cycles_per_jiffy;
+ 		write_c0_compare(expirelo);
+ 	}
+ }
+@@ -141,99 +186,33 @@ static void c0_hpt_init(unsigned int cou
+ static void c0_hpt_timer_init(unsigned int count)
  {
- 	return 0;
-@@ -147,92 +155,34 @@ static void c0_hpt_timer_init(unsigned i
+ 	count = read_c0_count() - count;
+-	expirelo = (count / cycles_per_jiffy + 1) * cycles_per_jiffy;
+-	write_c0_count(expirelo - cycles_per_jiffy);
++	expirelo = (count / hrt_cycles_per_jiffy + 1) * hrt_cycles_per_jiffy;
++	write_c0_count(expirelo - hrt_cycles_per_jiffy);
+ 	write_c0_compare(expirelo);
  	write_c0_count(count);
  }
  
--int (*mips_timer_state)(void);
--void (*mips_timer_ack)(void);
--unsigned int (*mips_hpt_read)(void);
--void (*mips_hpt_init)(unsigned int);
--
-+static DEFINE_RAW_SPINLOCK(checktsc_lock);
++static cycle_t read_mips_hpt(void)
++{
++	cycle_t ret;
++	ret = (cycle_t)c0_hpt_read();
++	return ret;
++}
++static struct clocksource clocksource_tsc = {
++	.name		= "MIPS",
++	.rating		= 300,
++	.read		= read_mips_hpt,
++	.mask		= 0xffffffff,
++	.mult		= 0,
++	.shift		= 24,
++	.is_continuous	= 1,
++};
++
+ int (*mips_timer_state)(void);
+ void (*mips_timer_ack)(void);
+ unsigned int (*mips_hpt_read)(void);
+ void (*mips_hpt_init)(unsigned int);
  
+-
 -/*
 - * This version of gettimeofday has microsecond resolution and better than
 - * microsecond precision on fast machines with cycle counter.
 - */
 -void do_gettimeofday(struct timeval *tv)
-+static cycle_t read_tsc(void)
- {
+-{
 -	unsigned long seq;
 -	unsigned long lost;
 -	unsigned long usec, sec;
@@ -12908,14 +13318,9 @@ Index: linux/arch/mips/kernel/time.c
 -
 -	do {
 -		seq = read_seqbegin(&xtime_lock);
-+	cycle_t ret;
-+	unsigned long flags;
- 
+-
 -		usec = do_gettimeoffset();
-+	spin_lock_irqsave(&checktsc_lock,flags);
-+	ret = mips_hpt_read();
-+	spin_unlock_irqrestore(&checktsc_lock,flags);
- 
+-
 -		lost = jiffies - wall_jiffies;
 -
 -		/*
@@ -12944,9 +13349,8 @@ Index: linux/arch/mips/kernel/time.c
 -
 -	tv->tv_sec = sec;
 -	tv->tv_usec = usec;
-+	return ret;
- }
- 
+-}
+-
 -EXPORT_SYMBOL(do_gettimeofday);
 -
 -int do_settimeofday(struct timespec *tv)
@@ -12979,25 +13383,29 @@ Index: linux/arch/mips/kernel/time.c
 -	clock_was_set();
 -	return 0;
 -}
-+static struct clocksource clocksource_tsc = {
-+	.name		= "MIPS",
-+	.rating		= 300,
-+	.read		= read_tsc,
-+	.mask		= 0xFFFFFFFF,
-+	.mult		= 0,
-+	.shift		= 32,
-+	.is_continuous	= 1,
-+};
- 
+-
 -EXPORT_SYMBOL(do_settimeofday);
-+int (*mips_timer_state)(void);
-+void (*mips_timer_ack)(void);
-+unsigned int (*mips_hpt_read)(void);
-+void (*mips_hpt_init)(unsigned int);
- 
+-
  /*
   * Gettimeoffset routines.  These routines returns the time duration
-@@ -414,6 +364,22 @@ void local_timer_interrupt(int irq, void
+  * since last timer interrupt in usecs.
+@@ -251,11 +230,9 @@ static unsigned long null_gettimeoffset(
+ 	return 0;
+ }
+ 
+-
+ /* The function pointer to one of the gettimeoffset funcs.  */
+ unsigned long (*do_gettimeoffset)(void) = null_gettimeoffset;
+ 
+-
+ static unsigned long fixed_rate_gettimeoffset(void)
+ {
+ 	u32 count;
+@@ -411,9 +388,26 @@ void local_timer_interrupt(int irq, void
+ {
+ 	if (current->pid)
+ 		profile_tick(CPU_PROFILING, regs);
++
  	update_process_times(user_mode(regs));
  }
  
@@ -13007,7 +13415,7 @@ Index: linux/arch/mips/kernel/time.c
 +	   xtime.tv_sec > last_rtc_update + 660 &&
 +	   (xtime.tv_nsec / 1000) >= 500000 - ((unsigned) TICK_SIZE) / 2 &&
 +	   (xtime.tv_nsec / 1000) <= 500000 + ((unsigned) TICK_SIZE) / 2) {
-+		if (rtc_set_mmss(xtime.tv_sec) == 0) {
++		if (rtc_mips_set_mmss(xtime.tv_sec) == 0) {
 +			last_rtc_update = xtime.tv_sec;
 +		} else {
 +			/* do it again in 60 s */
@@ -13020,7 +13428,57 @@ Index: linux/arch/mips/kernel/time.c
  /*
   * High-level timer interrupt service routines.  This function
   * is set as irqaction->handler and is invoked through do_IRQ.
-@@ -580,7 +546,7 @@ unsigned int mips_hpt_frequency;
+@@ -439,7 +433,7 @@ irqreturn_t timer_interrupt(int irq, voi
+ 
+ 	/*
+ 	 * If we have an externally synchronized Linux clock, then update
+-	 * CMOS clock accordingly every ~11 minutes. rtc_mips_set_time() has to be
++	 * CMOS clock accordingly every ~11 minutes. rtc_set_time() has to be
+ 	 * called as close as possible to 500 ms before the new second starts.
+ 	 */
+ 	if (ntp_synced() &&
+@@ -519,6 +513,15 @@ int (*perf_irq)(struct pt_regs *regs) = 
+ EXPORT_SYMBOL(null_perf_irq);
+ EXPORT_SYMBOL(perf_irq);
+ 
++#ifdef CONFIG_HIGH_RES_TIMERS
++void event_timer_handler(struct pt_regs *regs)
++{
++	c0_timer_ack();
++	if (lapic_clockevent.event_handler)
++		lapic_clockevent.event_handler(regs,NULL);
++}
++#endif
++
+ asmlinkage void ll_timer_interrupt(int irq, struct pt_regs *regs)
+ {
+ 	int r2 = cpu_has_mips_r2;
+@@ -532,6 +535,15 @@ asmlinkage void ll_timer_interrupt(int i
+ 	 * performance counter interrupt was pending, so we have to run the
+ 	 * performance counter interrupt handler anyway.
+ 	 */
++#ifdef CONFIG_HIGH_RES_TIMERS
++	/*
++	 * Run the event handler
++	 */
++	if (!r2 || (read_c0_cause() & (1 << 26)))
++		if (lapic_clockevent.event_handler)
++			lapic_clockevent.event_handler(regs,NULL);
++#endif
++
+ 	if (!r2 || (read_c0_cause() & (1 << 26)))
+ 		if (perf_irq(regs))
+ 			goto out;
+@@ -564,7 +576,7 @@ asmlinkage void ll_local_timer_interrupt
+  *      b) (optional) calibrate and set the mips_hpt_frequency
+  *	    (only needed if you intended to use fixed_rate_gettimeoffset
+  *	     or use cpu counter as timer interrupt source)
+- * 2) setup xtime based on rtc_mips_get_time().
++ * 2) setup xtime based on rtc_get_time().
+  * 3) choose a appropriate gettimeoffset routine.
+  * 4) calculate a couple of cached variables for later usage
+  * 5) board_timer_setup() -
+@@ -580,7 +592,7 @@ unsigned int mips_hpt_frequency;
  
  static struct irqaction timer_irqaction = {
  	.handler = timer_interrupt,
@@ -13029,26 +13487,199 @@ Index: linux/arch/mips/kernel/time.c
  	.name = "timer",
  };
  
-@@ -774,6 +740,19 @@ EXPORT_SYMBOL(to_tm);
+@@ -629,6 +641,9 @@ static unsigned int __init calibrate_hpt
+ 
+ void __init time_init(void)
+ {
++#ifdef CONFIG_HIGH_RES_TIMERS
++	u64 temp;
++#endif
+ 	if (board_time_init)
+ 		board_time_init();
+ 
+@@ -690,6 +705,12 @@ void __init time_init(void)
+ 		/* Calculate cache parameters.  */
+ 		cycles_per_jiffy = (mips_hpt_frequency + HZ / 2) / HZ;
+ 
++#ifdef CONFIG_HIGH_RES_TIMERS
++		hrt_cycles_per_jiffy = ( (CONFIG_CPU_SPEED * 1000000) + HZ / 2) / HZ;
++#else 
++		hrt_cycles_per_jiffy = cycles_per_jiffy;
++#endif
++
+ 		/* sll32_usecs_per_cycle = 10^6 * 2^32 / mips_counter_freq  */
+ 		do_div64_32(sll32_usecs_per_cycle,
+ 			    1000000, mips_hpt_frequency / 2,
+@@ -720,6 +741,24 @@ void __init time_init(void)
+ 	 * is not invoked accidentally.
+ 	 */
+ 	board_timer_setup(&timer_irqaction);
++
++#ifdef CONFIG_HIGH_RES_TIMERS
++	c0_hpt_timer_init(read_c0_count());
++
++	temp = (u64) (CONFIG_CPU_SPEED * 1000000)  << lapic_clockevent.shift;
++	do_div(temp, 1000000000);
++	lapic_clockevent.mult = (unsigned)temp;
++
++	lapic_clockevent.max_delta_ns =
++		clockevent_delta2ns(0xfffffffe, &lapic_clockevent);
++
++	lapic_clockevent.min_delta_ns =
++		clockevent_delta2ns(0xf, &lapic_clockevent);
++
++	setup_local_clockevent(&lapic_clockevent, CPU_MASK_NONE);
++#else
++	write_c0_count(0);
++#endif
+ }
+ 
+ #define FEBRUARY		2
+@@ -774,7 +813,144 @@ EXPORT_SYMBOL(to_tm);
  EXPORT_SYMBOL(rtc_mips_set_time);
  EXPORT_SYMBOL(rtc_mips_get_time);
  
 +static int __init init_tsc_clocksource(void)
 +{
 +	u64 temp;
-+	unsigned long mips_hpt_freq = 600 * 1000000;
 +
 +	temp = (u64) 1000000000 << clocksource_tsc.shift;
-+	do_div(temp, mips_hpt_freq);
++	do_div(temp, CONFIG_CPU_SPEED * 1000000);
 +	clocksource_tsc.mult = (unsigned)temp;
 +
-+	return register_clocksource(&clocksource_tsc);
++	return clocksource_register(&clocksource_tsc);
 +}
 +module_init(init_tsc_clocksource);
 +
  unsigned long long sched_clock(void)
  {
  	return (unsigned long long)jiffies*(1000000000/HZ);
+ }
++
++
++#ifdef CONFIG_SMP
++/*
++ * We have to synchronize the master CPU with all the slave CPUs
++ */
++static atomic_t cpus_started;
++static atomic_t cpus_ready;
++static atomic_t cpus_count;
++/*
++ * Master processor inits
++ */
++static void sync_cpus_init(int v)
++{
++	atomic_set(&cpus_count, 0);
++	mb();
++	atomic_set(&cpus_started, v);
++	mb();
++	atomic_set(&cpus_ready, v);
++	mb();
++}
++
++/*
++ * Called by the master processor
++ */
++static void sync_cpus_master(int v)
++{
++	atomic_set(&cpus_count, 0);
++	mb();
++	atomic_set(&cpus_started, v);
++	mb();
++	/* Wait here till all other CPUs are now ready */
++	while (atomic_read(&cpus_count) != (num_online_cpus() -1) )
++		mb();
++	atomic_set(&cpus_ready, v);
++	mb();
++}
++/*
++ * Called by the slave processors
++ */
++static void sync_cpus_slave(int v)
++{
++        /* Check if the master has been through this */
++        while (atomic_read(&cpus_started) != v)
++                mb();
++        atomic_inc(&cpus_count);
++        mb();
++        while (atomic_read(&cpus_ready) != v)
++                mb();
++}
++/*
++ * Called by the slave CPUs when done syncing the count register
++ * with the master processor
++ */
++static void sync_cpus_slave_exit(int v)
++{
++	while (atomic_read(&cpus_started) != v)
++		mb();
++	atomic_inc(&cpus_count);
++	mb();
++}
++
++#define LOOPS	100
++static u32 c0_count[NR_CPUS];		/* Count register per CPU */
++static u32 c[NR_CPUS][LOOPS + 1];	/* Count register per CPU per loop for syncing */
++
++/*
++ * Slave processors execute this via IPI
++ */
++static void sync_c0_count_slave(void *info)
++{
++	int cpus = 1, loop, prev_count = 0, cpu = smp_processor_id();
++	unsigned long flags;
++	u32 diff_count; /* CPU count registers are 32-bit */
++	local_irq_save(flags);
++        
++	for(loop = 0; loop <= LOOPS; loop++) {
++		/* Sync with the Master processor */
++		sync_cpus_slave(cpus++);
++		c[cpu][loop] = c0_count[cpu] = read_c0_count();
++		mb();
++		sync_cpus_slave(cpus++);
++		diff_count = c0_count[0] - c0_count[cpu];
++		diff_count += prev_count;
++		diff_count += read_c0_count();
++		write_c0_count(diff_count);
++		prev_count = (prev_count >> 1) +
++			((int)(c0_count[0] - c0_count[cpu]) >> 1);
++        }
++
++	/* Slave processor is done syncing count register with Master */
++	sync_cpus_slave_exit(cpus++);
++	printk("SMP: Slave processor %d done syncing count \n", cpu);
++	local_irq_restore(flags);
++}
++
++/*
++ * Master kicks off the syncing process
++ */
++void sync_c0_count_master(void)
++{
++	int cpus = 0, loop, cpu = smp_processor_id();
++	unsigned long flags;
++
++	printk("SMP: Starting to sync the c0 count register ... \n");
++	sync_cpus_init(cpus++);
++
++	/* Kick off the slave processors to also start the syncing process */
++	smp_call_function(sync_c0_count_slave, NULL, 0, 0);
++	local_irq_save(flags);
++
++	for (loop = 0; loop <= LOOPS; loop++) {
++		/* Wait for all the CPUs here */
++		sync_cpus_master(cpus++);
++		c[cpu][loop] = c0_count[cpu] = read_c0_count();
++		mb();
++		/* Do syncing once more */
++		sync_cpus_master(cpus++);
++	}
++	sync_cpus_master(cpus++);
++	local_irq_restore(flags);
++
++	printk("SMP: Syncing process completed accross CPUs ... \n");
++}
++#endif /* CONFIG_SMP */
 Index: linux/arch/mips/kernel/traps.c
 ===================================================================
 --- linux.orig/arch/mips/kernel/traps.c
@@ -13074,20 +13705,6 @@ Index: linux/arch/mips/lasat/interrupt.c
 +		irq_desc[i].chip	= &lasat_irq_type;
  	}
  }
-Index: linux/arch/mips/math-emu/cp1emu.c
-===================================================================
---- linux.orig/arch/mips/math-emu/cp1emu.c
-+++ linux/arch/mips/math-emu/cp1emu.c
-@@ -1269,7 +1269,9 @@ int fpu_emulator_cop1Handler(struct pt_r
- 		if (sig)
- 			break;
- 
-+		preempt_enable();
- 		cond_resched();
-+		preempt_disable();
- 	} while (xcp->cp0_epc > prevepc);
- 
- 	/* SIGILL indicates a non-fpu instruction */
 Index: linux/arch/mips/mips-boards/atlas/atlas_int.c
 ===================================================================
 --- linux.orig/arch/mips/mips-boards/atlas/atlas_int.c
@@ -13261,6 +13878,19 @@ Index: linux/arch/mips/sibyte/bcm1480/irq.c
  		}
  	}
  }
+Index: linux/arch/mips/sibyte/cfe/smp.c
+===================================================================
+--- linux.orig/arch/mips/sibyte/cfe/smp.c
++++ linux/arch/mips/sibyte/cfe/smp.c
+@@ -107,4 +107,8 @@ void prom_smp_finish(void)
+  */
+ void prom_cpus_done(void)
+ {
++#ifdef CONFIG_HIGH_RES_TIMERS
++	extern void sync_c0_count_master(void);
++	sync_c0_count_master();
++#endif
+ }
 Index: linux/arch/mips/sibyte/sb1250/irq.c
 ===================================================================
 --- linux.orig/arch/mips/sibyte/sb1250/irq.c
@@ -13274,20 +13904,22 @@ Index: linux/arch/mips/sibyte/sb1250/irq.c
  
  void sb1250_mask_irq(int cpu, int irq)
  {
-@@ -246,10 +246,10 @@ void __init init_sb1250_irqs(void)
+@@ -246,10 +246,12 @@ void __init init_sb1250_irqs(void)
  		irq_desc[i].action = 0;
  		irq_desc[i].depth = 1;
  		if (i < SB1250_NR_IRQS) {
 -			irq_desc[i].handler = &sb1250_irq_type;
 +			irq_desc[i].chip = &sb1250_irq_type;
++			irq_desc[i].handle_irq = (void *)0;
  			sb1250_irq_owner[i] = 0;
  		} else {
 -			irq_desc[i].handler = &no_irq_type;
 +			irq_desc[i].chip = &no_irq_type;
++			irq_desc[i].handle_irq = (void *)0;
  		}
  	}
  }
-@@ -263,7 +263,7 @@ static irqreturn_t  sb1250_dummy_handler
+@@ -263,7 +265,7 @@ static irqreturn_t  sb1250_dummy_handler
  
  static struct irqaction sb1250_dummy_action = {
  	.handler = sb1250_dummy_handler,
@@ -13296,6 +13928,57 @@ Index: linux/arch/mips/sibyte/sb1250/irq.c
  	.mask    = CPU_MASK_NONE,
  	.name    = "sb1250-private",
  	.next    = NULL,
+@@ -373,6 +375,10 @@ void __init arch_init_irq(void)
+ #ifdef CONFIG_KGDB
+ 	imask |= STATUSF_IP6;
+ #endif
++
++#ifdef CONFIG_HIGH_RES_TIMERS
++	imask |= STATUSF_IP7;
++#endif
+ 	/* Enable necessary IPs, disable the rest */
+ 	change_c0_status(ST0_IM, imask);
+ 
+@@ -462,6 +468,9 @@ asmlinkage void plat_irq_dispatch(struct
+ 	}
+ #endif
+ 
++	if (pending & CAUSEF_IP7)
++		event_timer_handler(regs);
++
+ 	if (pending & CAUSEF_IP4)
+ 		sb1250_timer_interrupt(regs);
+ 
+Index: linux/arch/mips/sibyte/sb1250/smp.c
+===================================================================
+--- linux.orig/arch/mips/sibyte/sb1250/smp.c
++++ linux/arch/mips/sibyte/sb1250/smp.c
+@@ -59,7 +59,7 @@ void sb1250_smp_finish(void)
+ {
+ 	extern void sb1250_time_init(void);
+ 	sb1250_time_init();
+-	local_irq_enable();
++	raw_local_irq_enable();
+ }
+ 
+ /*
+Index: linux/arch/mips/sibyte/swarm/setup.c
+===================================================================
+--- linux.orig/arch/mips/sibyte/swarm/setup.c
++++ linux/arch/mips/sibyte/swarm/setup.c
+@@ -131,6 +131,12 @@ void __init plat_setup(void)
+ 		rtc_mips_set_time = m41t81_set_time;
+ 	}
+ 
++#ifdef CONFIG_HIGH_RES_TIMERS
++	/*
++	 * set the mips_hpt_frequency here
++	 */
++	mips_hpt_frequency = CONFIG_CPU_SPEED * 1000000;
++#endif
+ 	printk("This kernel optimized for "
+ #ifdef CONFIG_SIMULATION
+ 	       "simulation"
 Index: linux/arch/mips/sni/irq.c
 ===================================================================
 --- linux.orig/arch/mips/sni/irq.c
@@ -17540,7 +18223,7 @@ Index: linux/arch/x86_64/kernel/time.c
 -
 -	wtm_sec  = wall_to_monotonic.tv_sec + (xtime.tv_sec - sec);
 -	wtm_nsec = wall_to_monotonic.tv_nsec + (xtime.tv_nsec - nsec);
- 
+-
 -	set_normalized_timespec(&xtime, sec, nsec);
 -	set_normalized_timespec(&wall_to_monotonic, wtm_sec, wtm_nsec);
 -
@@ -17550,7 +18233,7 @@ Index: linux/arch/x86_64/kernel/time.c
 -	clock_was_set();
 -	return 0;
 -}
--
+ 
 -EXPORT_SYMBOL(do_settimeofday);
 +volatile unsigned long jiffies  = INITIAL_JIFFIES;
  
@@ -17724,11 +18407,20 @@ Index: linux/arch/x86_64/kernel/time.c
  	/* Could do CPU core sync here. Opteron can execute rdtsc speculatively,
  	   which means it is not completely exact and may not be monotonous between
  	   CPUs. But the errors should be too small to matter for scheduling
-@@ -502,7 +247,20 @@ unsigned long long sched_clock(void)
+@@ -502,7 +247,29 @@ unsigned long long sched_clock(void)
  	return cycles_2_ns(a);
  }
  
 -static unsigned long get_cmos_time(void)
++/*
++ * Monotonic_clock - returns # of nanoseconds passed since time_init()
++ */
++unsigned long long monotonic_clock(void)
++{
++	return sched_clock();
++}
++EXPORT_SYMBOL(monotonic_clock);
++
 +static int tsc_unstable;
 +
 +static inline int check_tsc_unstable(void)
@@ -17746,7 +18438,7 @@ Index: linux/arch/x86_64/kernel/time.c
  {
  	unsigned int year, mon, day, hour, min, sec;
  	unsigned long flags;
-@@ -580,24 +338,6 @@ static void handle_cpufreq_delayed_get(v
+@@ -580,24 +347,6 @@ static void handle_cpufreq_delayed_get(v
  	cpufreq_delayed_issched = 0;
  }
  
@@ -17771,7 +18463,7 @@ Index: linux/arch/x86_64/kernel/time.c
  static unsigned int  ref_freq = 0;
  static unsigned long loops_per_jiffy_ref = 0;
  
-@@ -632,8 +372,10 @@ static int time_cpufreq_notifier(struct 
+@@ -632,8 +381,10 @@ static int time_cpufreq_notifier(struct 
  		cpufreq_scale(loops_per_jiffy_ref, ref_freq, freq->new);
  
  		cpu_khz = cpufreq_scale(cpu_khz_ref, ref_freq, freq->new);
@@ -17784,7 +18476,7 @@ Index: linux/arch/x86_64/kernel/time.c
  	}
  	
  	set_cyc2ns_scale(cpu_khz_ref);
-@@ -725,7 +467,7 @@ static __init int late_hpet_init(void)
+@@ -725,7 +476,7 @@ static __init int late_hpet_init(void)
  	struct hpet_data	hd;
  	unsigned int 		ntimer;
  
@@ -17793,7 +18485,7 @@ Index: linux/arch/x86_64/kernel/time.c
          	return 0;
  
  	memset(&hd, 0, sizeof (hd));
-@@ -738,7 +480,7 @@ static __init int late_hpet_init(void)
+@@ -738,7 +489,7 @@ static __init int late_hpet_init(void)
  	 * Register with driver.
  	 * Timer0 and Timer1 is used by platform.
  	 */
@@ -17802,7 +18494,7 @@ Index: linux/arch/x86_64/kernel/time.c
  	hd.hd_address = (void __iomem *)fix_to_virt(FIX_HPET_BASE);
  	hd.hd_nirqs = ntimer;
  	hd.hd_flags = HPET_DATA_PLATFORM;
-@@ -807,10 +549,10 @@ static int hpet_init(void)
+@@ -807,10 +558,10 @@ static int hpet_init(void)
  {
  	unsigned int id;
  
@@ -17816,7 +18508,7 @@ Index: linux/arch/x86_64/kernel/time.c
  
  /*
   * Read the period, compute tick and quotient.
-@@ -865,7 +607,7 @@ void __init pit_stop_interrupt(void)
+@@ -865,7 +616,7 @@ void __init pit_stop_interrupt(void)
  void __init stop_timer_interrupt(void)
  {
  	char *name;
@@ -17825,7 +18517,7 @@ Index: linux/arch/x86_64/kernel/time.c
  		name = "HPET";
  		hpet_timer_stop_set_go(0);
  	} else {
-@@ -882,28 +624,27 @@ int __init time_setup(char *str)
+@@ -882,28 +633,27 @@ int __init time_setup(char *str)
  }
  
  static struct irqaction irq0 = {
@@ -17859,7 +18551,7 @@ Index: linux/arch/x86_64/kernel/time.c
  
  	xtime.tv_sec = get_cmos_time();
  	xtime.tv_nsec = 0;
-@@ -911,39 +652,27 @@ void __init time_init(void)
+@@ -911,39 +661,27 @@ void __init time_init(void)
  	set_normalized_timespec(&wall_to_monotonic,
  	                        -xtime.tv_sec, -xtime.tv_nsec);
  
@@ -17888,15 +18580,15 @@ Index: linux/arch/x86_64/kernel/time.c
  		timename = "PIT";
  	}
 +	tsc_khz = cpu_khz;
-+
  
 -	vxtime.mode = VXTIME_TSC;
 -	gtod = time_init_gtod();
-+	if (unsynchronized_tsc())
-+		mark_tsc_unstable();
  
 -	printk(KERN_INFO "time.c: Using %ld.%06ld MHz WALL %s GTOD %s timer.\n",
 -	       vxtime_hz / 1000000, vxtime_hz % 1000000, timename, gtod);
++	if (unsynchronized_tsc())
++		mark_tsc_unstable();
++
  	printk(KERN_INFO "time.c: Detected %d.%03d MHz processor.\n",
  		cpu_khz / 1000, cpu_khz % 1000);
 -	vxtime.quot = (1000000L << 32) / vxtime_hz;
@@ -17905,7 +18597,7 @@ Index: linux/arch/x86_64/kernel/time.c
  	setup_irq(0, &irq0);
  
  	set_cyc2ns_scale(cpu_khz);
-@@ -967,39 +696,6 @@ __cpuinit int unsynchronized_tsc(void)
+@@ -967,39 +705,6 @@ __cpuinit int unsynchronized_tsc(void)
   	return num_present_cpus() > 1;
  }
  
@@ -17945,7 +18637,7 @@ Index: linux/arch/x86_64/kernel/time.c
  
  __setup("report_lost_ticks", time_setup);
  
-@@ -1030,7 +726,7 @@ static int timer_resume(struct sys_devic
+@@ -1030,7 +735,7 @@ static int timer_resume(struct sys_devic
  	unsigned long ctime = get_cmos_time();
  	unsigned long sleep_length = (ctime - sleep_start) * HZ;
  
@@ -17954,7 +18646,7 @@ Index: linux/arch/x86_64/kernel/time.c
  		hpet_reenable();
  	else
  		i8254_timer_resume();
-@@ -1039,21 +735,9 @@ static int timer_resume(struct sys_devic
+@@ -1039,21 +744,9 @@ static int timer_resume(struct sys_devic
  	write_seqlock_irqsave(&xtime_lock,flags);
  	xtime.tv_sec = sec;
  	xtime.tv_nsec = 0;
@@ -17977,7 +18669,7 @@ Index: linux/arch/x86_64/kernel/time.c
  	touch_softlockup_watchdog();
  	return 0;
  }
-@@ -1115,7 +799,7 @@ static unsigned int hpet_t1_cmp; /* cach
+@@ -1115,7 +808,7 @@ static unsigned int hpet_t1_cmp; /* cach
  
  int is_hpet_enabled(void)
  {
@@ -17986,7 +18678,7 @@ Index: linux/arch/x86_64/kernel/time.c
  }
  
  /*
-@@ -1320,3 +1004,137 @@ int __init notsc_setup(char *s)
+@@ -1320,3 +1013,137 @@ int __init notsc_setup(char *s)
  }
  
  __setup("notsc", notsc_setup);
@@ -26180,7 +26872,15 @@ Index: linux/include/asm-mips/atomic.h
 ===================================================================
 --- linux.orig/include/asm-mips/atomic.h
 +++ linux/include/asm-mips/atomic.h
-@@ -81,13 +81,16 @@ static __inline__ void atomic_add(int i,
+@@ -18,7 +18,6 @@
+  * main big wrapper ...
+  */
+ #include <linux/config.h>
+-#include <linux/spinlock.h>
+ 
+ #ifndef _ASM_ATOMIC_H
+ #define _ASM_ATOMIC_H
+@@ -81,13 +80,16 @@ static __inline__ void atomic_add(int i,
  		"	.set	mips0					\n"
  		: "=&r" (temp), "=m" (v->counter)
  		: "Ir" (i), "m" (v->counter));
@@ -26190,15 +26890,17 @@ Index: linux/include/asm-mips/atomic.h
 +	else {
  		unsigned long flags;
  
- 		local_irq_save(flags);
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
  		v->counter += i;
- 		local_irq_restore(flags);
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
  	}
 +#endif
  }
  
  /*
-@@ -123,13 +126,16 @@ static __inline__ void atomic_sub(int i,
+@@ -123,13 +125,16 @@ static __inline__ void atomic_sub(int i,
  		"	.set	mips0					\n"
  		: "=&r" (temp), "=m" (v->counter)
  		: "Ir" (i), "m" (v->counter));
@@ -26208,15 +26910,17 @@ Index: linux/include/asm-mips/atomic.h
 +	else {
  		unsigned long flags;
  
- 		local_irq_save(flags);
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
  		v->counter -= i;
- 		local_irq_restore(flags);
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
  	}
 +#endif
  }
  
  /*
-@@ -169,7 +175,9 @@ static __inline__ int atomic_add_return(
+@@ -169,15 +174,18 @@ static __inline__ int atomic_add_return(
  		: "=&r" (result), "=&r" (temp), "=m" (v->counter)
  		: "Ir" (i), "m" (v->counter)
  		: "memory");
@@ -26226,16 +26930,19 @@ Index: linux/include/asm-mips/atomic.h
 +	else {
  		unsigned long flags;
  
- 		local_irq_save(flags);
-@@ -178,6 +186,7 @@ static __inline__ int atomic_add_return(
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		result = v->counter;
+ 		result += i;
  		v->counter = result;
- 		local_irq_restore(flags);
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
  	}
 +#endif
  
  	return result;
  }
-@@ -216,7 +225,9 @@ static __inline__ int atomic_sub_return(
+@@ -216,15 +224,18 @@ static __inline__ int atomic_sub_return(
  		: "=&r" (result), "=&r" (temp), "=m" (v->counter)
  		: "Ir" (i), "m" (v->counter)
  		: "memory");
@@ -26245,16 +26952,19 @@ Index: linux/include/asm-mips/atomic.h
 +	else {
  		unsigned long flags;
  
- 		local_irq_save(flags);
-@@ -225,6 +236,7 @@ static __inline__ int atomic_sub_return(
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		result = v->counter;
+ 		result -= i;
  		v->counter = result;
- 		local_irq_restore(flags);
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
  	}
 +#endif
  
  	return result;
  }
-@@ -279,7 +291,9 @@ static __inline__ int atomic_sub_if_posi
+@@ -279,16 +290,19 @@ static __inline__ int atomic_sub_if_posi
  		: "=&r" (result), "=&r" (temp), "=m" (v->counter)
  		: "Ir" (i), "m" (v->counter)
  		: "memory");
@@ -26264,16 +26974,20 @@ Index: linux/include/asm-mips/atomic.h
 +	else {
  		unsigned long flags;
  
- 		local_irq_save(flags);
-@@ -289,6 +303,7 @@ static __inline__ int atomic_sub_if_posi
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		result = v->counter;
+ 		result -= i;
+ 		if (result >= 0)
  			v->counter = result;
- 		local_irq_restore(flags);
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
  	}
 +#endif
  
  	return result;
  }
-@@ -435,13 +450,16 @@ static __inline__ void atomic64_add(long
+@@ -435,13 +449,16 @@ static __inline__ void atomic64_add(long
  		"	.set	mips0					\n"
  		: "=&r" (temp), "=m" (v->counter)
  		: "Ir" (i), "m" (v->counter));
@@ -26283,15 +26997,17 @@ Index: linux/include/asm-mips/atomic.h
 +	else {
  		unsigned long flags;
  
- 		local_irq_save(flags);
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
  		v->counter += i;
- 		local_irq_restore(flags);
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
  	}
 +#endif
  }
  
  /*
-@@ -477,13 +495,16 @@ static __inline__ void atomic64_sub(long
+@@ -477,13 +494,16 @@ static __inline__ void atomic64_sub(long
  		"	.set	mips0					\n"
  		: "=&r" (temp), "=m" (v->counter)
  		: "Ir" (i), "m" (v->counter));
@@ -26301,15 +27017,17 @@ Index: linux/include/asm-mips/atomic.h
 +	else {
  		unsigned long flags;
  
- 		local_irq_save(flags);
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
  		v->counter -= i;
- 		local_irq_restore(flags);
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
  	}
 +#endif
  }
  
  /*
-@@ -523,7 +544,9 @@ static __inline__ long atomic64_add_retu
+@@ -523,17 +543,20 @@ static __inline__ long atomic64_add_retu
  		: "=&r" (result), "=&r" (temp), "=m" (v->counter)
  		: "Ir" (i), "m" (v->counter)
  		: "memory");
@@ -26319,17 +27037,21 @@ Index: linux/include/asm-mips/atomic.h
 +	else {
  		unsigned long flags;
  
- 		local_irq_save(flags);
-@@ -532,6 +555,8 @@ static __inline__ long atomic64_add_retu
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		result = v->counter;
+ 		result += i;
  		v->counter = result;
- 		local_irq_restore(flags);
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
  	}
-+#endif
-+#endif
  
  	return result;
++#endif
  }
-@@ -570,7 +595,9 @@ static __inline__ long atomic64_sub_retu
+ 
+ static __inline__ long atomic64_sub_return(long i, atomic64_t * v)
+@@ -570,17 +593,20 @@ static __inline__ long atomic64_sub_retu
  		: "=&r" (result), "=&r" (temp), "=m" (v->counter)
  		: "Ir" (i), "m" (v->counter)
  		: "memory");
@@ -26339,19 +27061,60 @@ Index: linux/include/asm-mips/atomic.h
 +	else {
  		unsigned long flags;
  
- 		local_irq_save(flags);
-@@ -643,6 +670,7 @@ static __inline__ long atomic64_sub_if_p
- 			v->counter = result;
- 		local_irq_restore(flags);
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		result = v->counter;
+ 		result -= i;
+ 		v->counter = result;
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
  	}
-+#endif
  
  	return result;
++#endif
  }
+ 
+ /*
+@@ -633,18 +659,20 @@ static __inline__ long atomic64_sub_if_p
+ 		: "=&r" (result), "=&r" (temp), "=m" (v->counter)
+ 		: "Ir" (i), "m" (v->counter)
+ 		: "memory");
+-	} else {
++	} 
++#if !defined(CONFIG_NO_SPINLOCK) && !defined(CONFIG_PREEMPT_RT)
++	else {
+ 		unsigned long flags;
+ 
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		result = v->counter;
+ 		result -= i;
+ 		if (result >= 0)
+ 			v->counter = result;
+-		local_irq_restore(flags);
++		raw_local_irq_restore(flags);
+ 	}
+-
+ 	return result;
++#endif
+ }
+ 
+ #define atomic64_dec_return(v) atomic64_sub_return(1,(v))
 Index: linux/include/asm-mips/bitops.h
 ===================================================================
 --- linux.orig/include/asm-mips/bitops.h
 +++ linux/include/asm-mips/bitops.h
+@@ -48,8 +48,8 @@
+  */
+ 
+ #define __bi_flags			unsigned long flags
+-#define __bi_local_irq_save(x)		local_irq_save(x)
+-#define __bi_local_irq_restore(x)	local_irq_restore(x)
++#define __bi_local_irq_save(x)		raw_local_irq_save(x)
++#define __bi_local_irq_restore(x)	raw_local_irq_restore(x)
+ #else
+ #define __bi_flags
+ #define __bi_local_irq_save(x)
 @@ -91,6 +91,7 @@ static inline void set_bit(unsigned long
  		"	.set	mips0					\n"
  		: "=&r" (temp), "=m" (*m)
@@ -26631,6 +27394,29 @@ Index: linux/include/asm-mips/io.h
  
  #include <asm/addrspace.h>
  #include <asm/byteorder.h>
+Index: linux/include/asm-mips/irqflags.h
+===================================================================
+--- /dev/null
++++ linux/include/asm-mips/irqflags.h
+@@ -0,0 +1,18 @@
++/*
++ * include/asm-i386/irqflags.h
++ *
++ * IRQ flags handling
++ *
++ * This file gets included from lowlevel asm headers too, to provide
++ * wrapped versions of the local_irq_*() APIs, based on the
++ * raw_local_irq_*() macros from the lowlevel headers.
++ */
++#ifndef _ASM_IRQFLAGS_H
++#define _ASM_IRQFLAGS_H
++
++# define TRACE_IRQS_ON
++# define TRACE_IRQS_OFF
++# define TRACE_IRQS_ON_STR
++# define TRACE_IRQS_OFF_STR
++
++#endif
 Index: linux/include/asm-mips/linkage.h
 ===================================================================
 --- linux.orig/include/asm-mips/linkage.h
@@ -26940,13 +27726,15 @@ Index: linux/include/asm-mips/semaphore.h
 -static inline void init_MUTEX (struct semaphore *sem)
 +static inline void compat_init_MUTEX (struct compat_semaphore *sem)
  {
- 	sema_init(sem, 1);
+-	sema_init(sem, 1);
++	compat_sema_init(sem, 1);
  }
  
 -static inline void init_MUTEX_LOCKED (struct semaphore *sem)
 +static inline void compat_init_MUTEX_LOCKED (struct compat_semaphore *sem)
  {
- 	sema_init(sem, 0);
+-	sema_init(sem, 0);
++	compat_sema_init(sem, 0);
  }
  
 -extern void __down(struct semaphore * sem);
@@ -26961,7 +27749,7 @@ Index: linux/include/asm-mips/semaphore.h
  {
  	might_sleep();
  
-@@ -79,31 +90,35 @@ static inline void down(struct semaphore
+@@ -79,31 +90,37 @@ static inline void down(struct semaphore
  	 * Try to get the semaphore, take the slow path if we fail.
  	 */
  	if (unlikely(atomic_dec_return(&sem->count) < 0))
@@ -26996,6 +27784,8 @@ Index: linux/include/asm-mips/semaphore.h
 +		__compat_up(sem);
  }
  
++extern int compat_sem_is_locked(struct compat_semaphore *sem);
++
 +#define compat_sema_count(sem) atomic_read(&(sem)->count)
 +
 +#include <linux/semaphore.h>
@@ -27003,27 +27793,136 @@ Index: linux/include/asm-mips/semaphore.h
  #endif /* __KERNEL__ */
  
  #endif /* __ASM_SEMAPHORE_H */
+Index: linux/include/asm-mips/spinlock.h
+===================================================================
+--- linux.orig/include/asm-mips/spinlock.h
++++ linux/include/asm-mips/spinlock.h
+@@ -27,7 +27,7 @@
+  * We make no fairness assumptions.  They have a cost.
+  */
+ 
+-static inline void __raw_spin_lock(raw_spinlock_t *lock)
++static inline void __raw_spin_lock(__raw_spinlock_t *lock)
+ {
+ 	unsigned int tmp;
+ 
+@@ -61,7 +61,7 @@ static inline void __raw_spin_lock(raw_s
+ 	}
+ }
+ 
+-static inline void __raw_spin_unlock(raw_spinlock_t *lock)
++static inline void __raw_spin_unlock(__raw_spinlock_t *lock)
+ {
+ 	__asm__ __volatile__(
+ 	"	.set	noreorder	# __raw_spin_unlock	\n"
+@@ -73,7 +73,7 @@ static inline void __raw_spin_unlock(raw
+ 	: "memory");
+ }
+ 
+-static inline unsigned int __raw_spin_trylock(raw_spinlock_t *lock)
++static inline unsigned int __raw_spin_trylock(__raw_spinlock_t *lock)
+ {
+ 	unsigned int temp, res;
+ 
+@@ -130,7 +130,7 @@ static inline unsigned int __raw_spin_tr
+  */
+ #define __raw_write_can_lock(rw)	(!(rw)->lock)
+ 
+-static inline void __raw_read_lock(raw_rwlock_t *rw)
++static inline void __raw_read_lock(__raw_rwlock_t *rw)
+ {
+ 	unsigned int tmp;
+ 
+@@ -167,7 +167,7 @@ static inline void __raw_read_lock(raw_r
+ /* Note the use of sub, not subu which will make the kernel die with an
+    overflow exception if we ever try to unlock an rwlock that is already
+    unlocked or is being held by a writer.  */
+-static inline void __raw_read_unlock(raw_rwlock_t *rw)
++static inline void __raw_read_unlock(__raw_rwlock_t *rw)
+ {
+ 	unsigned int tmp;
+ 
+@@ -196,7 +196,7 @@ static inline void __raw_read_unlock(raw
+ 	}
+ }
+ 
+-static inline void __raw_write_lock(raw_rwlock_t *rw)
++static inline void __raw_write_lock(__raw_rwlock_t *rw)
+ {
+ 	unsigned int tmp;
+ 
+@@ -229,7 +229,7 @@ static inline void __raw_write_lock(raw_
+ 	}
+ }
+ 
+-static inline void __raw_write_unlock(raw_rwlock_t *rw)
++static inline void __raw_write_unlock(__raw_rwlock_t *rw)
+ {
+ 	__asm__ __volatile__(
+ 	"	sync			# __raw_write_unlock	\n"
+@@ -239,9 +239,9 @@ static inline void __raw_write_unlock(ra
+ 	: "memory");
+ }
+ 
+-#define __raw_read_trylock(lock) generic__raw_read_trylock(lock)
++#define __raw_read_trylock(lock) generic_raw_read_trylock(lock)
+ 
+-static inline int __raw_write_trylock(raw_rwlock_t *rw)
++static inline int __raw_write_trylock(__raw_rwlock_t *rw)
+ {
+ 	unsigned int tmp;
+ 	int ret;
+Index: linux/include/asm-mips/spinlock_types.h
+===================================================================
+--- linux.orig/include/asm-mips/spinlock_types.h
++++ linux/include/asm-mips/spinlock_types.h
+@@ -7,13 +7,13 @@
+ 
+ typedef struct {
+ 	volatile unsigned int lock;
+-} raw_spinlock_t;
++} __raw_spinlock_t;
+ 
+ #define __RAW_SPIN_LOCK_UNLOCKED	{ 0 }
+ 
+ typedef struct {
+ 	volatile unsigned int lock;
+-} raw_rwlock_t;
++} __raw_rwlock_t;
+ 
+ #define __RAW_RW_LOCK_UNLOCKED		{ 0 }
+ 
 Index: linux/include/asm-mips/system.h
 ===================================================================
 --- linux.orig/include/asm-mips/system.h
 +++ linux/include/asm-mips/system.h
-@@ -246,6 +246,7 @@ static inline unsigned long __xchg_u32(v
- 		: "=&r" (retval), "=m" (*m), "=&r" (dummy)
- 		: "R" (*m), "Jr" (val)
- 		: "memory");
-+#ifndef CONFIG_PREEMPT_RT
+@@ -249,10 +249,10 @@ static inline unsigned long __xchg_u32(v
  	} else {
  		unsigned long flags;
  
-@@ -253,6 +254,7 @@ static inline unsigned long __xchg_u32(v
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
  		retval = *m;
  		*m = val;
- 		local_irq_restore(flags);	/* implies memory barrier  */
-+#endif
+-		local_irq_restore(flags);	/* implies memory barrier  */
++		raw_local_irq_restore(flags);	/* implies memory barrier  */
  	}
  
  	return retval;
-@@ -377,6 +379,7 @@ static inline unsigned long __cmpxchg_u3
+@@ -298,10 +298,10 @@ static inline __u64 __xchg_u64(volatile 
+ 	} else {
+ 		unsigned long flags;
+ 
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		retval = *m;
+ 		*m = val;
+-		local_irq_restore(flags);	/* implies memory barrier  */
++		raw_local_irq_restore(flags);	/* implies memory barrier  */
+ 	}
+ 
+ 	return retval;
+@@ -377,14 +377,16 @@ static inline unsigned long __cmpxchg_u3
  		: "=&r" (retval), "=R" (*m)
  		: "R" (*m), "Jr" (old), "Jr" (new)
  		: "memory");
@@ -27031,11 +27930,28 @@ Index: linux/include/asm-mips/system.h
  	} else {
  		unsigned long flags;
  
-@@ -385,6 +388,7 @@ static inline unsigned long __cmpxchg_u3
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		retval = *m;
  		if (retval == old)
  			*m = new;
- 		local_irq_restore(flags);	/* implies memory barrier  */
+-		local_irq_restore(flags);	/* implies memory barrier  */
++		raw_local_irq_restore(flags);	/* implies memory barrier  */
 +#endif
+ 	}
+ 
+ 	return retval;
+@@ -435,11 +437,11 @@ static inline unsigned long __cmpxchg_u6
+ 	} else {
+ 		unsigned long flags;
+ 
+-		local_irq_save(flags);
++		raw_local_irq_save(flags);
+ 		retval = *m;
+ 		if (retval == old)
+ 			*m = new;
+-		local_irq_restore(flags);	/* implies memory barrier  */
++		raw_local_irq_restore(flags);	/* implies memory barrier  */
  	}
  
  	return retval;
@@ -27059,6 +27975,129 @@ Index: linux/include/asm-mips/thread_info.h
  #define _TIF_RESTORE_SIGMASK	(1<<TIF_RESTORE_SIGMASK)
  #define _TIF_USEDFPU		(1<<TIF_USEDFPU)
  #define _TIF_POLLING_NRFLAG	(1<<TIF_POLLING_NRFLAG)
+Index: linux/include/asm-mips/time.h
+===================================================================
+--- linux.orig/include/asm-mips/time.h
++++ linux/include/asm-mips/time.h
+@@ -22,7 +22,7 @@
+ #include <linux/rtc.h>
+ #include <linux/spinlock.h>
+ 
+-extern spinlock_t rtc_lock;
++extern raw_spinlock_t rtc_lock;
+ 
+ /*
+  * RTC ops.  By default, they point to no-RTC functions.
+Index: linux/include/asm-mips/timeofday.h
+===================================================================
+--- /dev/null
++++ linux/include/asm-mips/timeofday.h
+@@ -0,0 +1,5 @@
++#ifndef _ASM_MIPS_TIMEOFDAY_H
++#define _ASM_MIPS_TIMEOFDAY_H
++#include <asm-generic/timeofday.h>
++#endif
++
+Index: linux/include/asm-mips/uaccess.h
+===================================================================
+--- linux.orig/include/asm-mips/uaccess.h
++++ linux/include/asm-mips/uaccess.h
+@@ -425,7 +425,6 @@ extern size_t __copy_user(void *__to, co
+ 	const void *__cu_from;						\
+ 	long __cu_len;							\
+ 									\
+-	might_sleep();							\
+ 	__cu_to = (to);							\
+ 	__cu_from = (from);						\
+ 	__cu_len = (n);							\
+@@ -455,7 +454,6 @@ extern size_t __copy_user(void *__to, co
+ 	const void *__cu_from;						\
+ 	long __cu_len;							\
+ 									\
+-	might_sleep();							\
+ 	__cu_to = (to);							\
+ 	__cu_from = (from);						\
+ 	__cu_len = (n);							\
+@@ -510,7 +508,6 @@ extern size_t __copy_user(void *__to, co
+ 	const void __user *__cu_from;					\
+ 	long __cu_len;							\
+ 									\
+-	might_sleep();							\
+ 	__cu_to = (to);							\
+ 	__cu_from = (from);						\
+ 	__cu_len = (n);							\
+@@ -541,7 +538,6 @@ extern size_t __copy_user(void *__to, co
+ 	const void __user *__cu_from;					\
+ 	long __cu_len;							\
+ 									\
+-	might_sleep();							\
+ 	__cu_to = (to);							\
+ 	__cu_from = (from);						\
+ 	__cu_len = (n);							\
+@@ -559,7 +555,6 @@ extern size_t __copy_user(void *__to, co
+ 	const void __user *__cu_from;					\
+ 	long __cu_len;							\
+ 									\
+-	might_sleep();							\
+ 	__cu_to = (to);							\
+ 	__cu_from = (from);						\
+ 	__cu_len = (n);							\
+@@ -586,7 +581,6 @@ __clear_user(void __user *addr, __kernel
+ {
+ 	__kernel_size_t res;
+ 
+-	might_sleep();
+ 	__asm__ __volatile__(
+ 		"move\t$4, %1\n\t"
+ 		"move\t$5, $0\n\t"
+@@ -635,7 +629,6 @@ __strncpy_from_user(char *__to, const ch
+ {
+ 	long res;
+ 
+-	might_sleep();
+ 	__asm__ __volatile__(
+ 		"move\t$4, %1\n\t"
+ 		"move\t$5, %2\n\t"
+@@ -672,7 +665,6 @@ strncpy_from_user(char *__to, const char
+ {
+ 	long res;
+ 
+-	might_sleep();
+ 	__asm__ __volatile__(
+ 		"move\t$4, %1\n\t"
+ 		"move\t$5, %2\n\t"
+@@ -691,7 +683,6 @@ static inline long __strlen_user(const c
+ {
+ 	long res;
+ 
+-	might_sleep();
+ 	__asm__ __volatile__(
+ 		"move\t$4, %1\n\t"
+ 		__MODULE_JAL(__strlen_user_nocheck_asm)
+@@ -721,7 +712,6 @@ static inline long strlen_user(const cha
+ {
+ 	long res;
+ 
+-	might_sleep();
+ 	__asm__ __volatile__(
+ 		"move\t$4, %1\n\t"
+ 		__MODULE_JAL(__strlen_user_asm)
+@@ -738,7 +728,6 @@ static inline long __strnlen_user(const 
+ {
+ 	long res;
+ 
+-	might_sleep();
+ 	__asm__ __volatile__(
+ 		"move\t$4, %1\n\t"
+ 		"move\t$5, %2\n\t"
+@@ -769,7 +758,6 @@ static inline long strnlen_user(const ch
+ {
+ 	long res;
+ 
+-	might_sleep();
+ 	__asm__ __volatile__(
+ 		"move\t$4, %1\n\t"
+ 		"move\t$5, %2\n\t"
 Index: linux/include/asm-parisc/hw_irq.h
 ===================================================================
 --- linux.orig/include/asm-parisc/hw_irq.h
@@ -36237,7 +37276,7 @@ Index: linux/kernel/futex.c
 +	}
 +
 +	down_read(&curr->mm->mmap_sem);
-+	hb = queue_lock(&q, -1, NULL);
++	spin_lock(q.lock_ptr);
 +
 +	/*
 +	 * Got the lock. We might not be the anticipated owner if we
