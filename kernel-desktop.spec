@@ -55,7 +55,11 @@
 
 %define		xen_version		3.0.2
 
+%if %{with laptop}
+%define		alt_kernel	laptop
+%else
 %define		alt_kernel	desktop
+%endif
 
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -63,8 +67,8 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel-%{alt_kernel}
 %define		_basever	2.6.17
-%define		_postver	.1
-%define		_rel		0.5
+%define		_postver	.3
+%define		_rel		0.1
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -77,7 +81,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	f7197c29beb5bd28b6f566b58260ece8
+# Source1-md5:	2c426ef5e2f02f1a761f150c13a7dac8
 %endif
 Source3:	kernel-desktop-autoconf.h
 Source4:	kernel-desktop-config.h
