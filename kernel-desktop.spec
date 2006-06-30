@@ -111,8 +111,6 @@ Patch1:		kernel-desktop-preempt_ppc_fix.patch
 Patch2:		kernel-desktop-nopreempt-compat.patch
 
 Patch3:		kernel-desktop-suspend2.patch
-Patch4:		kernel-desktop-suspend2-rt.patch
-Patch5:		kernel-desktop-suspend2-nort.patch
 
 # Con Kolivas patchset
 Patch6:		kernel-desktop-fcache.patch
@@ -642,11 +640,6 @@ Documentation.
 
 # suspend 2
 %patch3 -p1
-%if %{with preemptrt}
-%patch4 -p1
-%else
-%patch5 -p1
-%endif
 
 # Con Kolivas patchset
 %if %{with ck}
@@ -683,6 +676,7 @@ Documentation.
 
 ### netfilter
 # base
+%if 0
 %patch40 -p1
 %patch41 -p1
 %patch42 -p1
@@ -705,6 +699,7 @@ Documentation.
 %patch64 -p1
 %patch65 -p1
 %patch66 -p1
+%endif
 ### end of netfilter
 
 # net software
