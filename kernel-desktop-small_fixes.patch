@@ -35,25 +35,6 @@ diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.
  
  #include <asm/atomic.h>
  #include <asm/types.h>
---- linux-2.6.17/mm/slab.c~	2006-06-19 17:12:13.000000000 +0000
-+++ linux-2.6.17/mm/slab.c	2006-06-19 17:11:25.000000000 +0000
-@@ -3243,14 +3243,14 @@
- 				if (unlikely(alien->avail == alien->limit)) {
- 					STATS_INC_ACOVERFLOW(cachep);
- 					__drain_alien_cache(cachep,
--							    alien, nodeid);
-+							    alien, nodeid, this_cpu);
- 				}
- 				alien->entry[alien->avail++] = objp;
- 				spin_unlock(&alien->lock);
- 			} else {
- 				spin_lock(&(cachep->nodelists[nodeid])->
- 					  list_lock);
--				free_block(cachep, &objp, 1, nodeid);
-+				free_block(cachep, &objp, 1, nodeid, this_cpu);
- 				spin_unlock(&(cachep->nodelists[nodeid])->
- 					    list_lock);
- 			}
 --- linux-2.6.17/include/asm-ppc/io.h~	2006-06-18 01:49:35.000000000 +0000
 +++ linux-2.6.17/include/asm-ppc/io.h	2006-06-22 02:44:19.000000000 +0000
 @@ -445,6 +445,10 @@
