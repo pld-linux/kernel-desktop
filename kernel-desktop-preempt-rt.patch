@@ -39972,7 +39972,7 @@ Index: linux/kernel/irq/manage.c
  	if (!handler)
  		return -EINVAL;
  
-@@ -390,6 +473,270 @@ int request_irq(unsigned int irq,
+@@ -390,6 +473,268 @@ int request_irq(unsigned int irq,
  
  	return retval;
  }
@@ -40149,17 +40149,21 @@ Index: linux/kernel/irq/manage.c
 +
 +static int curr_irq_prio = 49;
 +
++static void follow_irq_affinity(struct irq_desc *desc)
++{
++#ifdef CONFIG_SMP
++	if (cpus_equal(current->cpus_allowed, desc->affinity))
++		return;
++	set_cpus_allowed(current, desc->affinity);
++#endif
++}
++
 +static int do_irqd(void * __desc)
 +{
 +	struct sched_param param = { 0, };
 +	struct irq_desc *desc = __desc;
-+#ifdef CONFIG_SMP
-+	int irq = desc - irq_desc;
-+	cpumask_t mask;
 +
-+	mask = cpumask_of_cpu(any_online_cpu(irq_desc[irq].affinity));
-+	set_cpus_allowed(current, mask);
-+#endif
++	follow_irq_affinity(desc);
 +	current->flags |= PF_NOFREEZE | PF_HARDIRQ;
 +
 +	/*
@@ -40178,13 +40182,7 @@ Index: linux/kernel/irq/manage.c
 +		local_irq_disable();
 +		__do_softirq();
 +		local_irq_enable();
-+#ifdef CONFIG_SMP
-+		/*
-+		 * Did IRQ affinities change?
-+		 */
-+		if (!cpus_equal(current->cpus_allowed, irq_desc[irq].affinity))
-+			set_cpus_allowed(current, irq_desc[irq].affinity);
-+#endif
++		follow_irq_affinity(desc);
 +		schedule();
 +	}
 +	__set_current_state(TASK_RUNNING);
