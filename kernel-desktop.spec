@@ -51,7 +51,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
-%define		suspend_version		2.2.4.2
+%define		suspend_version		2.2.7
 
 %define		xen_version		3.0.2
 
@@ -83,6 +83,9 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	c3b9e8e7b63d6273c5476a999a3b6280
 %endif
+Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.tar.bz2
+# Source2-md5:	f46b17f3b6e3ce21e7e2fc2db4b08af1
+
 Source3:	kernel-desktop-autoconf.h
 Source4:	kernel-desktop-config.h
 Source5:	kernel-desktop-module-build.pl
@@ -624,7 +627,7 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 Documentation.
 
 %prep
-%setup -q -n linux-%{_basever}%{_rc} 
+%setup -q -n linux-%{_basever}%{_rc} -a2
 
 %if "%{_postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
@@ -639,7 +642,10 @@ Documentation.
 %endif
 
 # suspend 2
-%patch3 -p1
+#%%patch3 -p1
+for i in suspend2-%{suspend_version}-for-%{_basever}/[0-9]*; do
+	patch -p1 -s < $i
+done
 
 # Con Kolivas patchset
 %if %{with ck}
