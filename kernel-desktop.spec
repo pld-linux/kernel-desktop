@@ -68,7 +68,7 @@ Summary(pl):	J±dro Linuksa
 Name:		kernel-%{alt_kernel}
 %define		_basever	2.6.17
 %define		_postver	.4
-%define		_rel		0.1
+%define		_rel		0.2
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -642,7 +642,9 @@ Documentation.
 %endif
 
 # suspend 2
-#%%patch3 -p1
+%ifarch ppc
+rm suspend2-%{suspend_version}-for-%{_basever}/9920-linus-console-suspend-resume.patch
+%endif
 for i in suspend2-%{suspend_version}-for-%{_basever}/[0-9]*; do
 	patch -p1 -s < $i
 done
