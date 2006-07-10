@@ -126,7 +126,7 @@ Patch9:		kernel-desktop-grsec-minimal.patch
 Patch10:	kernel-desktop-reiser4.patch
 Patch11:	kernel-desktop-squashfs.patch
 
-# hadrware
+# hardware
 Patch20:	kernel-desktop-tahoe9xx.patch
 Patch21:	kernel-desktop-sk98lin.patch
 Patch22:	kernel-desktop-vesafb-tng.patch
