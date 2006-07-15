@@ -67,8 +67,8 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel-%{alt_kernel}
 %define		_basever	2.6.17
-%define		_postver	.4
-%define		_rel		0.2
+%define		_postver	.5
+%define		_rel		0.1
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -81,7 +81,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	c3b9e8e7b63d6273c5476a999a3b6280
+# Source1-md5:	c3fcb2c5e4a066c0571fd8727a35417e
 %endif
 Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.tar.bz2
 # Source2-md5:	f46b17f3b6e3ce21e7e2fc2db4b08af1
