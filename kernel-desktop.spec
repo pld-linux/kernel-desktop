@@ -67,8 +67,8 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel-%{alt_kernel}
 %define		_basever	2.6.17
-%define		_postver	.6
-%define		_rel		1
+%define		_postver	.7
+%define		_rel		0.1
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -81,7 +81,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	37ddefe96625502161f075b9d907f21e
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	d8598f06ed1ce41b4ea51d9eb7ed4277
+# Source1-md5:	f2c255cdf482ba589151f5da03fed418
 %endif
 Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.tar.bz2
 # Source2-md5:	f46b17f3b6e3ce21e7e2fc2db4b08af1
@@ -176,6 +176,9 @@ Patch90:	kernel-desktop-sco-mtu.patch
 Patch91:	kernel-desktop-fbcon-margins.patch
 Patch92:	kernel-desktop-static-dev.patch
 Patch100:	kernel-desktop-small_fixes.patch
+
+# http://www.linuxtv.org/~mkrufky/stable/2.6.17.y/budget-av-compile-fix.patch
+Patch1000:	kernel-desktop-budget-av-compile-fix.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -645,6 +648,8 @@ Documentation.
 %ifarch ppc
 rm suspend2-%{suspend_version}-for-%{_basever}/9920-linus-console-suspend-resume.patch
 %endif
+# 9930-pdflush-fix.patch fixed in 2.6.17.7
+rm -f suspend2-%{suspend_version}-for-%{_basever}/9930-pdflush-fix.patch
 for i in suspend2-%{suspend_version}-for-%{_basever}/[0-9]*; do
 	patch -p1 -s < $i
 done
@@ -724,6 +729,8 @@ done
 %patch92 -p1
 %patch100 -p1
 
+# compile-fix
+%patch1000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
