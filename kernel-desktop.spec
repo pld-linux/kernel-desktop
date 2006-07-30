@@ -176,6 +176,7 @@ Patch90:	kernel-desktop-sco-mtu.patch
 Patch91:	kernel-desktop-fbcon-margins.patch
 Patch92:	kernel-desktop-static-dev.patch
 Patch100:	kernel-desktop-small_fixes.patch
+Patch101:	kernel-desktop-asus-a6km.patch
 
 # http://www.linuxtv.org/~mkrufky/stable/2.6.17.y/budget-av-compile-fix.patch
 Patch1000:	kernel-desktop-budget-av-compile-fix.patch
@@ -728,6 +729,7 @@ done
 %patch91 -p1
 %patch92 -p1
 %patch100 -p1
+%patch101 -p0
 
 # compile-fix
 %patch1000 -p1
