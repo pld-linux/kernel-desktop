@@ -32305,7 +32305,7 @@ Index: linux/include/linux/rcupdate.h
  
  /**
   * rcu_dereference - fetch an RCU-protected pointer in an
-@@ -246,13 +267,19 @@ extern int rcu_needs_cpu(int cpu);
+@@ -246,14 +267,19 @@ extern int rcu_needs_cpu(int cpu);
   * softirq handlers will have completed, since in some kernels, these
   * handlers can run in process context, and can block.
   *
@@ -32318,15 +32318,15 @@ Index: linux/include/linux/rcupdate.h
   */
 +#ifndef CONFIG_PREEMPT_RCU
  #define synchronize_sched() synchronize_rcu()
-+extern void rcu_barrier(void);
 +#else /* #ifndef CONFIG_PREEMPT_RCU */
 +extern void synchronize_sched(void);
-+#define rcu_barrier() do {} while(0)
 +#endif /* #else #ifndef CONFIG_PREEMPT_RCU */
  
++extern void rcu_barrier(void);
  extern void rcu_init(void);
  extern void rcu_check_callbacks(int cpu, int user);
-@@ -264,10 +291,8 @@ extern void FASTCALL(call_rcu(struct rcu
+ extern void rcu_restart_cpu(int cpu);
+@@ -264,10 +290,8 @@ extern void FASTCALL(call_rcu(struct rcu
  				void (*func)(struct rcu_head *head)));
  extern void FASTCALL(call_rcu_bh(struct rcu_head *head,
  				void (*func)(struct rcu_head *head)));
@@ -33292,31 +33292,7 @@ Index: linux/include/linux/sched.h
  
  	atomic_t fs_excl;	/* holding fs exclusive resources */
  	struct rcu_head rcu;
-@@ -911,6 +1105,15 @@ static inline int pid_alive(struct task_
- extern void free_task(struct task_struct *tsk);
- #define get_task_struct(tsk) do { atomic_inc(&(tsk)->usage); } while(0)
- 
-+#ifdef CONFIG_PREEMPT_RT
-+extern void __put_task_struct_cb(struct rcu_head *rhp);
-+
-+static inline void put_task_struct(struct task_struct *t)
-+{
-+	if (atomic_dec_and_test(&t->usage))
-+		call_rcu(&t->rcu, __put_task_struct_cb);
-+}
-+#else
- extern void __put_task_struct(struct task_struct *t);
- 
- static inline void put_task_struct(struct task_struct *t)
-@@ -918,6 +1121,7 @@ static inline void put_task_struct(struc
- 	if (atomic_dec_and_test(&t->usage))
- 		__put_task_struct(t);
- }
-+#endif
- 
- /*
-  * Per process flags
-@@ -945,9 +1149,13 @@ static inline void put_task_struct(struc
+@@ -945,9 +1139,13 @@ static inline void put_task_struct(struc
  #define PF_BORROWED_MM	0x00400000	/* I am a kthread doing use_mm */
  #define PF_RANDOMIZE	0x00800000	/* randomize virtual address space */
  #define PF_SWAPWRITE	0x01000000	/* Allowed to write to swap */
@@ -33330,7 +33306,7 @@ Index: linux/include/linux/sched.h
  
  /*
   * Only the _current_ task can read/write to tsk->flags, but other
-@@ -1002,6 +1210,17 @@ static inline void idle_task_exit(void) 
+@@ -1002,6 +1200,17 @@ static inline void idle_task_exit(void) 
  #endif
  
  extern void sched_idle_next(void);
@@ -33348,7 +33324,7 @@ Index: linux/include/linux/sched.h
  extern void set_user_nice(task_t *p, long nice);
  extern int task_prio(const task_t *p);
  extern int task_nice(const task_t *p);
-@@ -1009,11 +1228,13 @@ extern int can_nice(const task_t *p, con
+@@ -1009,11 +1218,13 @@ extern int can_nice(const task_t *p, con
  extern int task_curr(const task_t *p);
  extern int idle_cpu(int cpu);
  extern int sched_setscheduler(struct task_struct *, int, struct sched_param *);
@@ -33362,7 +33338,7 @@ Index: linux/include/linux/sched.h
  
  /*
   * The default (Linux) execution domain.
-@@ -1061,6 +1282,9 @@ extern void do_timer(struct pt_regs *);
+@@ -1061,6 +1272,9 @@ extern void do_timer(struct pt_regs *);
  
  extern int FASTCALL(wake_up_state(struct task_struct * tsk, unsigned int state));
  extern int FASTCALL(wake_up_process(struct task_struct * tsk));
@@ -33372,7 +33348,7 @@ Index: linux/include/linux/sched.h
  extern void FASTCALL(wake_up_new_task(struct task_struct * tsk,
  						unsigned long clone_flags));
  #ifdef CONFIG_SMP
-@@ -1147,12 +1371,20 @@ extern struct mm_struct * mm_alloc(void)
+@@ -1147,12 +1361,20 @@ extern struct mm_struct * mm_alloc(void)
  
  /* mmdrop drops the mm and the page tables */
  extern void FASTCALL(__mmdrop(struct mm_struct *));
@@ -33393,7 +33369,7 @@ Index: linux/include/linux/sched.h
  /* mmput gets rid of the mappings and all user-space */
  extern void mmput(struct mm_struct *);
  /* Grab a reference to a task's mm, if it is not already going away */
-@@ -1313,43 +1545,97 @@ static inline int signal_pending(struct 
+@@ -1313,43 +1535,97 @@ static inline int signal_pending(struct 
  	return unlikely(test_tsk_thread_flag(p,TIF_SIGPENDING));
  }
    
@@ -33507,7 +33483,7 @@ Index: linux/include/linux/sched.h
  /* Reevaluate whether the task has signals pending delivery.
     This is required every time the blocked sigset_t changes.
     callers must hold sighand->siglock.  */
-@@ -1371,6 +1657,7 @@ static inline unsigned int task_cpu(cons
+@@ -1371,6 +1647,7 @@ static inline unsigned int task_cpu(cons
  
  static inline void set_task_cpu(struct task_struct *p, unsigned int cpu)
  {
@@ -35496,7 +35472,7 @@ Index: linux/kernel/Kconfig.preempt
  	  latency of rescheduling, providing faster application reactions,
  	  at the cost of slighly lower throughput.
  
-@@ -33,33 +32,149 @@ config PREEMPT_VOLUNTARY
+@@ -33,33 +32,150 @@ config PREEMPT_VOLUNTARY
  
  	  Select this if you are building a kernel for a desktop system.
  
@@ -35532,6 +35508,7 @@ Index: linux/kernel/Kconfig.preempt
 +	select PREEMPT_SOFTIRQS
 +	select PREEMPT_HARDIRQS
 +	select PREEMPT_RCU
++	select RT_MUTEXES
 +	help
 +	  This option further reduces the scheduling latency of the
 +	  kernel by replacing almost every spinlock used by the kernel
@@ -35845,7 +35822,7 @@ Index: linux/kernel/fork.c
  int nr_processes(void)
  {
  	int cpu;
-@@ -104,14 +115,36 @@ static kmem_cache_t *mm_cachep;
+@@ -104,6 +115,7 @@ static kmem_cache_t *mm_cachep;
  void free_task(struct task_struct *tsk)
  {
  	free_thread_info(tsk->thread_info);
@@ -35853,27 +35830,7 @@ Index: linux/kernel/fork.c
  	free_task_struct(tsk);
  }
  EXPORT_SYMBOL(free_task);
- 
-+#ifdef CONFIG_PREEMPT_RT
-+void __put_task_struct_cb(struct rcu_head *rhp)
-+{
-+	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
-+
-+	BUG_ON(atomic_read(&tsk->usage));
-+	WARN_ON(!(tsk->flags & PF_DEAD));
-+	WARN_ON(!(tsk->exit_state & (EXIT_DEAD | EXIT_ZOMBIE)));
-+	WARN_ON(tsk == current);
-+
-+	security_task_free(tsk);
-+	free_uid(tsk->user);
-+	put_group_info(tsk->group_info);
-+
-+	if (!profile_handoff_task(tsk))
-+		free_task(tsk);
-+}
-+
-+#else
-+
+@@ -111,7 +123,8 @@ EXPORT_SYMBOL(free_task);
  void __put_task_struct(struct task_struct *tsk)
  {
  	WARN_ON(!(tsk->exit_state & (EXIT_DEAD | EXIT_ZOMBIE)));
@@ -35883,11 +35840,7 @@ Index: linux/kernel/fork.c
  	WARN_ON(tsk == current);
  
  	security_task_free(tsk);
-@@ -121,9 +154,12 @@ void __put_task_struct(struct task_struc
- 	if (!profile_handoff_task(tsk))
- 		free_task(tsk);
- }
-+#endif
+@@ -124,6 +137,8 @@ void __put_task_struct(struct task_struc
  
  void __init fork_init(unsigned long mempages)
  {
@@ -35896,7 +35849,7 @@ Index: linux/kernel/fork.c
  #ifndef __HAVE_ARCH_TASK_STRUCT_ALLOCATOR
  #ifndef ARCH_MIN_TASKALIGN
  #define ARCH_MIN_TASKALIGN	L1_CACHE_BYTES
-@@ -151,6 +187,9 @@ void __init fork_init(unsigned long memp
+@@ -151,6 +166,9 @@ void __init fork_init(unsigned long memp
  	init_task.signal->rlim[RLIMIT_NPROC].rlim_max = max_threads/2;
  	init_task.signal->rlim[RLIMIT_SIGPENDING] =
  		init_task.signal->rlim[RLIMIT_NPROC];
@@ -35906,7 +35859,7 @@ Index: linux/kernel/fork.c
  }
  
  static struct task_struct *dup_task_struct(struct task_struct *orig)
-@@ -324,6 +363,7 @@ static struct mm_struct * mm_init(struct
+@@ -324,6 +342,7 @@ static struct mm_struct * mm_init(struct
  	spin_lock_init(&mm->page_table_lock);
  	rwlock_init(&mm->ioctx_list_lock);
  	mm->ioctx_list = NULL;
@@ -35914,7 +35867,7 @@ Index: linux/kernel/fork.c
  	mm->free_area_cache = TASK_UNMAPPED_BASE;
  	mm->cached_hole_size = ~0UL;
  
-@@ -909,6 +949,20 @@ asmlinkage long sys_set_tid_address(int 
+@@ -909,6 +928,20 @@ asmlinkage long sys_set_tid_address(int 
  	return current->pid;
  }
  
@@ -35935,7 +35888,7 @@ Index: linux/kernel/fork.c
  /*
   * This creates a new process as a copy of the old one,
   * but does not actually start it yet.
-@@ -1015,7 +1069,7 @@ static task_t *copy_process(unsigned lon
+@@ -1015,7 +1048,7 @@ static task_t *copy_process(unsigned lon
   	INIT_LIST_HEAD(&p->cpu_timers[0]);
   	INIT_LIST_HEAD(&p->cpu_timers[1]);
   	INIT_LIST_HEAD(&p->cpu_timers[2]);
@@ -35944,7 +35897,7 @@ Index: linux/kernel/fork.c
  	p->lock_depth = -1;		/* -1 = no lock */
  	do_posix_clock_monotonic_gettime(&p->start_time);
  	p->security = NULL;
-@@ -1033,10 +1087,11 @@ static task_t *copy_process(unsigned lon
+@@ -1033,10 +1066,11 @@ static task_t *copy_process(unsigned lon
  	mpol_fix_fork_child_flag(p);
  #endif
  
@@ -35957,7 +35910,7 @@ Index: linux/kernel/fork.c
  	p->tgid = p->pid;
  	if (clone_flags & CLONE_THREAD)
  		p->tgid = current->tgid;
-@@ -1065,6 +1120,9 @@ static task_t *copy_process(unsigned lon
+@@ -1065,6 +1099,9 @@ static task_t *copy_process(unsigned lon
  	retval = copy_thread(0, clone_flags, stack_start, stack_size, p, regs);
  	if (retval)
  		goto bad_fork_cleanup_namespace;
@@ -35967,7 +35920,7 @@ Index: linux/kernel/fork.c
  
  	p->set_child_tid = (clone_flags & CLONE_CHILD_SETTID) ? child_tidptr : NULL;
  	/*
-@@ -1075,6 +1133,9 @@ static task_t *copy_process(unsigned lon
+@@ -1075,6 +1112,9 @@ static task_t *copy_process(unsigned lon
  #ifdef CONFIG_COMPAT
  	p->compat_robust_list = NULL;
  #endif
@@ -35977,7 +35930,7 @@ Index: linux/kernel/fork.c
  	/*
  	 * sigaltstack should be cleared when sharing the same VM
  	 */
-@@ -1124,10 +1185,12 @@ static task_t *copy_process(unsigned lon
+@@ -1124,10 +1164,12 @@ static task_t *copy_process(unsigned lon
  	 * to ensure it is on a valid CPU (and if not, just force it back to
  	 * parent's CPU). This avoids alot of nasty races.
  	 */
@@ -35990,7 +35943,7 @@ Index: linux/kernel/fork.c
  
  	/* CLONE_PARENT re-uses the old parent */
  	if (clone_flags & (CLONE_PARENT|CLONE_THREAD))
-@@ -1204,7 +1267,9 @@ static task_t *copy_process(unsigned lon
+@@ -1204,7 +1246,9 @@ static task_t *copy_process(unsigned lon
  			attach_pid(p, PIDTYPE_SID, p->signal->session);
  
  			list_add_tail_rcu(&p->tasks, &init_task.tasks);
@@ -36000,7 +35953,7 @@ Index: linux/kernel/fork.c
  		}
  		attach_pid(p, PIDTYPE_PID, p->pid);
  		nr_threads++;
-@@ -1648,3 +1713,122 @@ bad_unshare_cleanup_thread:
+@@ -1648,3 +1692,122 @@ bad_unshare_cleanup_thread:
  bad_unshare_out:
  	return err;
  }
@@ -44311,7 +44264,7 @@ Index: linux/kernel/rcupreempt.c
 ===================================================================
 --- /dev/null
 +++ linux/kernel/rcupreempt.c
-@@ -0,0 +1,486 @@
+@@ -0,0 +1,525 @@
 +/*
 + * Read-Copy Update mechanism for mutual exclusion, realtime implementation
 + *
@@ -44406,6 +44359,11 @@ Index: linux/kernel/rcupreempt.c
 +};
 +static DEFINE_PER_CPU(atomic_t [2], rcu_flipctr) =
 +	{ ATOMIC_INIT(0), ATOMIC_INIT(0) };
++
++static DEFINE_PER_CPU(struct rcu_head, rcu_barrier_head);
++static atomic_t rcu_barrier_cpu_count;
++static DEFINE_MUTEX(rcu_barrier_mutex);
++static struct completion rcu_barrier_completion;
 +
 +/*
 + * Return the number of RCU batches processed thus far.  Useful
@@ -44702,6 +44660,39 @@ Index: linux/kernel/rcupreempt.c
 +		rcu_data.nextlist != NULL);
 +}
 +
++static void rcu_barrier_callback(struct rcu_head *notused)
++{
++        if (atomic_dec_and_test(&rcu_barrier_cpu_count))
++                complete(&rcu_barrier_completion);
++}
++
++/*
++ * Called with preemption disabled, and from cross-cpu IRQ context.
++ */
++static void rcu_barrier_func(void *notused)
++{
++        int cpu = smp_processor_id();
++        struct rcu_head *head = &per_cpu(rcu_barrier_head, cpu);
++
++        atomic_inc(&rcu_barrier_cpu_count);
++        call_rcu(head, rcu_barrier_callback);
++}
++
++/**
++ * rcu_barrier - Wait until all the in-flight RCUs are complete.
++ */
++void rcu_barrier(void)
++{
++        BUG_ON(in_interrupt());
++        /* Take cpucontrol mutex to protect against CPU hotplug */
++        mutex_lock(&rcu_barrier_mutex);
++        init_completion(&rcu_barrier_completion);
++        atomic_set(&rcu_barrier_cpu_count, 0);
++        on_each_cpu(rcu_barrier_func, NULL, 0, 1);
++        wait_for_completion(&rcu_barrier_completion);
++        mutex_unlock(&rcu_barrier_mutex);
++}
++
 +void __init rcu_init(void)
 +{
 +/*&&&&*/printk("WARNING: experimental RCU implementation.\n");
@@ -44791,6 +44782,7 @@ Index: linux/kernel/rcupreempt.c
 +
 +#endif /* #ifdef CONFIG_RCU_STATS */
 +
++EXPORT_SYMBOL_GPL(rcu_barrier);
 +EXPORT_SYMBOL_GPL(call_rcu);
 +EXPORT_SYMBOL_GPL(rcu_batches_completed);
 +EXPORT_SYMBOL_GPL(synchronize_rcu);
@@ -49794,7 +49786,7 @@ Index: linux/kernel/softirq.c
  
  /*
   * we cannot loop indefinitely here to avoid userspace starvation,
-@@ -52,15 +93,47 @@ static DEFINE_PER_CPU(struct task_struct
+@@ -52,15 +93,52 @@ static DEFINE_PER_CPU(struct task_struct
   * to the pending events, so lets the scheduler to balance
   * the softirq load for us.
   */
@@ -49815,7 +49807,12 @@ Index: linux/kernel/softirq.c
 +	struct task_struct *tsk = __get_cpu_var(ksoftirqd[softirq].tsk);
 +
 +	if (tsk) {
-+		if (tsk->normal_prio != prio) {
++		/*
++		 * The lower the prio, the higher the priority.
++		 * This can only raise the priority but it can
++		 * not lower it.
++		 */
++		if (tsk->normal_prio > prio) {
 +			struct sched_param param;
 +
 +			param.sched_priority = MAX_RT_PRIO-1 - prio;
@@ -49844,7 +49841,7 @@ Index: linux/kernel/softirq.c
  /*
   * We restart softirq processing MAX_SOFTIRQ_RESTART times,
   * and we fall back to softirqd after that.
-@@ -72,7 +145,7 @@ static inline void wakeup_softirqd(void)
+@@ -72,7 +150,7 @@ static inline void wakeup_softirqd(void)
   */
  #define MAX_SOFTIRQ_RESTART 10
  
@@ -49853,7 +49850,7 @@ Index: linux/kernel/softirq.c
  {
  	struct softirq_action *h;
  	__u32 pending;
-@@ -81,7 +154,6 @@ asmlinkage void __do_softirq(void)
+@@ -81,7 +159,6 @@ asmlinkage void __do_softirq(void)
  
  	pending = local_softirq_pending();
  
@@ -49861,7 +49858,7 @@ Index: linux/kernel/softirq.c
  	cpu = smp_processor_id();
  restart:
  	/* Reset the pending bitmask before enabling irqs */
-@@ -93,8 +165,17 @@ restart:
+@@ -93,8 +170,17 @@ restart:
  
  	do {
  		if (pending & 1) {
@@ -49880,7 +49877,7 @@ Index: linux/kernel/softirq.c
  		}
  		h++;
  		pending >>= 1;
-@@ -107,11 +188,72 @@ restart:
+@@ -107,11 +193,72 @@ restart:
  		goto restart;
  
  	if (pending)
@@ -49954,7 +49951,7 @@ Index: linux/kernel/softirq.c
  #ifndef __ARCH_HAS_DO_SOFTIRQ
  
  asmlinkage void do_softirq(void)
-@@ -136,6 +278,8 @@ EXPORT_SYMBOL(do_softirq);
+@@ -136,6 +283,8 @@ EXPORT_SYMBOL(do_softirq);
  
  #endif
  
@@ -49963,7 +49960,7 @@ Index: linux/kernel/softirq.c
  void local_bh_enable(void)
  {
  	WARN_ON(irqs_disabled());
-@@ -153,6 +297,8 @@ void local_bh_enable(void)
+@@ -153,6 +302,8 @@ void local_bh_enable(void)
  }
  EXPORT_SYMBOL(local_bh_enable);
  
@@ -49972,7 +49969,7 @@ Index: linux/kernel/softirq.c
  #ifdef __ARCH_IRQ_EXIT_IRQS_DISABLED
  # define invoke_softirq()	__do_softirq()
  #else
-@@ -166,9 +312,30 @@ void irq_exit(void)
+@@ -166,9 +317,30 @@ void irq_exit(void)
  {
  	account_system_vtime(current);
  	sub_preempt_count(IRQ_EXIT_OFFSET);
@@ -50006,7 +50003,7 @@ Index: linux/kernel/softirq.c
  }
  
  /*
-@@ -176,7 +343,7 @@ void irq_exit(void)
+@@ -176,7 +348,7 @@ void irq_exit(void)
   */
  inline fastcall void raise_softirq_irqoff(unsigned int nr)
  {
@@ -50015,7 +50012,7 @@ Index: linux/kernel/softirq.c
  
  	/*
  	 * If we're in an interrupt or softirq, we're done
-@@ -187,8 +354,9 @@ inline fastcall void raise_softirq_irqof
+@@ -187,8 +359,9 @@ inline fastcall void raise_softirq_irqof
  	 * Otherwise we wake up ksoftirqd to make sure we
  	 * schedule the softirq soon.
  	 */
@@ -50027,7 +50024,7 @@ Index: linux/kernel/softirq.c
  }
  
  EXPORT_SYMBOL(raise_softirq_irqoff);
-@@ -221,14 +389,24 @@ struct tasklet_head
+@@ -221,14 +394,24 @@ struct tasklet_head
  static DEFINE_PER_CPU(struct tasklet_head, tasklet_vec) = { NULL };
  static DEFINE_PER_CPU(struct tasklet_head, tasklet_hi_vec) = { NULL };
  
@@ -50055,7 +50052,7 @@ Index: linux/kernel/softirq.c
  	local_irq_restore(flags);
  }
  
-@@ -239,81 +417,130 @@ void fastcall __tasklet_hi_schedule(stru
+@@ -239,81 +422,130 @@ void fastcall __tasklet_hi_schedule(stru
  	unsigned long flags;
  
  	local_irq_save(flags);
@@ -50231,7 +50228,7 @@ Index: linux/kernel/softirq.c
  void tasklet_init(struct tasklet_struct *t,
  		  void (*func)(unsigned long), unsigned long data)
  {
-@@ -333,7 +560,7 @@ void tasklet_kill(struct tasklet_struct 
+@@ -333,7 +565,7 @@ void tasklet_kill(struct tasklet_struct 
  
  	while (test_and_set_bit(TASKLET_STATE_SCHED, &t->state)) {
  		do
@@ -50240,7 +50237,7 @@ Index: linux/kernel/softirq.c
  		while (test_bit(TASKLET_STATE_SCHED, &t->state));
  	}
  	tasklet_unlock_wait(t);
-@@ -348,36 +575,64 @@ void __init softirq_init(void)
+@@ -348,36 +580,64 @@ void __init softirq_init(void)
  	open_softirq(HI_SOFTIRQ, tasklet_hi_action, NULL);
  }
  
@@ -50315,7 +50312,7 @@ Index: linux/kernel/softirq.c
  	}
  	__set_current_state(TASK_RUNNING);
  	return 0;
-@@ -424,7 +679,7 @@ void tasklet_kill_immediate(struct taskl
+@@ -424,7 +684,7 @@ void tasklet_kill_immediate(struct taskl
  	BUG();
  }
  
@@ -50324,7 +50321,7 @@ Index: linux/kernel/softirq.c
  {
  	struct tasklet_struct **i;
  
-@@ -446,41 +701,72 @@ static void takeover_tasklets(unsigned i
+@@ -446,41 +706,72 @@ static void takeover_tasklets(unsigned i
  }
  #endif /* CONFIG_HOTPLUG_CPU */
  
@@ -50415,7 +50412,7 @@ Index: linux/kernel/softirq.c
  	return NOTIFY_OK;
  }
  
-@@ -497,6 +783,34 @@ __init int spawn_ksoftirqd(void)
+@@ -497,6 +788,34 @@ __init int spawn_ksoftirqd(void)
  	return 0;
  }
  
