@@ -51,7 +51,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
-%define		suspend_version		2.2.7
+%define		suspend_version		2.2.7.3
 
 %define		xen_version		3.0.2
 
@@ -84,7 +84,7 @@ Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	f2c255cdf482ba589151f5da03fed418
 %endif
 Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.tar.bz2
-# Source2-md5:	f46b17f3b6e3ce21e7e2fc2db4b08af1
+# Source2-md5:	93c5fff0ce771cd547043db91718706f
 
 Source3:	kernel-desktop-autoconf.h
 Source4:	kernel-desktop-config.h
@@ -646,9 +646,6 @@ Documentation.
 %endif
 
 # suspend 2
-%ifarch ppc
-rm suspend2-%{suspend_version}-for-%{_basever}/9920-linus-console-suspend-resume.patch
-%endif
 # 9930-pdflush-fix.patch fixed in 2.6.17.7
 rm -f suspend2-%{suspend_version}-for-%{_basever}/9930-pdflush-fix.patch
 for i in suspend2-%{suspend_version}-for-%{_basever}/[0-9]*; do
