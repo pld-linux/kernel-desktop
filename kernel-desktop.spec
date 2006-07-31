@@ -178,9 +178,6 @@ Patch92:	kernel-desktop-static-dev.patch
 Patch100:	kernel-desktop-small_fixes.patch
 Patch101:	kernel-desktop-asus-a6km.patch
 
-# http://www.linuxtv.org/~mkrufky/stable/2.6.17.y/budget-av-compile-fix.patch
-Patch1000:	kernel-desktop-budget-av-compile-fix.patch
-
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
 BuildRequires:	diffutils
@@ -727,9 +724,6 @@ done
 %patch92 -p1
 %patch100 -p1
 %patch101 -p0
-
-# compile-fix
-%patch1000 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
