@@ -772,7 +772,7 @@ TuneUpConfigForIX86 () {
 %if "%{_target_base_arch}" != "%{_arch}"
 	CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
 	DepMod=/bin/true
-	%if "%{_arch}" == "x86_64" && "%_target_base_arch}" == "i386"
+	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
 	CrossOpts="ARCH=%{_target_base_arch}"
 	DepMod=/sbin/depmod
 	%endif
