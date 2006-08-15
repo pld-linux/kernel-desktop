@@ -130,7 +130,6 @@ Patch11:	kernel-desktop-squashfs.patch
 Patch20:	kernel-desktop-tahoe9xx.patch
 Patch21:	kernel-desktop-sk98lin.patch
 Patch22:	kernel-desktop-vesafb-tng.patch
-Patch23:	kernel-desktop-hdaps_protect.patch
 
 # console
 Patch30:	kernel-desktop-bootsplash.patch
@@ -673,7 +672,6 @@ done
 %patch20 -p1
 %patch21 -p1
 %patch22 -p1
-%patch23 -p1
 
 # console
 %if %{with bootsplash}
