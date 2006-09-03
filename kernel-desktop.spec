@@ -280,26 +280,6 @@ DRM Kernel Treiber (%{drm_xfree_version}).
 %description drm -l pl
 Sterowniki DRM (%{drm_xfree_version}).
 
-%package net-netfilter
-Summary:	Netfilter kernel modules
-Summary(de):	Netfilter Kernel Treiber
-Summary(pl):	Modu造 Netfiltera
-Group:		Base/Kernel
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Requires:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel(netfilter) = %{_netfilter_snap}
-Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
-Autoreqprov:	no
-
-%description net-netfilter
-Netfilter kernel modules (%{_netfilter_snap}).
-
-%description net-netfilter -l de
-Netfilter Kernel Treiber (%{_netfilter_snap}).
-
-%description net-netfilter -l pl
-Modu造 Netfiltera (%{_netfilter_snap}).
-
 %package pcmcia
 Summary:	PCMCIA modules
 Summary(de):	PCMCIA Module
@@ -445,26 +425,6 @@ DRM SMP Kernel Module (%{drm_xfree_version}).
 
 %description smp-drm -l pl
 Sterowniki DRM dla maszyn wieloprocesorowych (%{drm_xfree_version}).
-
-%package smp-net-netfilter
-Summary:	Netfilter SMP kernel modules
-Summary(de):	Netfilter SMP Kernel Treiber
-Summary(pl):	Modu造 Netfiltera dla maszyn wieloprocesorowych
-Group:		Base/Kernel
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Requires:	%{name}-smp = %{epoch}:%{version}-%{release}
-Provides:	kernel(netfilter) = %{_netfilter_snap}
-Provides:	kernel(nf-hipac) = %{_nf_hipac_ver}
-Autoreqprov:	no
-
-%description smp-net-netfilter
-Netfilter SMP kernel modules (%{_netfilter_snap}).
-
-%description smp-net-netfilter -l de
-Netfilter SMP Kernel Treiber (%{_netfilter_snap}).
-
-%description smp-net-netfilter -l pl
-Modu造 Netfiltera dla maszyn wieloprocesorowych (%{_netfilter_snap}).
 
 %package smp-pcmcia
 Summary:	PCMCIA modules for SMP kernel
@@ -790,13 +750,16 @@ BuildConfig() {
 	[ "$1" = "smp" -o "$2" = "smp" ] && smp="yes"
 	if [ "$smp" = "yes" ]; then
 		cfg="smp"
+		echo "-%{release}smp" > localversion
 		Config="%{_target_base_arch}-smp"
 	else
+		echo "-%{release}" > localversion
 		Config="%{_target_base_arch}"
 	fi
 	KernelVer=%{ver_rel}$1
 
 	echo "Building config file [using $Config.conf] for KERNEL $1..."
+
 	cat %{SOURCE20} > arch/%{_target_base_arch}/defconfig
 	cat $RPM_SOURCE_DIR/kernel-desktop-$Config.config >> arch/%{_target_base_arch}/defconfig
 
@@ -837,11 +800,6 @@ BuildConfig() {
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
 %{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" arch/%{_target_base_arch}/defconfig}
-
-	if [ "$smp" = "yes" ]; then
-		sed -e 's:CONFIG_LOCALVERSION="":CONFIG_LOCALVERSION="smp":'	\
-			-i arch/%{_target_base_arch}/defconfig
-	fi
 
 	ln -sf arch/%{_target_base_arch}/defconfig .config
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{ver}/include/linux
@@ -914,7 +872,6 @@ PreInstallKernel() {
 }
 
 KERNEL_BUILD_DIR=`pwd`
-echo "-%{release}" > localversion
 
 # UP KERNEL
 KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel-UP"
@@ -1177,17 +1134,16 @@ fi
 /lib/modules/%{ver_rel}/kernel/drivers
 %exclude /lib/modules/%{ver_rel}/kernel/drivers/char/drm
 %if %{have_isa}
-%exclude /lib/modules/%{ver_rel}/kernel/drivers/media/radio/miropcm20.ko*
+%exclude /lib/modules/%{ver_rel}/kernel/drivers/media/radio/miropcm20*.ko*
 %endif
 /lib/modules/%{ver_rel}/kernel/fs
 /lib/modules/%{ver_rel}/kernel/kernel
 /lib/modules/%{ver_rel}/kernel/lib
 /lib/modules/%{ver_rel}/kernel/net
-%exclude /lib/modules/%{ver_rel}/kernel/net/netfilter
-%exclude /lib/modules/%{ver_rel}/kernel/net/*/netfilter
 /lib/modules/%{ver_rel}/kernel/security
 %dir /lib/modules/%{ver_rel}/kernel/sound
 /lib/modules/%{ver_rel}/kernel/sound/soundcore.*
+%exclude /lib/modules/%{ver_rel}/kernel/drivers/media/video/*/*-alsa.ko*
 %dir /lib/modules/%{ver_rel}/misc
 %exclude /lib/modules/%{ver_rel}/kernel/drivers/pcmcia
 %exclude /lib/modules/%{ver_rel}/kernel/drivers/*/pcmcia
@@ -1212,11 +1168,6 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}/kernel/drivers/char/drm
 
-%files net-netfilter
-%defattr(644,root,root,755)
-/lib/modules/%{ver_rel}/kernel/net/netfilter
-/lib/modules/%{ver_rel}/kernel/net/*/netfilter
-
 %files pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}/kernel/drivers/pcmcia
@@ -1230,19 +1181,22 @@ fi
 /lib/modules/%{ver_rel}/kernel/drivers/serial/serial_cs.ko*
 /lib/modules/%{ver_rel}/kernel/drivers/telephony/ixj_pcmcia.ko*
 /lib/modules/%{ver_rel}/kernel/drivers/usb/host/sl811_cs.ko*
+/lib/modules/%{ver_rel}/kernel/sound/pcmcia
 
 %files sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}/kernel/sound
+/lib/modules/%{ver_rel}/kernel/drivers/media/video/*/*-alsa.ko*
 %exclude %dir /lib/modules/%{ver_rel}/kernel/sound
 %exclude /lib/modules/%{ver_rel}/kernel/sound/soundcore.*
 %exclude /lib/modules/%{ver_rel}/kernel/sound/oss
+%exclude /lib/modules/%{ver_rel}/kernel/sound/pcmcia
 
 %files sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}/kernel/sound/oss
 %if %{have_isa}
-/lib/modules/%{ver_rel}/kernel/drivers/media/radio/miropcm20.ko*
+/lib/modules/%{ver_rel}/kernel/drivers/media/radio/miropcm20*.ko*
 %endif
 %endif			# %%{with up}
 
@@ -1260,17 +1214,16 @@ fi
 /lib/modules/%{ver_rel}smp/kernel/drivers
 %exclude /lib/modules/%{ver_rel}smp/kernel/drivers/char/drm
 %if %{have_isa}
-%exclude /lib/modules/%{ver_rel}smp/kernel/drivers/media/radio/miropcm20.ko*
+%exclude /lib/modules/%{ver_rel}smp/kernel/drivers/media/radio/miropcm20*.ko*
 %endif
 /lib/modules/%{ver_rel}smp/kernel/fs
 /lib/modules/%{ver_rel}smp/kernel/kernel
 /lib/modules/%{ver_rel}smp/kernel/lib
 /lib/modules/%{ver_rel}smp/kernel/net
-%exclude /lib/modules/%{ver_rel}smp/kernel/net/netfilter
-%exclude /lib/modules/%{ver_rel}smp/kernel/net/*/netfilter
 /lib/modules/%{ver_rel}smp/kernel/security
 %dir /lib/modules/%{ver_rel}smp/kernel/sound
 /lib/modules/%{ver_rel}smp/kernel/sound/soundcore.*
+%exclude /lib/modules/%{ver_rel}smp/kernel/drivers/media/video/*/*-alsa.ko*
 %dir /lib/modules/%{ver_rel}smp/misc
 %exclude /lib/modules/%{ver_rel}smp/kernel/drivers/pcmcia
 %exclude /lib/modules/%{ver_rel}smp/kernel/drivers/*/pcmcia
@@ -1295,11 +1248,6 @@ fi
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}smp/kernel/drivers/char/drm
 
-%files smp-net-netfilter
-%defattr(644,root,root,755)
-/lib/modules/%{ver_rel}smp/kernel/net/netfilter
-/lib/modules/%{ver_rel}smp/kernel/net/*/netfilter
-
 %files smp-pcmcia
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}smp/kernel/drivers/pcmcia
@@ -1313,19 +1261,22 @@ fi
 /lib/modules/%{ver_rel}smp/kernel/drivers/serial/serial_cs.ko*
 /lib/modules/%{ver_rel}smp/kernel/drivers/telephony/ixj_pcmcia.ko*
 /lib/modules/%{ver_rel}smp/kernel/drivers/usb/host/sl811_cs.ko*
+/lib/modules/%{ver_rel}smp/kernel/sound/pcmcia
 
 %files smp-sound-alsa
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}smp/kernel/sound
+/lib/modules/%{ver_rel}smp/kernel/drivers/media/video/*/*-alsa.ko*
 %exclude %dir /lib/modules/%{ver_rel}smp/kernel/sound
 %exclude /lib/modules/%{ver_rel}smp/kernel/sound/soundcore.*
 %exclude /lib/modules/%{ver_rel}smp/kernel/sound/oss
+%exclude /lib/modules/%{ver_rel}smp/kernel/sound/pcmcia
 
 %files smp-sound-oss
 %defattr(644,root,root,755)
 /lib/modules/%{ver_rel}smp/kernel/sound/oss
 %if %{have_isa}
-/lib/modules/%{ver_rel}smp/kernel/drivers/media/radio/miropcm20.ko*
+/lib/modules/%{ver_rel}smp/kernel/drivers/media/radio/miropcm20*.ko*
 %endif
 %endif			# %%{with smp}
 
