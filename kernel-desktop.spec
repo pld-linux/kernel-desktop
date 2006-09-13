@@ -957,6 +957,7 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{ver}/include/linux
 %endif
 
 %{__make} $CrossOpts mrproper
+echo "-%{release}" > localversion
 %{__make} $CrossOpts include/linux/version.h
 install %{SOURCE3} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/config.h
