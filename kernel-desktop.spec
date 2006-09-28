@@ -694,7 +694,7 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 TuneUpConfigForIX86 () {
 %ifarch %{ix86}
 	pae=
-	[ "$2" = "yes" ] && pae=yes
+	[ "$2" = "smp" ] && pae=yes
 	%if %{with pae}
 		pae=yes
 	%endif
@@ -747,61 +747,60 @@ BuildConfig() {
 	# is this a special kernel we want to build?
 	smp=
 	cfg="up"
-	[ "$1" = "smp" -o "$2" = "smp" ] && smp="yes"
-	if [ "$smp" = "yes" ]; then
+	[ "$1" = "smp" -o "$2" = "smp" ] && smp="smp"
+	if [ "$smp" = "smp" ]; then
 		cfg="smp"
-		echo "-%{release}smp" > localversion
 		Config="%{_target_base_arch}-smp"
 	else
-		echo "-%{release}" > localversion
 		Config="%{_target_base_arch}"
 	fi
 	KernelVer=%{ver_rel}$1
 
 	echo "Building config file [using $Config.conf] for KERNEL $1..."
 
-	cat %{SOURCE20} > arch/%{_target_base_arch}/defconfig
-	cat $RPM_SOURCE_DIR/kernel-desktop-$Config.config >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE20} > .config
+	cat $RPM_SOURCE_DIR/kernel-desktop-$Config.config >> .config
+	echo "CONFIG_LOCALVERSION=\"-%{release}$smp\"" >> .config
 
-	TuneUpConfigForIX86 arch/%{_target_base_arch}/defconfig "$smp"
+	TuneUpConfigForIX86 .config "$smp"
 
 	# preempt
 %if %{with preemptrt}	
-	cat %{SOURCE41} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE41} >> .config
 %else
-	cat %{SOURCE42} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE42} >> .config
 %endif
 
-	cat %{SOURCE43} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE43} >> .config
 
 	# fbsplash, vesafb-tng, squashfs, imq, tahoe, atm, reiser4
-	cat %{SOURCE44} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE44} >> .config
 
 	# netfilter
-	cat %{SOURCE45} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE45} >> .config
 
 %if %{with grsec_minimal}
-	cat %{SOURCE46} >> arch/%{_target_base_arch}/defconfig
+	cat %{SOURCE46} >> .config
 %endif
 
 %if %{with laptop}
 	sed -e "s:CONFIG_HZ_1000=y:# CONFIG_HZ_1000 is not set:"	\
 		-e "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:"	\
 		-e "s:CONFIG_HZ=1000:CONFIG_HZ=100:"			\
-		-i arch/%{_target_base_arch}/defconfig
+		-i .config
 %endif
 
 %if %{with bootsplash}
 	sed -e 's:CONFIG_FB_SPLASH:CONFIG_BOOTSPLASH:'		\
 		-e 's:CONFIG_LOGO=y:# CONFIG_LOGO is not set:'	\
-		-i arch/%{_target_base_arch}/defconfig
+		-i .config
 %endif
 
-%{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" arch/%{_target_base_arch}/defconfig}
-%{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" arch/%{_target_base_arch}/defconfig}
-%{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" arch/%{_target_base_arch}/defconfig}
+%{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" .config}
+%{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" .config}
+%{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" .config}
 
-	ln -sf arch/%{_target_base_arch}/defconfig .config
+	install .config arch/%{_target_base_arch}/defconfig
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{ver}/include/linux
 	rm -f include/linux/autoconf.h
 	%{__make} $CrossOpts include/linux/autoconf.h
@@ -809,6 +808,7 @@ BuildConfig() {
 		$KERNEL_INSTALL_DIR/usr/src/linux-%{ver}/include/linux/autoconf-${cfg}.h
 	install .config \
 		$KERNEL_INSTALL_DIR/usr/src/linux-%{ver}/config-${cfg}
+	install .config arch/%{_target_base_arch}/defconfig
 }
 
 BuildKernel() {
@@ -816,7 +816,7 @@ BuildKernel() {
 	echo "Building kernel $1 ..."
 	%{__make} $CrossOpts mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
-	ln -sf arch/%{_target_base_arch}/defconfig .config
+	install arch/%{_target_base_arch}/defconfig .config
 
 	%{__make} $CrossOpts clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
@@ -832,8 +832,8 @@ BuildKernel() {
 PreInstallKernel() {
 	smp=
 	cfg="up"
-	[ "$1" = "smp" -o "$2" = "smp" ] && smp=yes
-	if [ "$smp" = "yes" ]; then
+	[ "$1" = "smp" -o "$2" = "smp" ] && smp=smp
+	if [ "$smp" = "smp" ]; then
 		cfg="smp"
 		Config="%{_target_base_arch}-smp"
 	else
@@ -957,13 +957,15 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{ver}/include/linux
 %endif
 
 %{__make} $CrossOpts mrproper
-echo "-%{release}" > localversion
+install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{ver}/config-up \
+	.config
 %{__make} $CrossOpts include/linux/version.h
+rm -f .config
 install %{SOURCE3} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/config.h
 
 # collect module-build files and directories
-perl %{SOURCE5} %{_prefix}/src/linux-%{ver} $KERNEL_BUILD_DIR
+%{__perl} %{SOURCE5} %{_prefix}/src/linux-%{ver} $KERNEL_BUILD_DIR
 
 %if %{with up} || %{with smp}
 # ghosted initrd
@@ -1285,17 +1287,14 @@ fi
 %defattr(644,root,root,755)
 %dir %{_prefix}/src/linux-%{ver}
 %{_prefix}/src/linux-%{ver}/include
-%if %{with smp}
 %{_prefix}/src/linux-%{ver}/config-smp
-%{_prefix}/src/linux-%{ver}/Module.symvers-smp
-%endif
+%{?with_smp:%{_prefix}/src/linux-%{ver}/Module.symvers-smp}
 %{_prefix}/src/linux-%{ver}/config-up
 %{?with_up:%{_prefix}/src/linux-%{ver}/Module.symvers-up}
 
 %files module-build -f aux_files
 %defattr(644,root,root,755)
 %{_prefix}/src/linux-%{ver}/Kbuild
-%{_prefix}/src/linux-%{ver}/localversion
 %{_prefix}/src/linux-%{ver}/arch/*/kernel/asm-offsets.*
 %{_prefix}/src/linux-%{ver}/arch/*/kernel/sigframe.h
 %dir %{_prefix}/src/linux-%{ver}/scripts
