@@ -193,6 +193,7 @@ Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel = %{epoch}:%{version}-%{release}
+Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(realtime-lsm) = 0.1.1
 Provides:	kernel-misc-fuse
 Provides:	kernel-net-hostap = 0.4.4
@@ -348,6 +349,7 @@ Requires:	coreutils
 Requires:	geninitrd >= 2.26
 Requires:	module-init-tools >= 0.9.9
 Provides:	kernel = %{epoch}:%{version}-%{release}
+Provides:	kernel(netfilter) = %{_netfilter_snap}
 Provides:	kernel(realtime-lsm) = 0.1.1
 Provides:	kernel-smp-misc-fuse
 Provides:	kernel-smp-net-hostap = 0.4.4
