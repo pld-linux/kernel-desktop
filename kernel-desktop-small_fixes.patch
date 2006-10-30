@@ -48,3 +48,33 @@ diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.
  /* Enforce in-order execution of data I/O.
   * No distinction between read/write on PPC; use eieio for all three.
   */
+--- a/drivers/pcmcia/ti113x.h	Tue May  9 00:41:05 2006
++++ b/drivers/pcmcia/ti113x.h	Mon May  8 23:08:29 2006
+@@ -647,6 +647,7 @@
+ 		 */
+ 		break;
+ 
++	case PCI_DEVICE_ID_TI_XX12:
+ 	case PCI_DEVICE_ID_TI_X515:
+ 	case PCI_DEVICE_ID_TI_X420:
+ 	case PCI_DEVICE_ID_TI_X620:
+--- a/drivers/pcmcia/yenta_socket.c	Tue May  9 00:41:05 2006
++++ b/drivers/pcmcia/yenta_socket.c	Mon May  8 23:08:29 2006
+@@ -1232,6 +1232,7 @@
+ 
+ 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_XX21_XX11, TI12XX),
+ 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_X515, TI12XX),
++	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_XX12, TI12XX),
+ 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_X420, TI12XX),
+ 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_X620, TI12XX),
+ 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_7410, TI12XX),
+--- a/include/linux/pci_ids.h	Tue May  9 00:41:05 2006
++++ b/include/linux/pci_ids.h	Mon May  8 23:08:29 2006
+@@ -726,6 +726,7 @@
+ #define PCI_DEVICE_ID_TI_4450		0x8011
+ #define PCI_DEVICE_ID_TI_XX21_XX11	0x8031
+ #define PCI_DEVICE_ID_TI_X515		0x8036
++#define PCI_DEVICE_ID_TI_XX12		0x8039
+ #define PCI_DEVICE_ID_TI_1130		0xac12
+ #define PCI_DEVICE_ID_TI_1031		0xac13
+ #define PCI_DEVICE_ID_TI_1131		0xac15
