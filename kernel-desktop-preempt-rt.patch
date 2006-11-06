@@ -10610,7 +10610,7 @@ Index: linux/arch/sparc64/kernel/time.c
  
 +
  /* The quotient formula is taken from the IA64 port. */
- #define SPARC64_NSEC_PER_CYC_SHIFT	30UL
+ #define SPARC64_NSEC_PER_CYC_SHIFT	10UL
  void __init time_init(void)
  {
  	unsigned long clock = sparc64_init_timers();
@@ -14151,7 +14151,7 @@ Index: linux/arch/x86_64/kernel/time.c
 - 	if (boot_cpu_data.x86_vendor == X86_VENDOR_INTEL) {
 -#ifdef CONFIG_ACPI
 -		/* But TSC doesn't tick in C3 so don't use it there */
--		if (acpi_fadt.length > 0 && acpi_fadt.plvl3_lat < 100)
+-		if (acpi_fadt.length > 0 && acpi_fadt.plvl3_lat < 1000)
 -			return 1;
 -#endif
 - 		return 0;
@@ -14707,7 +14707,7 @@ Index: linux/arch/x86_64/kernel/tsc.c
 + 	if (boot_cpu_data.x86_vendor == X86_VENDOR_INTEL) {
 +#ifdef CONFIG_ACPI
 +		/* But TSC doesn't tick in C3 so don't use it there */
-+		if (acpi_fadt.length > 0 && acpi_fadt.plvl3_lat < 100)
++		if (acpi_fadt.length > 0 && acpi_fadt.plvl3_lat < 1000)
 +			return 1;
 +#endif
 + 		return 0;
@@ -53292,27 +53292,6 @@ Index: linux/sound/core/control_compat.c
  	unsigned int indirect;
  
  	if (copy_from_user(&data->id, &data32->id, sizeof(data->id)))
-Index: linux/sound/core/hwdep.c
-===================================================================
---- linux.orig/sound/core/hwdep.c
-+++ linux/sound/core/hwdep.c
-@@ -158,6 +158,7 @@ static int snd_hwdep_release(struct inod
- {
- 	int err = -ENXIO;
- 	struct snd_hwdep *hw = file->private_data;
-+	struct module *mod = hw->card->module;
- 	mutex_lock(&hw->open_mutex);
- 	if (hw->ops.release) {
- 		err = hw->ops.release(hw, file);
-@@ -167,7 +168,7 @@ static int snd_hwdep_release(struct inod
- 		hw->used--;
- 	snd_card_file_remove(hw->card, file);
- 	mutex_unlock(&hw->open_mutex);
--	module_put(hw->card->module);
-+	module_put(mod);
- 	return err;
- }
- 
 Index: linux/sound/core/pcm_lib.c
 ===================================================================
 --- linux.orig/sound/core/pcm_lib.c
