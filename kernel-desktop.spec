@@ -51,7 +51,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
-%define		suspend_version		2.2.7.3
+%define		suspend_version		2.2.8.2
 
 %define		xen_version		3.0.2
 
@@ -66,9 +66,9 @@ Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel-%{alt_kernel}
-%define		_basever	2.6.17
-%define		_postver	.14
-%define		_rel		1
+%define		_basever	2.6.18
+%define		_postver	.2
+%define		_rel		0.1
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -78,13 +78,13 @@ Group:		Base/Kernel
 #define		_rc	-rc6
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{_basever}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	37ddefe96625502161f075b9d907f21e
+# Source0-md5:	296a6d150d260144639c3664d127d174
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	ea360a4ffddb249333fb8fab35e6e7e7
+# Source1-md5:	70c23255c697aa18a6e6ce97dc4eeb9b
 %endif
-Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.tar.bz2
-# Source2-md5:	93c5fff0ce771cd547043db91718706f
+Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.patch.bz2
+# Source2-md5:	b74c386616b33d5be2e39ad727490e5c
 
 Source3:	kernel-desktop-autoconf.h
 Source4:	kernel-desktop-config.h
@@ -590,26 +590,21 @@ Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
 Documentation.
 
 %prep
-%setup -q -n linux-%{_basever}%{_rc} -a2
+%setup -q -n linux-%{_basever}%{_rc}
 
 %if "%{_postver}" != "%{nil}"
-%{__bzip2} -dc %{SOURCE1} | patch -p1 -s
+%{__bzip2} -dc %{SOURCE1} | %{__patch} -p1 -s
 %endif
-
 
 %if %{with preemptrt}
 %patch0 -p1
 %patch1 -p1
 %else
-%patch2 -p1
+#%%patch2 -p1
 %endif
 
 # suspend 2
-# 9930-pdflush-fix.patch fixed in 2.6.17.7
-rm -f suspend2-%{suspend_version}-for-%{_basever}/9930-pdflush-fix.patch
-for i in suspend2-%{suspend_version}-for-%{_basever}/[0-9]*; do
-	patch -p1 -s < $i
-done
+%{__bzip2} -dc %{SOURCE2} | %{__patch} -p1 -s
 
 # Con Kolivas patchset
 %if %{with ck}
