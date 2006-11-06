@@ -174,7 +174,6 @@ Patch90:	kernel-desktop-sco-mtu.patch
 Patch91:	kernel-desktop-fbcon-margins.patch
 Patch92:	kernel-desktop-static-dev.patch
 Patch100:	kernel-desktop-small_fixes.patch
-Patch101:	kernel-desktop-asus-a6km.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -604,17 +603,17 @@ Documentation.
 # Con Kolivas patchset
 %if %{with ck}
 %if %{with preemptrt}
-%patch6 -p1
+#%%patch6 -p1	NEEDS UPDATE
 %else
 %patch7 -p1
 %endif
 %else
-%patch8 -p1
+#%%patch8 -p1	NEEDS UPDATE
 %endif
 
 # grsecurity
 %if %{with grsec_minimal}
-%patch9 -p1
+#%%patch9 -p1	NEEDS UPDATE
 %endif
 
 # filesystems
@@ -623,15 +622,15 @@ Documentation.
 
 # hardware
 %patch20 -p1
-%patch21 -p1
-%patch22 -p1
+#%%patch21 -p1	NEEDS UPDATE
+#%%patch22 -p1	NEEDS UPDATE
 %patch23 -p1
 
 # console
 %if %{with bootsplash}
 %patch30 -p1
 %else
-%patch31 -p1
+#%%patch31 -p1	NEEDS UPDATE
 %endif
 
 ### netfilter
@@ -663,19 +662,18 @@ Documentation.
 ### end of netfilter
 
 # net software
-%patch70 -p1
+#%%patch70 -p1	NEEDS UPDATE
 %patch71 -p1
 %patch72 -p1
 %patch73 -p1
 
-#%%patch80 -p1
+#%%patch80 -p1	NEEDS a lot of work
 
 # fixes
-%patch90 -p1
+#%%patch90 -p1	NEEDS UPDATE
 %patch91 -p1
 %patch92 -p1
 %patch100 -p1
-%patch101 -p0
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
