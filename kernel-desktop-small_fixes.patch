@@ -1,30 +1,3 @@
-diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-main.c linux-2.6.15.6.iforce/drivers/input/joystick/iforce/iforce-main.c
---- linux-2.6.15.6/drivers/input/joystick/iforce/iforce-main.c	2006-03-05 19:07:54.000000000 +0000
-+++ linux-2.6.15.6.iforce/drivers/input/joystick/iforce/iforce-main.c	2006-04-30 00:45:51.000000000 +0000
-@@ -79,6 +79,7 @@
- 	{ 0x06f8, 0x0001, "Guillemot Race Leader Force Feedback",	btn_wheel, abs_wheel, ff_iforce }, //?
- 	{ 0x06f8, 0x0004, "Guillemot Force Feedback Racing Wheel",	btn_wheel, abs_wheel, ff_iforce }, //?
- 	{ 0x06f8, 0x0004, "Gullemot Jet Leader 3D",			btn_joystick, abs_joystick, ff_iforce }, //?
-+	{ 0x06d6, 0x29bc, "Trust Force Feedback Race Master",		btn_wheel, abs_wheel, ff_iforce },
- 	{ 0x0000, 0x0000, "Unknown I-Force Device [%04x:%04x]",		btn_joystick, abs_joystick, ff_iforce }
- };
- 
-diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.15.6.iforce/drivers/input/joystick/iforce/iforce-serio.c
---- linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c	2006-03-05 19:07:54.000000000 +0000
-+++ linux-2.6.15.6.iforce/drivers/input/joystick/iforce/iforce-serio.c	2006-04-29 23:17:59.000000000 +0000
-@@ -175,6 +175,12 @@
- 		.id	= SERIO_ANY,
- 		.extra	= SERIO_ANY,
- 	},
-+	{
-+		.type	= SERIO_RS232,
-+		.proto	= 0x1f, // Trust ForceFeedback Race Master
-+		.id	= SERIO_ANY,
-+		.extra	= SERIO_ANY,
-+	},
- 	{ 0 }
- };
- 
 --- linux-2.6.17/include/linux/skbuff.h~	2006-06-19 16:14:43.000000000 +0200
 +++ linux-2.6.17/include/linux/skbuff.h	2006-06-19 16:57:47.000000000 +0200
 @@ -19,6 +19,7 @@
@@ -48,33 +21,3 @@ diff -Nur linux-2.6.15.6/drivers/input/joystick/iforce/iforce-serio.c linux-2.6.
  /* Enforce in-order execution of data I/O.
   * No distinction between read/write on PPC; use eieio for all three.
   */
---- a/drivers/pcmcia/ti113x.h	Tue May  9 00:41:05 2006
-+++ b/drivers/pcmcia/ti113x.h	Mon May  8 23:08:29 2006
-@@ -647,6 +647,7 @@
- 		 */
- 		break;
- 
-+	case PCI_DEVICE_ID_TI_XX12:
- 	case PCI_DEVICE_ID_TI_X515:
- 	case PCI_DEVICE_ID_TI_X420:
- 	case PCI_DEVICE_ID_TI_X620:
---- a/drivers/pcmcia/yenta_socket.c	Tue May  9 00:41:05 2006
-+++ b/drivers/pcmcia/yenta_socket.c	Mon May  8 23:08:29 2006
-@@ -1232,6 +1232,7 @@
- 
- 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_XX21_XX11, TI12XX),
- 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_X515, TI12XX),
-+	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_XX12, TI12XX),
- 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_X420, TI12XX),
- 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_X620, TI12XX),
- 	CB_ID(PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_7410, TI12XX),
---- a/include/linux/pci_ids.h	Tue May  9 00:41:05 2006
-+++ b/include/linux/pci_ids.h	Mon May  8 23:08:29 2006
-@@ -726,6 +726,7 @@
- #define PCI_DEVICE_ID_TI_4450		0x8011
- #define PCI_DEVICE_ID_TI_XX21_XX11	0x8031
- #define PCI_DEVICE_ID_TI_X515		0x8036
-+#define PCI_DEVICE_ID_TI_XX12		0x8039
- #define PCI_DEVICE_ID_TI_1130		0xac12
- #define PCI_DEVICE_ID_TI_1031		0xac13
- #define PCI_DEVICE_ID_TI_1131		0xac15
