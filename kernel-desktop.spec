@@ -110,8 +110,6 @@ Source46:	kernel-desktop-grsec.config
 ###
 
 Patch0:		kernel-desktop-preempt-rt.patch
-Patch1:		kernel-desktop-preempt_ppc_fix.patch
-Patch2:		kernel-desktop-nopreempt-compat.patch
 
 Patch3:		kernel-desktop-suspend2.patch
 
@@ -596,15 +594,12 @@ Documentation.
 %{__bzip2} -dc %{SOURCE1} | %{__patch} -p1 -s
 %endif
 
-%if %{with preemptrt}
-%patch0 -p1
-%patch1 -p1
-%else
-#%%patch2 -p1
-%endif
-
 # suspend 2
 %{__bzip2} -dc %{SOURCE2} | %{__patch} -p1 -s
+
+%if %{with preemptrt}
+%patch0 -p1
+%endif
 
 # Con Kolivas patchset
 %if %{with ck}
