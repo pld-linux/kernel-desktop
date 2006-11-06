@@ -2241,13 +2241,13 @@ Index: linux-2.6.18-ck1/include/linux/sysctl.h
  	VM_LOWMEM_RESERVE_RATIO=20,/* reservation ratio for lower memory zones */
  	VM_MIN_FREE_KBYTES=21,	/* Minimum free kilobytes to maintain */
  	VM_MAX_MAP_COUNT=22,	/* int: Maximum number of mmaps/address-space */
-@@ -191,6 +194,9 @@ enum
- 	VM_MIN_UNMAPPED=32,	/* Set min percent of unmapped pages */
+@@ -192,6 +195,9 @@ enum
  	VM_PANIC_ON_OOM=33,	/* panic at out-of-memory */
  	VM_VDSO_ENABLED=34,	/* map VDSO into new processes? */
-+	VM_SWAP_PREFETCH=35,	/* swap prefetch */
-+	VM_HARDMAPLIMIT=36,	/* Make mapped a hard limit */
-+	VM_TAIL_LARGEFILES=37,	/* Read large files to lru tail */
+ 	VM_MIN_SLAB=35,		 /* Percent pages ignored by zone reclaim */
++	VM_SWAP_PREFETCH=36,	/* swap prefetch */
++	VM_HARDMAPLIMIT=37,	/* Make mapped a hard limit */
++	VM_TAIL_LARGEFILES=38,	/* Read large files to lru tail */
  };
  
  
@@ -3675,12 +3675,7 @@ Index: linux-2.6.18-ck1/mm/vmscan.c
  	count_vm_event(ALLOCSTALL);
  
  	for (i = 0; zones[i] != NULL; i++) {
-@@ -984,11 +1033,11 @@ unsigned long try_to_free_pages(struct z
- 		if (!cpuset_zone_allowed(zone, __GFP_HARDWALL))
- 			continue;
- 
--		zone->temp_priority = DEF_PRIORITY;
-+		zone->temp_priority = scan_priority;
+@@ -988,7 +1037,7 @@ unsigned long try_to_free_pages(struct z
  		lru_pages += zone->nr_active + zone->nr_inactive;
  	}
  
@@ -3710,26 +3705,30 @@ Index: linux-2.6.18-ck1/mm/vmscan.c
  	unsigned long total_scanned;
  	unsigned long nr_reclaimed;
  	struct reclaim_state *reclaim_state = current->reclaim_state;
-@@ -1066,9 +1115,11 @@ static unsigned long balance_pgdat(pg_da
+@@ -1066,14 +1115,16 @@ static unsigned long balance_pgdat(pg_da
  		.gfp_mask = GFP_KERNEL,
  		.may_swap = 1,
  		.swap_cluster_max = SWAP_CLUSTER_MAX,
 -		.swappiness = vm_swappiness,
 +		.mapped = vm_mapped,
  	};
+ 	/*
+ 	 * temp_priority is used to remember the scanning priority at which
+ 	 * this zone was successfully refilled to free_pages == pages_high.
+ 	 */
+ 	int temp_priority[MAX_NR_ZONES];
  
 +	scan_priority = sc_priority(pgdat->kswapd);
 +
  loop_again:
  	total_scanned = 0;
  	nr_reclaimed = 0;
-@@ -1078,10 +1129,10 @@ loop_again:
- 	for (i = 0; i < pgdat->nr_zones; i++) {
- 		struct zone *zone = pgdat->node_zones + i;
- 
--		zone->temp_priority = DEF_PRIORITY;
-+		zone->temp_priority = scan_priority;
- 	}
+@@ -1078,9 +1129,9 @@ loop_again:
+ 	count_vm_event(PAGEOUTRUN);
+ 	
+ 	for (i = 0; i < pgdat->nr_zones; i++)
+-		temp_priority[i] = DEF_PRIORITY;
++		temp_priority[i] = scan_priority;
  
 -	for (priority = DEF_PRIORITY; priority >= 0; priority--) {
 +	for (priority = scan_priority; priority >= 0; priority--) {
