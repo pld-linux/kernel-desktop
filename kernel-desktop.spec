@@ -632,8 +632,8 @@ Documentation.
 %endif
 
 # filesystems
-%patch10 -p1
-%patch11 -p1
+#%%patch10 -p1	NEEDS UPDATE - fails to build
+#%%patch11 -p1	NEEDS UPDATE - fails to build
 
 # hardware
 %patch20 -p1
@@ -847,7 +847,7 @@ PreInstallKernel() {
 
 	%{__make} %{MakeOpts} modules_install \
 		%{?with_verbose:V=1} \
-		DEPMOD=$DepMod \
+		DEPMOD=%{DepMod} \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
 
