@@ -9000,15 +9000,16 @@ Index: linux/arch/powerpc/kernel/time.c
  			}
  			else {
  				printk( "Titan recalibrate: FAILED (difference > 4 percent)\n"
-@@ -693,7 +534,7 @@ void timer_interrupt(struct pt_regs * re
+@@ -693,8 +534,7 @@ void timer_interrupt(struct pt_regs * re
  		tb_next_jiffy = tb_last_jiffy + tb_ticks_per_jiffy;
  		if (per_cpu(last_jiffy, cpu) >= tb_next_jiffy) {
  			tb_last_jiffy = tb_next_jiffy;
 -			do_timer(regs);
 +			do_timer(1);
- 			timer_recalc_offset(tb_last_jiffy);
+-			timer_recalc_offset(tb_last_jiffy);
  			timer_check_rtc();
  		}
+ 		write_sequnlock(&xtime_lock);
 @@ -781,82 +622,6 @@ unsigned long long sched_clock(void)
  	return mulhdu(get_tb(), tb_to_ns_scale) << tb_to_ns_shift;
  }
@@ -53317,3 +53318,14 @@ Index: linux/sound/core/pcm_lib.c
  		snd_printd(KERN_DEBUG "XRUN: pcmC%dD%d%c\n",
  			   substream->pcm->card->number,
  			   substream->pcm->device,
+--- linux-2.6.18/include/linux/mc146818rtc.h~	2006-09-20 03:42:06.000000000 +0000
++++ linux-2.6.18/include/linux/mc146818rtc.h	2006-11-07 00:28:19.000000000 +0000
+@@ -17,7 +17,7 @@
+ 
+ #ifdef __KERNEL__
+ #include <linux/spinlock.h>		/* spinlock_t */
+-extern spinlock_t rtc_lock;		/* serialize CMOS RAM access */
++extern raw_spinlock_t rtc_lock;		/* serialize CMOS RAM access */
+ #endif
+ 
+ /**********************************************************************
