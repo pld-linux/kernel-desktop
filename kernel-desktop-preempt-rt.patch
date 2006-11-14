@@ -49264,7 +49264,7 @@ Index: linux/kernel/sched.c
  }
  
  int __sched cond_resched(void)
-@@ -4081,43 +4765,121 @@ EXPORT_SYMBOL(cond_resched);
+@@ -4081,41 +4765,119 @@ EXPORT_SYMBOL(cond_resched);
   * operations here to prevent schedule() from being called twice (once via
   * spin_unlock(), once by hand).
   */
@@ -49281,7 +49281,7 @@ Index: linux/kernel/sched.c
  		spin_lock(lock);
 +		ret = 1;
  	}
- 	if (need_resched()) {
+ 	if (need_resched() && __resched_legal(1)) {
 -		_raw_spin_unlock(lock);
 -		preempt_enable_no_resched();
 +		spin_unlock_no_resched(lock);
@@ -49292,7 +49292,6 @@ Index: linux/kernel/sched.c
  	}
  	return ret;
  }
- 
 -EXPORT_SYMBOL(cond_resched_lock);
 +EXPORT_SYMBOL(__cond_resched_raw_spinlock);
 +
@@ -49325,8 +49324,8 @@ Index: linux/kernel/sched.c
 +#ifndef CONFIG_PREEMPT_RT
  	BUG_ON(!in_softirq());
  
--	if (need_resched()) {
-+	if (softirq_need_resched()) {
+-	if (need_resched() && __resched_legal(0)) {
++	if (softirq_need_resched() && __resched_legal(0)) {
  		__local_bh_enable();
  		__cond_resched();
  		local_bh_disable();
@@ -49335,7 +49334,6 @@ Index: linux/kernel/sched.c
 +#endif
  	return 0;
  }
- 
  EXPORT_SYMBOL(cond_resched_softirq);
  
 +/*
@@ -49391,9 +49389,9 @@ Index: linux/kernel/sched.c
 +__setup("voluntary-preempt=", voluntary_preempt_setup);
 +
 +#endif
- 
  /**
   * yield - yield the current processor to other threads.
+  *
 @@ -4125,12 +4887,31 @@ EXPORT_SYMBOL(cond_resched_softirq);
   * this is a shortcut for kernel-space yielding - it marks the
   * thread runnable and calls sys_sched_yield().
@@ -56870,9 +56868,9 @@ Index: linux/net/ipv4/netfilter/arp_tables.c
 --- linux.orig/net/ipv4/netfilter/arp_tables.c
 +++ linux/net/ipv4/netfilter/arp_tables.c
 @@ -249,7 +249,7 @@ unsigned int arpt_do_table(struct sk_buf
- 	outdev = out ? out->name : nulldevname;
  
  	read_lock_bh(&table->lock);
+ 	private = table->private;
 -	table_base = (void *)private->entries[smp_processor_id()];
 +	table_base = (void *)private->entries[raw_smp_processor_id()];
  	e = get_entry(table_base, private->hook_entry[hook]);
@@ -56958,9 +56956,9 @@ Index: linux/net/ipv4/netfilter/ip_tables.c
 --- linux.orig/net/ipv4/netfilter/ip_tables.c
 +++ linux/net/ipv4/netfilter/ip_tables.c
 @@ -248,7 +248,7 @@ ipt_do_table(struct sk_buff **pskb,
- 
  	read_lock_bh(&table->lock);
  	IP_NF_ASSERT(table->valid_hooks & (1 << hook));
+ 	private = table->private;
 -	table_base = (void *)private->entries[smp_processor_id()];
 +	table_base = (void *)private->entries[raw_smp_processor_id()];
  	e = get_entry(table_base, private->hook_entry[hook]);
