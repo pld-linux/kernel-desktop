@@ -225,6 +225,21 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		ver		%{version}_%{alt_kernel}
 %define		ver_rel		%{version}_%{alt_kernel}-%{release}
 
+%define	CommonOpts	HOSTCC="%{__cc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
+%if "%{_target_base_arch}" != "%{_arch}"
+	%define	MakeOpts %{CommonOpts} ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
+	%define	DepMod /bin/true
+
+	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
+	%define	MakeOpts %{CommonOpts} CC="%{__cc}" ARCH=%{_target_base_arch}
+	%define	DepMod /sbin/depmod
+	%endif
+
+%else
+	%define MakeOpts %{CommonOpts} CC="%{__cc}"
+	%define	DepMod /sbin/depmod
+%endif
+
 %description
 This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
@@ -731,18 +746,6 @@ TuneUpConfigForIX86 () {
 %endif
 }
 
-%if "%{_target_base_arch}" != "%{_arch}"
-	CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
-	DepMod=/bin/true
-	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
-	CrossOpts="ARCH=%{_target_base_arch}"
-	DepMod=/sbin/depmod
-	%endif
-%else
-	CrossOpts=""
-	DepMod=/sbin/depmod
-%endif
-
 
 BuildConfig() {
 	%{?debug:set -x}
@@ -805,7 +808,7 @@ BuildConfig() {
 	install .config arch/%{_target_base_arch}/defconfig
 	install -d $KERNEL_INSTALL_DIR/usr/src/linux-%{ver}/include/linux
 	rm -f include/linux/autoconf.h
-	%{__make} $CrossOpts include/linux/autoconf.h
+	%{__make} %{MakeOpts} include/linux/autoconf.h
 	install include/linux/autoconf.h \
 		$KERNEL_INSTALL_DIR/usr/src/linux-%{ver}/include/linux/autoconf-${cfg}.h
 	install .config \
@@ -816,18 +819,18 @@ BuildConfig() {
 BuildKernel() {
 	%{?debug:set -x}
 	echo "Building kernel $1 ..."
-	%{__make} $CrossOpts mrproper \
+	%{__make} %{MakeOpts} mrproper \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 	install arch/%{_target_base_arch}/defconfig .config
 
-	%{__make} $CrossOpts clean \
+	%{__make} %{MakeOpts} clean \
 		RCS_FIND_IGNORE='-name build-done -prune -o'
 
-	%{__make} $CrossOpts include/linux/version.h \
+	%{__make} %{MakeOpts} include/linux/version.h \
 		%{?with_verbose:V=1}
 
 
-	%{__make} $CrossOpts \
+	%{__make} %{MakeOpts} \
 		%{?with_verbose:V=1}
 }
 
@@ -854,9 +857,9 @@ PreInstallKernel() {
 %endif
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 
-	%{__make} $CrossOpts modules_install \
+	%{__make} %{MakeOpts} modules_install \
 		%{?with_verbose:V=1} \
-		DEPMOD=$DepMod \
+		DEPMOD=%{DepMod} \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
 		KERNELRELEASE=$KernelVer
 
@@ -864,12 +867,13 @@ PreInstallKernel() {
 		$KERNEL_INSTALL_DIR/usr/src/linux-%{ver}/Module.symvers-${cfg}
 
 	echo "CHECKING DEPENDENCIES FOR KERNEL MODULES"
-	[ -z "$CrossOpts" ] && \
-		/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae \
-		-F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer \
-		|| echo
-	[ -n "$CrossOpts" ] && \
+	%if "%{_target_base_arch}" != "%{_arch}"
 		touch $KERNEL_INSTALL_DIR/lib/modules/$KernelVer/modules.dep
+	%else
+		/sbin/depmod --basedir $KERNEL_INSTALL_DIR -ae \
+			-F $KERNEL_INSTALL_DIR/boot/System.map-$KernelVer -r $KernelVer \
+			|| echo
+	%endif
 	echo "KERNEL RELEASE $KernelVer DONE"
 }
 
@@ -896,18 +900,7 @@ PreInstallKernel smp
 %install
 rm -rf $RPM_BUILD_ROOT
 umask 022
-
-%if "%{_target_base_arch}" != "%{_arch}"
-	CrossOpts="ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-"
-	export DEPMOD=/bin/true
-	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
-	CrossOpts="ARCH=%{_target_base_arch}"
-	unset DEPMOD
-	%endif
-%else
-	CrossOpts=""
-%endif
-
+export DEPMOD=%{DepMod}
 
 install -d $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{ver_rel}{,smp}
@@ -933,7 +926,7 @@ find . -maxdepth 1 ! -name "build-done" ! -name "." -exec cp -a "{}" "$RPM_BUILD
 
 cd $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}
 
-%{__make} $CrossOpts mrproper \
+%{__make} %{MakeOpts} mrproper \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
 find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
@@ -958,10 +951,10 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{ver}/include/linux
 	$RPM_BUILD_ROOT/usr/src/linux-%{ver}/include/linux
 %endif
 
-%{__make} $CrossOpts mrproper
+%{__make} %{MakeOpts} mrproper
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{ver}/config-up \
 	.config
-%{__make} $CrossOpts include/linux/version.h
+%{__make} %{MakeOpts} include/linux/version.h
 rm -f .config
 install %{SOURCE3} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/config.h
