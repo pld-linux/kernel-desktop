@@ -628,7 +628,7 @@ Documentation.
 
 # grsecurity
 %if %{with grsec_minimal}
-#%%patch9 -p1	NEEDS UPDATE
+%patch9 -p1
 %endif
 
 # filesystems
