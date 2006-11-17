@@ -942,7 +942,7 @@ install $KERNEL_BUILD_DIR/build-done/kernel-*/usr/src/linux-%{ver}/include/linux
 %{__make} %{MakeOpts} mrproper
 install $KERNEL_BUILD_DIR/build-done/kernel-UP/usr/src/linux-%{ver}/config-up \
 	.config
-%{__make} %{MakeOpts} include/linux/version.h
+%{__make} %{MakeOpts} include/linux/version.h include/linux/utsrelease.h
 rm -f .config
 install %{SOURCE3} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/autoconf.h
 install %{SOURCE4} $RPM_BUILD_ROOT%{_prefix}/src/linux-%{ver}/include/linux/config.h
