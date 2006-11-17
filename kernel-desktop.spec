@@ -999,7 +999,7 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux.old-%{alt_kernel} 2> /dev/null > /dev/null
+mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux-%{alt_kernel}.old 2> /dev/null > /dev/null
 ln -sf vmlinux-%{ver_rel} /boot/vmlinux-%{alt_kernel}
 
 %post drm
