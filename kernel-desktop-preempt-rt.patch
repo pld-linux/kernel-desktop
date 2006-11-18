@@ -9351,19 +9351,6 @@ Index: linux/arch/powerpc/platforms/chrp/smp.c
  static unsigned int timebase_upper = 0, timebase_lower = 0;
  
  void __devinit smp_chrp_give_timebase(void)
-Index: linux/arch/powerpc/platforms/chrp/time.c
-===================================================================
---- linux.orig/arch/powerpc/platforms/chrp/time.c
-+++ linux/arch/powerpc/platforms/chrp/time.c
-@@ -27,7 +27,7 @@
- #include <asm/sections.h>
- #include <asm/time.h>
- 
--extern spinlock_t rtc_lock;
-+extern raw_spinlock_t rtc_lock;
- 
- static int nvram_as1 = NVRAM_AS1;
- static int nvram_as0 = NVRAM_AS0;
 Index: linux/arch/powerpc/platforms/iseries/setup.c
 ===================================================================
 --- linux.orig/arch/powerpc/platforms/iseries/setup.c
@@ -53318,14 +53305,21 @@ Index: linux/sound/core/pcm_lib.c
  		snd_printd(KERN_DEBUG "XRUN: pcmC%dD%d%c\n",
  			   substream->pcm->card->number,
  			   substream->pcm->device,
---- linux-2.6.18/include/linux/mc146818rtc.h~	2006-09-20 03:42:06.000000000 +0000
-+++ linux-2.6.18/include/linux/mc146818rtc.h	2006-11-07 00:28:19.000000000 +0000
-@@ -17,7 +17,7 @@
+--- linux-2.6.18/include/asm-powerpc/spinlock.h~	2006-11-14 23:42:09.000000000 +0000
++++ linux-2.6.18/include/asm-powerpc/spinlock.h	2006-11-14 23:23:28.000000000 +0000
+@@ -179,6 +179,7 @@
+  * This returns the old value in the lock + 1,
+  * so we got a read lock if the return value is > 0.
+  */
++#if 0
+ static long __inline__ __read_trylock(__raw_rwlock_t *rw)
+ {
+ 	long tmp;
+@@ -260,6 +261,7 @@
+ {
+ 	return __write_trylock(rw) == 0;
+ }
++#endif
  
- #ifdef __KERNEL__
- #include <linux/spinlock.h>		/* spinlock_t */
--extern spinlock_t rtc_lock;		/* serialize CMOS RAM access */
-+extern spinlock_t rtc_lock __cacheline_aligned_in_smp;		/* serialize CMOS RAM access */
- #endif
- 
- /**********************************************************************
+ static void __inline__ __raw_read_unlock(__raw_rwlock_t *rw)
+ {
