@@ -13,7 +13,7 @@ index 92e89ae..a6cfacc 100644
  vesafb.txt
 diff --git a/Documentation/fb/splash.txt b/Documentation/fb/splash.txt
 new file mode 100644
-index 0000000..5e3b009
+index 0000000..6b281c9
 --- /dev/null
 +++ b/Documentation/fb/splash.txt
 @@ -0,0 +1,207 @@
@@ -32,7 +32,7 @@ index 0000000..5e3b009
 + 3) build the kernel helper program
 + 4) build your kernel with the FB_SPLASH option enabled.
 +
-+To get fb splash operational right after fbcon initialization is finished, you
++To get fbsplash operational right after fbcon initialization is finished, you
 +will have to include a theme and the kernel helper into your initramfs image.
 +Please refer to splashutils documentation for instructions on how to do that.
 +
@@ -44,31 +44,31 @@ index 0000000..5e3b009
 +
 +The userspace splash helper (by default: /sbin/splash_helper) is called by the
 +kernel whenever an important event occurs and the kernel needs some kind of
-+job to be carried out. Important events include console switches and graphic
++job to be carried out. Important events include console switches and video
 +mode switches (the kernel requests background images and configuration
-+parameters for the current console). The splash helper must be accessible at 
++parameters for the current console). The splash helper must be accessible at
 +all times. If it's not, fbsplash will be switched off automatically.
 +
-+It's possible to set path to the splash helper by writing it to 
++It's possible to set path to the splash helper by writing it to
 +/proc/sys/kernel/fbsplash.
 +
 +*****************************************************************************
 +
-+The information below is mostly technical stuff. There's probably no need to 
++The information below is mostly technical stuff. There's probably no need to
 +read it unless you plan to develop a userspace helper.
 +
 +The splash protocol
 +-------------------
 +
-+The splash protocol defines a communication interface between the kernel and 
++The splash protocol defines a communication interface between the kernel and
 +the userspace splash helper.
 +
 +The kernel side is responsible for:
 +
-+ o rendering console text, using an image as a background (instead of a
++ * rendering console text, using an image as a background (instead of a
 +   standard solid color fbcon uses),
-+ o accepting commands from the user via ioctls on the fbsplash device,
-+ o calling the userspace helper to set things up as soon as the fb subsystem 
++ * accepting commands from the user via ioctls on the fbsplash device,
++ * calling the userspace helper to set things up as soon as the fb subsystem 
 +   is initialized.
 +
 +The userspace helper is responsible for everything else, including parsing
@@ -92,24 +92,24 @@ index 0000000..5e3b009
 + framebuffer number
 + theme
 +
-+Splash protocol v1 specified an additional 'fbsplash mode' after the 
++Splash protocol v1 specified an additional 'fbsplash mode' after the
 +framebuffer number. Splash protocol v1 is deprecated and should not be used.
 +
 +Splash protocol v2 specifies the following commands:
 +
 +getpic
 +------
-+ The kernel issues this command to request image data. It's up to the userspace
-+ helper to find a background image appropriate for the specified theme and the 
-+ current resolution. The userspace helper should respond by issuing the
-+ FBIOSPLASH_SETPIC ioctl.
++ The kernel issues this command to request image data. It's up to the 
++ userspace  helper to find a background image appropriate for the specified 
++ theme and the current resolution. The userspace helper should respond by 
++ issuing the FBIOSPLASH_SETPIC ioctl.
 +
 +init
 +----
 + The kernel issues this command after the fbsplash device is created and
-+ the fbsplash interface is initialized. Upon receiving 'init', the userspace 
++ the fbsplash interface is initialized. Upon receiving 'init', the userspace
 + helper should parse the kernel command line (/proc/cmdline) or otherwise
-+ decide whether fbsplash is to be activated. 
++ decide whether fbsplash is to be activated.
 +
 + To activate fbsplash on the first console the helper should issue the
 + FBIOSPLASH_SETCFG, FBIOSPLASH_SETPIC and FBIOSPLASH_SETSTATE commands,
@@ -117,10 +117,10 @@ index 0000000..5e3b009
 +
 + When the userspace helper is called in an early phase of the boot process
 + (right after the initialization of fbcon), no filesystems will be mounted.
-+ The helper program should mount sysfs and then create the appropriate 
-+ framebuffer, fbsplash and tty0 devices (if they don't already exist) to get 
++ The helper program should mount sysfs and then create the appropriate
++ framebuffer, fbsplash and tty0 devices (if they don't already exist) to get
 + current display settings and to be able to communicate with the kernel side.
-+ It should probably also mount the procfs to be able to parse the kernel 
++ It should probably also mount the procfs to be able to parse the kernel
 + command line parameters.
 +
 + Note that the console sem is not held when the kernel calls splash_helper
@@ -138,14 +138,14 @@ index 0000000..5e3b009
 +Userspace -> Kernel
 +-------------------
 +
-+Userspace programs can communicate with fbsplash via ioctls on the fbsplash 
-+device. These ioctls are to be used by both the userspace helper (called 
++Userspace programs can communicate with fbsplash via ioctls on the fbsplash
++device. These ioctls are to be used by both the userspace helper (called
 +only by the kernel) and userspace configuration tools (run by the users).
 +
-+The splash helper should set the origin field to FB_SPLASH_IO_ORIG_KERNEL 
-+when doing the appropriate ioctls. All userspace configuration tools should 
++The splash helper should set the origin field to FB_SPLASH_IO_ORIG_KERNEL
++when doing the appropriate ioctls. All userspace configuration tools should
 +use FB_SPLASH_IO_ORIG_USER. Failure to set the appropriate value in the origin
-+field when performing ioctls from the kernel helper will most likely result 
++field when performing ioctls from the kernel helper will most likely result
 +in a console deadlock.
 +
 +FB_SPLASH_IO_ORIG_KERNEL instructs fbsplash not to try to acquire the console
@@ -159,11 +159,11 @@ index 0000000..5e3b009
 +description: loads a background picture for a virtual console
 +argument: struct fb_splash_iowrapper*; data: struct fb_image*
 +notes: 
-+If called for consoles other than the current foreground one, the picture data 
++If called for consoles other than the current foreground one, the picture data
 +will be ignored.
 +
 +If the current virtual console is running in a 8-bpp mode, the cmap substruct
-+of fb_image has to be filled appropriately: start should be set to 16 (first 
++of fb_image has to be filled appropriately: start should be set to 16 (first
 +16 colors are reserved for fbcon), len to a value <= 240 and red, green and
 +blue should point to valid cmap data. The transp field is ingored. The fields
 +dx, dy, bg_color, fg_color in fb_image are ignored as well.
@@ -180,7 +180,7 @@ index 0000000..5e3b009
 +FBIOSPLASH_SETSTATE
 +description: sets the fbsplash state for a virtual console
 +argument: struct fb_splash_iowrapper*; data: unsigned int*
-+	  values: 0 = disabled, 1 = enabled.
++          values: 0 = disabled, 1 = enabled.
 +
 +FBIOSPLASH_GETSTATE
 +description: gets the fbsplash state for a virtual console
@@ -191,7 +191,7 @@ index 0000000..5e3b009
 +
 +Definition of struct vc_splash can be found in linux/console_splash.h. It's
 +heavily commented. Note that the 'theme' field should point to a string
-+no longer than FB_SPLASH_THEME_LEN. When FBIOSPLASH_GETCFG call is 
++no longer than FB_SPLASH_THEME_LEN. When FBIOSPLASH_GETCFG call is
 +performed, the theme field should point to a char buffer of length
 +FB_SPLASH_THEME_LEN.
 +
@@ -222,13 +222,13 @@ index 0000000..5e3b009
 +  Ken Wimer <wimer@suse.de>.
 +
 +Fbsplash, splash protocol design, current implementation & docs by:
-+  Michael Januszewski <spock@gentoo.org>
++  Michal Januszewski <spock@gentoo.org>
 +
 diff --git a/drivers/Makefile b/drivers/Makefile
-index 5c69b86..fa098bb 100644
+index fc2d744..7e09d12 100644
 --- a/drivers/Makefile
 +++ b/drivers/Makefile
-@@ -8,6 +8,9 @@
+@@ -8,6 +8,9 @@ #
  obj-$(CONFIG_PCI)		+= pci/
  obj-$(CONFIG_PARISC)		+= parisc/
  obj-$(CONFIG_RAPIDIO)		+= rapidio/
@@ -238,7 +238,7 @@ index 5c69b86..fa098bb 100644
  obj-y				+= video/
  obj-$(CONFIG_ACPI)		+= acpi/
  # PnP must come after ACPI since it will eventually need to check if acpi
-@@ -15,10 +18,6 @@ obj-$(CONFIG_ACPI)		+= acpi/
+@@ -15,10 +18,6 @@ # was used and do nothing if so
  obj-$(CONFIG_PNP)		+= pnp/
  obj-$(CONFIG_ARM_AMBA)		+= amba/
  
@@ -250,18 +250,10 @@ index 5c69b86..fa098bb 100644
  
  # i810fb and intelfb depend on char/agp/
 diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
-index f5079c7..f4cb4a7 100644
+index c40b9b8..375597a 100644
 --- a/drivers/video/Kconfig
 +++ b/drivers/video/Kconfig
-@@ -754,7 +754,6 @@ config FB_MATROX
- 	select FB_CFB_FILLRECT
- 	select FB_CFB_COPYAREA
- 	select FB_CFB_IMAGEBLIT
--	select FB_TILEBLITTING
- 	select FB_MACMODES if PPC_PMAC
- 	---help---
- 	  Say Y here if you have a Matrox Millennium, Matrox Millennium II,
-@@ -1458,5 +1457,15 @@ if FB && SYSFS
+@@ -1616,5 +1616,15 @@ if SYSFS
  	source "drivers/video/backlight/Kconfig"
  endif
  
@@ -279,17 +271,17 @@ index f5079c7..f4cb4a7 100644
 +	  If unsure, say N.
 +endmenu
 diff --git a/drivers/video/Makefile b/drivers/video/Makefile
-index aa434e7..8a74fce 100644
+index 481c6c9..ccb5f64 100644
 --- a/drivers/video/Makefile
 +++ b/drivers/video/Makefile
-@@ -7,6 +7,7 @@
+@@ -13,6 +13,7 @@ fb-objs                           := $(f
  obj-$(CONFIG_VT)		  += console/
  obj-$(CONFIG_LOGO)		  += logo/
  obj-$(CONFIG_SYSFS)		  += backlight/
 +obj-$(CONFIG_FB_SPLASH)           += fbsplash.o cfbsplash.o
  
- obj-$(CONFIG_FB)                  += fb.o
- fb-y                              := fbmem.o fbmon.o fbcmap.o fbsysfs.o \
+ obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
+ obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
 diff --git a/drivers/video/cfbsplash.c b/drivers/video/cfbsplash.c
 new file mode 100644
 index 0000000..4adeb2e
@@ -769,10 +761,10 @@ index 0000000..4adeb2e
 +}
 +
 diff --git a/drivers/video/console/bitblit.c b/drivers/video/console/bitblit.c
-index eea422e..f7eb288 100644
+index 308850d..36a885c 100644
 --- a/drivers/video/console/bitblit.c
 +++ b/drivers/video/console/bitblit.c
-@@ -18,6 +18,7 @@
+@@ -17,6 +17,7 @@ #include <linux/vt_kern.h>
  #include <linux/console.h>
  #include <asm/types.h>
  #include "fbcon.h"
@@ -780,7 +772,7 @@ index eea422e..f7eb288 100644
  
  /*
   * Accelerated handlers.
-@@ -55,6 +56,13 @@ static void bit_bmove(struct vc_data *vc
+@@ -54,6 +55,13 @@ static void bit_bmove(struct vc_data *vc
  	area.height = height * vc->vc_font.height;
  	area.width = width * vc->vc_font.width;
  
@@ -794,7 +786,7 @@ index eea422e..f7eb288 100644
  	info->fbops->fb_copyarea(info, &area);
  }
  
-@@ -380,11 +388,15 @@ static void bit_cursor(struct vc_data *v
+@@ -379,11 +387,15 @@ static void bit_cursor(struct vc_data *v
  	cursor.image.depth = 1;
  	cursor.rop = ROP_XOR;
  
@@ -815,10 +807,10 @@ index eea422e..f7eb288 100644
  	ops->cursor_reset = 0;
  }
 diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
-index 041d069..945b5b0 100644
+index 390439b..279850b 100644
 --- a/drivers/video/console/fbcon.c
 +++ b/drivers/video/console/fbcon.c
-@@ -93,6 +93,7 @@
+@@ -91,6 +91,7 @@ #include <asm/setup.h>
  #endif
  
  #include "fbcon.h"
@@ -826,7 +818,7 @@ index 041d069..945b5b0 100644
  
  #ifdef FBCONDEBUG
  #  define DPRINTK(fmt, args...) printk(KERN_DEBUG "%s: " fmt, __FUNCTION__ , ## args)
-@@ -108,7 +109,7 @@ enum {
+@@ -106,7 +107,7 @@ enum {
  
  static struct display fb_display[MAX_NR_CONSOLES];
  
@@ -835,7 +827,7 @@ index 041d069..945b5b0 100644
  static signed char con2fb_map_boot[MAX_NR_CONSOLES];
  static int logo_height;
  static int logo_lines;
-@@ -298,7 +299,7 @@ static inline int fbcon_is_inactive(stru
+@@ -300,7 +301,7 @@ static inline int fbcon_is_inactive(stru
  		vc->vc_mode != KD_TEXT || ops->graphics);
  }
  
@@ -844,7 +836,7 @@ index 041d069..945b5b0 100644
  	      u16 c, int is_fg)
  {
  	int depth = fb_get_color_depth(&info->var, &info->fix);
-@@ -404,6 +405,7 @@ static void fb_flashcursor(void *private
+@@ -409,6 +410,7 @@ static void fb_flashcursor(void *private
  		CM_ERASE : CM_DRAW;
  	ops->cursor(vc, info, mode, softback_lines, get_color(vc, info, c, 1),
  		    get_color(vc, info, c, 0));
@@ -852,7 +844,7 @@ index 041d069..945b5b0 100644
  	release_console_sem();
  }
  
-@@ -568,6 +570,8 @@ static int fbcon_takeover(int show_logo)
+@@ -574,6 +576,8 @@ static int fbcon_takeover(int show_logo)
  		info_idx = -1;
  	}
  
@@ -861,7 +853,7 @@ index 041d069..945b5b0 100644
  	return err;
  }
  
-@@ -971,6 +975,12 @@ static const char *fbcon_startup(void)
+@@ -980,6 +984,12 @@ static const char *fbcon_startup(void)
  	rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
  	cols /= vc->vc_font.width;
  	rows /= vc->vc_font.height;
@@ -874,7 +866,7 @@ index 041d069..945b5b0 100644
  	vc_resize(vc, cols, rows);
  
  	DPRINTK("mode:   %s\n", info->fix.id);
-@@ -1053,7 +1063,7 @@ static void fbcon_init(struct vc_data *v
+@@ -1063,7 +1073,7 @@ static void fbcon_init(struct vc_data *v
  	cap = info->flags;
  
  	if (vc != svc || logo_shown == FBCON_LOGO_DONTSHOW ||
@@ -883,7 +875,7 @@ index 041d069..945b5b0 100644
  		logo = 0;
  
  	if (var_to_display(p, &info->var, info))
-@@ -1193,6 +1203,11 @@ static void fbcon_clear(struct vc_data *
+@@ -1257,6 +1267,11 @@ static void fbcon_clear(struct vc_data *
  	if (!height || !width)
  		return;
  
@@ -895,7 +887,7 @@ index 041d069..945b5b0 100644
  	/* Split blits that cross physical y_wrap boundary */
  
  	y_break = p->vrows - p->yscroll;
-@@ -1212,10 +1227,15 @@ static void fbcon_putcs(struct vc_data *
+@@ -1276,10 +1291,15 @@ static void fbcon_putcs(struct vc_data *
  	struct display *p = &fb_display[vc->vc_num];
  	struct fbcon_ops *ops = info->fbcon_par;
  
@@ -915,7 +907,7 @@ index 041d069..945b5b0 100644
  }
  
  static void fbcon_putc(struct vc_data *vc, int c, int ypos, int xpos)
-@@ -1231,8 +1251,13 @@ static void fbcon_clear_margins(struct v
+@@ -1295,8 +1315,13 @@ static void fbcon_clear_margins(struct v
  	struct fb_info *info = registered_fb[con2fb_map[vc->vc_num]];
  	struct fbcon_ops *ops = info->fbcon_par;
  
@@ -931,7 +923,7 @@ index 041d069..945b5b0 100644
  }
  
  static void fbcon_cursor(struct vc_data *vc, int mode)
-@@ -1705,7 +1730,7 @@ static int fbcon_scroll(struct vc_data *
+@@ -1769,7 +1794,7 @@ static int fbcon_scroll(struct vc_data *
  			count = vc->vc_rows;
  		if (softback_top)
  			fbcon_softback_note(vc, t, count);
@@ -940,7 +932,7 @@ index 041d069..945b5b0 100644
  			goto redraw_up;
  		switch (p->scrollmode) {
  		case SCROLL_MOVE:
-@@ -1793,6 +1818,8 @@ static int fbcon_scroll(struct vc_data *
+@@ -1857,6 +1882,8 @@ static int fbcon_scroll(struct vc_data *
  			count = vc->vc_rows;
  		if (logo_shown >= 0)
  			goto redraw_down;
@@ -949,7 +941,7 @@ index 041d069..945b5b0 100644
  		switch (p->scrollmode) {
  		case SCROLL_MOVE:
  			ops->bmove(vc, info, t, 0, t + count, 0,
-@@ -1935,6 +1962,13 @@ static void fbcon_bmove_rec(struct vc_da
+@@ -1999,6 +2026,13 @@ static void fbcon_bmove_rec(struct vc_da
  		}
  		return;
  	}
@@ -963,7 +955,7 @@ index 041d069..945b5b0 100644
  	ops->bmove(vc, info, real_y(p, sy), sx, real_y(p, dy), dx,
  		   height, width);
  }
-@@ -2005,8 +2039,9 @@ static int fbcon_resize(struct vc_data *
+@@ -2069,8 +2103,9 @@ static int fbcon_resize(struct vc_data *
  	var.yres = virt_h * virt_fh;
  	x_diff = info->var.xres - var.xres;
  	y_diff = info->var.yres - var.yres;
@@ -975,15 +967,14 @@ index 041d069..945b5b0 100644
  		struct fb_videomode *mode;
  
  		DPRINTK("attempting resize %ix%i\n", var.xres, var.yres);
-@@ -2042,7 +2077,26 @@ static int fbcon_switch(struct vc_data *
+@@ -2106,6 +2141,25 @@ static int fbcon_switch(struct vc_data *
  
  	info = registered_fb[con2fb_map[vc->vc_num]];
  	ops = info->fbcon_par;
--
 +	prev_console = ops->currcon;
 +	if (prev_console != -1)
 +		old_info = registered_fb[con2fb_map[prev_console]];
-+	
++
 +	if (fbsplash_active_vc(vc)) {
 +		struct vc_data *vc_curr = vc_cons[prev_console].d;
 +		if (!vc_curr->vc_splash.theme || strcmp(vc->vc_splash.theme, vc_curr->vc_splash.theme)) {
@@ -999,11 +990,10 @@ index 041d069..945b5b0 100644
 +			       0, info->var.yres * info->fix.line_length);
 +		}
 +	}
-+	
+ 
  	if (softback_top) {
  		if (softback_lines)
- 			fbcon_set_origin(vc);
-@@ -2060,9 +2114,6 @@ static int fbcon_switch(struct vc_data *
+@@ -2124,9 +2178,6 @@ static int fbcon_switch(struct vc_data *
  		logo_shown = FBCON_LOGO_CANSHOW;
  	}
  
@@ -1013,19 +1003,19 @@ index 041d069..945b5b0 100644
  	/*
  	 * FIXME: If we have multiple fbdev's loaded, we need to
  	 * update all info->currcon.  Perhaps, we can place this
-@@ -2104,6 +2155,11 @@ static int fbcon_switch(struct vc_data *
- 		}
+@@ -2165,6 +2216,11 @@ static int fbcon_switch(struct vc_data *
+ 		if (old_info != info)
+ 			fbcon_del_cursor_timer(old_info);
  	}
- 
++	
 +	if (fbsplash_active_nores(info, vc) && !fbsplash_active(info, vc)) {
 +		if (fbsplash_call_helper("modechange", vc->vc_num))
 +			fbsplash_disable(vc, 0);
 +	}
-+
- 	set_blitting_type(vc, info);
- 	ops->cursor_reset = 1;
  
-@@ -2205,8 +2261,12 @@ static int fbcon_blank(struct vc_data *v
+ 	fbcon_add_cursor_timer(info);
+ 	set_blitting_type(vc, info);
+@@ -2268,8 +2324,12 @@ static int fbcon_blank(struct vc_data *v
  			fbcon_cursor(vc, blank ? CM_ERASE : CM_DRAW);
  			ops->cursor_flash = (!blank);
  
@@ -1040,7 +1030,7 @@ index 041d069..945b5b0 100644
  		}
  
  		if (!blank)
-@@ -2364,13 +2424,22 @@ static int fbcon_do_set_font(struct vc_d
+@@ -2419,13 +2479,22 @@ static int fbcon_do_set_font(struct vc_d
  	}
  
  	if (resize) {
@@ -1063,7 +1053,7 @@ index 041d069..945b5b0 100644
  		if (CON_IS_VISIBLE(vc) && softback_buf)
  			fbcon_update_softback(vc);
  	} else if (CON_IS_VISIBLE(vc)
-@@ -2488,7 +2557,7 @@ static int fbcon_set_palette(struct vc_d
+@@ -2543,7 +2612,7 @@ static int fbcon_set_palette(struct vc_d
  	int i, j, k, depth;
  	u8 val;
  
@@ -1072,7 +1062,7 @@ index 041d069..945b5b0 100644
  		return -EINVAL;
  
  	if (!CON_IS_VISIBLE(vc))
-@@ -2514,7 +2583,49 @@ static int fbcon_set_palette(struct vc_d
+@@ -2569,7 +2638,49 @@ static int fbcon_set_palette(struct vc_d
  	} else
  		fb_copy_cmap(fb_default_cmap(1 << depth), &palette_cmap);
  
@@ -1123,7 +1113,7 @@ index 041d069..945b5b0 100644
  }
  
  static u16 *fbcon_screen_pos(struct vc_data *vc, int offset)
-@@ -2740,7 +2851,14 @@ static void fbcon_modechanged(struct fb_
+@@ -2795,7 +2906,14 @@ static void fbcon_modechanged(struct fb_
  		rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
  		cols /= vc->vc_font.width;
  		rows /= vc->vc_font.height;
@@ -1139,19 +1129,27 @@ index 041d069..945b5b0 100644
  		updatescrollmode(p, info, vc);
  		scrollback_max = 0;
  		scrollback_current = 0;
+@@ -3235,6 +3353,7 @@ #endif
+ 		}
+ 	}
+ 
++	fbsplash_exit();
+ 	fbcon_has_exited = 1;
+ }
+ 
 diff --git a/drivers/video/fbcmap.c b/drivers/video/fbcmap.c
-index c32a2a5..3a227fa 100644
+index e8b135f..8622d74 100644
 --- a/drivers/video/fbcmap.c
 +++ b/drivers/video/fbcmap.c
-@@ -16,6 +16,7 @@
- #include <linux/tty.h>
+@@ -15,6 +15,7 @@ #include <linux/string.h>
+ #include <linux/module.h>
  #include <linux/fb.h>
  #include <linux/slab.h>
 +#include "fbsplash.h"
  
  #include <asm/uaccess.h>
  
-@@ -235,14 +236,17 @@ int fb_set_cmap(struct fb_cmap *cmap, st
+@@ -234,14 +235,17 @@ int fb_set_cmap(struct fb_cmap *cmap, st
  			if (transp)
  				htransp = *transp++;
  			if (info->fbops->fb_setcolreg(start++,
@@ -1172,7 +1170,7 @@ index c32a2a5..3a227fa 100644
  	return rc;
  }
  
-@@ -250,7 +254,7 @@ int fb_set_user_cmap(struct fb_cmap_user
+@@ -249,7 +253,7 @@ int fb_set_user_cmap(struct fb_cmap_user
  {
  	int rc, size = cmap->len * sizeof(u16);
  	struct fb_cmap umap;
@@ -1183,10 +1181,10 @@ index c32a2a5..3a227fa 100644
  		return -EINVAL;
 diff --git a/drivers/video/fbsplash.c b/drivers/video/fbsplash.c
 new file mode 100644
-index 0000000..a12d5b8
+index 0000000..e22e544
 --- /dev/null
 +++ b/drivers/video/fbsplash.c
-@@ -0,0 +1,406 @@
+@@ -0,0 +1,425 @@
 +/* 
 + *  linux/drivers/video/fbsplash.c -- Framebuffer splash routines
 + *
@@ -1236,6 +1234,7 @@ index 0000000..a12d5b8
 +extern signed char con2fb_map[];
 +static int fbsplash_enable(struct vc_data *vc);
 +char fbsplash_path[KMOD_PATH_LEN] = "/sbin/splash_helper";
++static int initialized = 0;
 +
 +int fbsplash_call_helper(char* cmd, unsigned short vc)
 +{
@@ -1561,12 +1560,12 @@ index 0000000..a12d5b8
 +	.fops = &splash_ops
 +};
 +
-+int fbsplash_init(void)
++void fbsplash_reset(void)
 +{
 +	struct fb_info *info;
 +	struct vc_data *vc;
 +	int i;
-+	
++
 +	vc = vc_cons[0].d;
 +	info = registered_fb[0];
 +
@@ -1581,6 +1580,18 @@ index 0000000..a12d5b8
 +		vc_cons[i].d->vc_splash.theme = NULL;
 +	}
 +
++	return;
++}
++
++int fbsplash_init(void)
++{
++	int i;
++
++	fbsplash_reset();
++
++	if (initialized)
++		return 0;
++
 +	i = misc_register(&splash_dev);
 +	if (i) {
 +		printk(KERN_ERR "fbsplash: failed to register device\n");
@@ -1588,17 +1599,23 @@ index 0000000..a12d5b8
 +	}
 +
 +	fbsplash_call_helper("init", 0);
-+	
++	initialized = 1;
++	return 0;
++}
++
++int fbsplash_exit(void)
++{
++	fbsplash_reset();
 +	return 0;
 +}
 +
 +EXPORT_SYMBOL(fbsplash_path);
 diff --git a/drivers/video/fbsplash.h b/drivers/video/fbsplash.h
 new file mode 100644
-index 0000000..211fa23
+index 0000000..cb9398f
 --- /dev/null
 +++ b/drivers/video/fbsplash.h
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,78 @@
 +/* 
 + *  linux/drivers/video/fbsplash.h -- Framebuffer splash headers
 + *
@@ -1623,6 +1640,7 @@ index 0000000..211fa23
 +#ifdef CONFIG_FB_SPLASH
 +/* fbsplash.c */
 +int fbsplash_init(void);
++int fbsplash_exit(void);
 +int fbsplash_call_helper(char* cmd, unsigned short cons);
 +int fbsplash_disable(struct vc_data *vc, unsigned char redraw);
 +
@@ -1666,6 +1684,7 @@ index 0000000..211fa23
 +static inline void fbsplash_fix_pseudo_pal(struct fb_info *info, struct vc_data *vc) {}
 +static inline int fbsplash_call_helper(char* cmd, unsigned short cons) { return 0; }
 +static inline int fbsplash_init(void) { return 0; }
++static inline int fbsplash_exit(void) { return 0; }
 +static inline int fbsplash_disable(struct vc_data *vc, unsigned char redraw) { return 0; }
 +
 +#define fbsplash_active_vc(y) (0)
@@ -1695,10 +1714,10 @@ index 0000000..c448dd2
 +
 +#endif
 diff --git a/include/linux/console_struct.h b/include/linux/console_struct.h
-index f8e5587..3e7f476 100644
+index 25423f7..5131f77 100644
 --- a/include/linux/console_struct.h
 +++ b/include/linux/console_struct.h
-@@ -14,6 +14,7 @@
+@@ -15,6 +15,7 @@ #include <linux/vt.h>
  struct vt_struct;
  
  #define NPAR 16
@@ -1706,7 +1725,7 @@ index f8e5587..3e7f476 100644
  
  struct vc_data {
  	unsigned short	vc_num;			/* Console number */
-@@ -97,6 +98,8 @@ struct vc_data {
+@@ -98,6 +99,8 @@ struct vc_data {
  	struct vc_data **vc_display_fg;		/* [!] Ptr to var holding fg console for this display */
  	unsigned long	vc_uni_pagedir;
  	unsigned long	*vc_uni_pagedir_loc;  /* [!] Location of uni_pagedir variable for this console */
@@ -1716,10 +1735,10 @@ index f8e5587..3e7f476 100644
  };
  
 diff --git a/include/linux/fb.h b/include/linux/fb.h
-index 2cb19e6..c45e177 100644
+index 4ad0673..dcd0950 100644
 --- a/include/linux/fb.h
 +++ b/include/linux/fb.h
-@@ -8,6 +8,13 @@
+@@ -9,6 +9,13 @@ #include <asm/types.h>
  #define FB_MAJOR		29
  #define FB_MAX			32	/* sufficient for now */
  
@@ -1733,24 +1752,23 @@ index 2cb19e6..c45e177 100644
  /* ioctls
     0x46 is 'F'								*/
  #define FBIOGET_VSCREENINFO	0x4600
-@@ -35,7 +42,15 @@
+@@ -36,7 +43,15 @@ #define FBIOGET_GLYPH           0x4615
  #define FBIOGET_HWCINFO         0x4616
  #define FBIOPUT_MODEINFO        0x4617
  #define FBIOGET_DISPINFO        0x4618
--
 +#define FBIOSPLASH_SETCFG	_IOWR('F', 0x19, struct fb_splash_iowrapper)
 +#define FBIOSPLASH_GETCFG	_IOR('F', 0x1A, struct fb_splash_iowrapper)
 +#define FBIOSPLASH_SETSTATE	_IOWR('F', 0x1B, struct fb_splash_iowrapper)
 +#define FBIOSPLASH_GETSTATE	_IOR('F', 0x1C, struct fb_splash_iowrapper)
 +#define FBIOSPLASH_SETPIC 	_IOWR('F', 0x1D, struct fb_splash_iowrapper)
-+
+ 
 +#define FB_SPLASH_THEME_LEN		128	/* Maximum lenght of a theme name */
 +#define FB_SPLASH_IO_ORIG_KERNEL	0	/* Kernel ioctl origin */
 +#define FB_SPLASH_IO_ORIG_USER		1 	/* User ioctl origin */
  
  #define FB_TYPE_PACKED_PIXELS		0	/* Packed Pixels	*/
  #define FB_TYPE_PLANES			1	/* Non interleaved planes */
-@@ -769,6 +784,9 @@ struct fb_info {
+@@ -785,6 +800,9 @@ #define FBINFO_STATE_RUNNING	0
  #define FBINFO_STATE_SUSPENDED	1
  	u32 state;			/* Hardware state i.e suspend */
  	void *fbcon_par;                /* fbcon use-only private area */
@@ -1761,22 +1779,22 @@ index 2cb19e6..c45e177 100644
  	void *par;	
  };
 diff --git a/include/linux/sysctl.h b/include/linux/sysctl.h
-index bac61db..1695abc 100644
+index e4b1a4d..5741f04 100644
 --- a/include/linux/sysctl.h
 +++ b/include/linux/sysctl.h
-@@ -148,6 +148,7 @@ enum
- 	KERN_SPIN_RETRY=70,	/* int: number of spinlock retries */
- 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
- 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
-+	KERN_FBSPLASH=73,	/* string: path to fbsplash helper */
-	KERN_MAX_LOCK_DEPTH=80,
+@@ -153,6 +153,7 @@ enum
+ 	KERN_INTERACTIVE=75,	/* interactive tasks can have cpu bursts */
+ 	KERN_COMPUTE=76,	/* adjust timeslices for a compute server */
+ 	KERN_ISO_CPU=77,	/* percent cpu SCHED_ISO tasks run SCHED_RR */
++	KERN_FBSPLASH=78,	/* string: path to fbsplash helper */
  };
  
+ 
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 32b48e8..bb6c528 100644
+index 362a0cc..883c8c9 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -89,6 +89,9 @@ static int ngroups_max = NGROUPS_MAX;
+@@ -90,6 +90,9 @@ static int ngroups_max = NGROUPS_MAX;
  #ifdef CONFIG_KMOD
  extern char modprobe_path[];
  #endif
@@ -1786,7 +1804,7 @@ index 32b48e8..bb6c528 100644
  #ifdef CONFIG_CHR_DEV_SG
  extern int sg_big_buff;
  #endif
-@@ -409,6 +412,17 @@ static ctl_table kern_table[] = {
+@@ -407,6 +410,17 @@ #if defined(CONFIG_HOTPLUG) && defined(C
  		.strategy	= &sysctl_string,
  	},
  #endif
