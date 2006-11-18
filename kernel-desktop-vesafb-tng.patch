@@ -549,7 +549,7 @@ new file mode 100644
 index 0000000..ddc3d1c
 --- /dev/null
 +++ b/drivers/video/vesafb-thread.c
-@@ -0,0 +1,724 @@
+@@ -0,0 +1,722 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards.
 + * Kernel thread and vm86 routines.
@@ -578,8 +578,6 @@ index 0000000..ddc3d1c
 +#include <asm/uaccess.h>
 +#include <asm/mmu_context.h>
 +#include "edid.h"
-+
-+static int errno;
 +
 +static DECLARE_COMPLETION(vesafb_th_completion);
 +static DECLARE_MUTEX(vesafb_task_list_sem);
