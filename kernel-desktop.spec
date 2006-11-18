@@ -638,7 +638,7 @@ Documentation.
 # hardware
 %patch20 -p1
 #%%patch21 -p1	NEEDS UPDATE
-#%%patch22 -p1	NEEDS UPDATE
+%patch22 -p1
 %patch23 -p1
 
 # console
