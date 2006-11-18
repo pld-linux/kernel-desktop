@@ -648,7 +648,7 @@ exit 1
 %if %{with bootsplash}
 %patch30 -p1
 %else
-#%%patch31 -p1	NEEDS UPDATE
+%patch31 -p1
 %endif
 
 ### netfilter
