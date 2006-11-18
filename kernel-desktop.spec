@@ -619,11 +619,14 @@ Documentation.
 %if %{with ck}
 %if %{with preemptrt}
 #%%patch6 -p1	NEEDS UPDATE
+: ck patch for preemptrt-patched kernel is not prepared
+: try --without ck
+exit 1
 %else
 %patch7 -p1
 %endif
 %else
-#%%patch8 -p1	NEEDS UPDATE
+%patch8 -p1
 %endif
 
 # grsecurity
