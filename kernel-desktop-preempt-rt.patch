@@ -53325,7 +53325,7 @@ Index: linux/sound/core/pcm_lib.c
  #ifdef __KERNEL__
  #include <linux/spinlock.h>		/* spinlock_t */
 -extern spinlock_t rtc_lock;		/* serialize CMOS RAM access */
-+extern raw_spinlock_t rtc_lock;		/* serialize CMOS RAM access */
++extern spinlock_t rtc_lock __cacheline_aligned_in_smp;		/* serialize CMOS RAM access */
  #endif
  
  /**********************************************************************
