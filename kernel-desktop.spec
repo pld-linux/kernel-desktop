@@ -14,6 +14,10 @@
 
 %{?debug:%define with_verbose 1}
 
+%ifnarch %{ix86}
+%undefine	with_pae
+%endif
+
 %ifarch %{ix86} ppc
 %define		have_isa	1
 %else
@@ -236,10 +240,25 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 	%define	DepMod /sbin/depmod
 %endif
 
+%define __features Enabled features:\
+%{?debug: - DEBUG}\
+%{?with_preemptrt: - realtime-preempt patch by Ingo Molar}\
+%{?with_ck: - desktop patchset by Con Kolivas}\
+%{?with_grsec_minimal: - grsecurity minimal}\
+ - %{?with_bootsplash:bootsplash}%{!?with_bootsplash:fbsplash}\
+ - HZ=100%{!?with_laptop:0}
+
+%define Features_smp %(echo "%{__features}" | sed '/^$/d')
+%define Features_up %(echo "%{__features}
+%{?with_pae: - PAE (HIGHMEM64G) support}" | sed '/^$/d')
+# vim: "
+
 %description
 This package contains the Linux kernel that is used to boot and run
 your system. It contains few device drivers for specific hardware.
 Most hardware is instead supported by modules loaded after booting.
+
+%{Features_up}
 
 %description -l de
 Das Kernel-Packet enthält den Linux-Kernel (vmlinuz), den Kern des
@@ -247,16 +266,22 @@ Linux-Betriebssystems. Der Kernel ist für grundliegende
 Systemfunktionen verantwortlich: Speicherreservierung,
 Prozeß-Management, Geräte Ein- und Ausgaben, usw.
 
+%{Features_up}
+
 %description -l fr
 Le package kernel contient le kernel linux (vmlinuz), la partie
 centrale d'un système d'exploitation Linux. Le noyau traite les
 fonctions basiques d'un système d'exploitation: allocation mémoire,
 allocation de process, entrée/sortie de peripheriques, etc.
 
+%{Features_up}
+
 %description -l pl
 Pakiet zawiera j±dro Linuksa niezbêdne do prawid³owego dzia³ania
 Twojego komputera. Zawiera w sobie sterowniki do sprzêtu znajduj±cego
 siê w komputerze, takiego jak sterowniki dysków itp.
+
+%{Features_up}
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
@@ -389,21 +414,29 @@ This package includes a SMP version of the Linux %{version} kernel. It
 is required only on machines with two or more CPUs, although it should
 work fine on single-CPU boxes.
 
+%{Features_smp}
+
 %description smp -l de
 Dieses Packet enthält eine SMP (Multiprozessor)-Version vom
 Linux-Kernel %{version}. Es wird für Maschinen mit zwei oder mehr
 Prozessoren gebraucht, sollte aber auch auf Komputern mit nur einer
 CPU laufen.
 
+%{Features_smp}
+
 %description smp -l fr
 Ce package inclu une version SMP du noyau de Linux version {version}.
 Il et nécessaire seulement pour les machine avec deux processeurs ou
 plus, il peut quand même fonctionner pour les système mono-processeur.
 
+%{Features_smp}
+
 %description smp -l pl
 Pakiet zawiera j±dro SMP Linuksa w wersji %{version}. Jest ono
 wymagane przez komputery zawieraj±ce dwa lub wiêcej procesorów.
 Powinno równie¿ dobrze dzia³aæ na maszynach z jednym procesorem.
+
+%{Features_smp}
 
 %package smp-vmlinux
 Summary:	vmlinux - uncompressed SMP kernel image
