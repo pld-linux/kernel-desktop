@@ -111,7 +111,25 @@
 +dont_load_bitmap
 +	Don't load all bitmap blocks at mount time, it is useful for
 +	machines with tiny RAM and large disks.
---- linux-2.6.18.orig/fs/Kconfig	2006-11-19 02:58:23.771150237 +0000
+--- linux-2.6.18.orig/arch/i386/lib/usercopy.c	2006-09-20 03:42:06.000000000 +0000
++++ linux-2.6.18.reiser4/arch/i386/lib/usercopy.c	2006-11-19 03:50:04.921061237 +0000
+@@ -811,6 +811,7 @@
+ #endif
+ 	return n;
+ }
++EXPORT_SYMBOL(__copy_from_user_ll_nocache);
+ 
+ unsigned long __copy_from_user_ll_nocache_nozero(void *to, const void __user *from,
+ 					unsigned long n)
+@@ -826,6 +827,7 @@
+ #endif
+ 	return n;
+ }
++EXPORT_SYMBOL(__copy_from_user_ll_nocache_nozero);
+ 
+ /**
+  * copy_to_user: - Copy a block of data into user space.
+--- linux-2.6.18.orig/fs/Kconfig	2006-11-19 03:47:15.838061237 +0000
 +++ linux-2.6.18.reiser4/fs/Kconfig	2006-11-19 02:58:40.284150237 +0000
 @@ -177,6 +177,8 @@
  	default y if EXT2_FS=y || EXT3_FS=y
@@ -80235,3 +80253,65 @@
  extern int filemap_fdatawrite(struct address_space *);
  extern int filemap_flush(struct address_space *);
  extern int filemap_fdatawait(struct address_space *);
+--- linux-2.6.18.orig/lib/radix-tree.c	2006-09-20 03:42:06.000000000 +0000
++++ linux-2.6.18.reiser4/lib/radix-tree.c	2006-11-19 03:48:19.802061237 +0000
+@@ -139,6 +139,7 @@
+ out:
+ 	return ret;
+ }
++EXPORT_SYMBOL(radix_tree_preload);
+ 
+ static inline void tag_set(struct radix_tree_node *node, unsigned int tag,
+ 		int offset)
+--- linux-2.6.18.orig/mm/filemap.c	2006-11-19 03:47:15.805061237 +0000
++++ linux-2.6.18.reiser4/mm/filemap.c	2006-11-19 03:50:36.709061237 +0000
+@@ -121,6 +121,7 @@
+ 	mapping->nrpages--;
+ 	__dec_zone_page_state(page, NR_FILE_PAGES);
+ }
++EXPORT_SYMBOL(__remove_from_page_cache);
+ 
+ void remove_from_page_cache(struct page *page)
+ {
+@@ -132,6 +133,7 @@
+ 	__remove_from_page_cache(page);
+ 	write_unlock_irq(&mapping->tree_lock);
+ }
++EXPORT_SYMBOL(remove_from_page_cache);
+ 
+ static int sync_page(void *word)
+ {
+@@ -284,6 +286,7 @@
+ 
+ 	return ret;
+ }
++EXPORT_SYMBOL(add_to_page_cache_lru);
+ 
+ /**
+  * sync_page_range - write and wait on all pages in the passed range
+@@ -741,6 +744,7 @@
+ 	read_unlock_irq(&mapping->tree_lock);
+ 	return ret;
+ }
++EXPORT_SYMBOL(find_get_pages);
+ 
+ /**
+  * find_get_pages_contig - gang contiguous pagecache lookup
+@@ -773,6 +777,7 @@
+ 	read_unlock_irq(&mapping->tree_lock);
+ 	return i;
+ }
++EXPORT_SYMBOL(find_get_pages_tag);
+ 
+ /**
+  * find_get_pages_tag - find and return pages that match @tag
+--- linux-2.6.18.orig/mm/readahead.c	2006-09-20 03:42:06.000000000 +0000
++++ linux-2.6.18.reiser4/mm/readahead.c	2006-11-19 03:49:02.362061237 +0000
+@@ -569,6 +569,7 @@
+ 	ra->flags &= ~RA_FLAG_INCACHE;
+ 	ra->cache_hit = 0;
+ }
++EXPORT_SYMBOL_GPL(handle_ra_miss);
+ 
+ /*
+  * Given a desired number of PAGE_CACHE_SIZE readahead pages, return a
