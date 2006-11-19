@@ -39254,14 +39254,13 @@ Index: linux/kernel/power/pm.c
 ===================================================================
 --- linux.orig/kernel/power/pm.c
 +++ linux/kernel/power/pm.c
-@@ -202,8 +202,6 @@ int pm_send_all(pm_request_t rqst, void 
+@@ -202,7 +202,6 @@ int pm_send_all(pm_request_t rqst, void 
  	return 0;
  }
  
 -EXPORT_SYMBOL(pm_register);
--EXPORT_SYMBOL(pm_send_all);
+ EXPORT_SYMBOL(pm_send_all);
  EXPORT_SYMBOL(pm_active);
- 
  
 Index: linux/kernel/power/swsusp.c
 ===================================================================
