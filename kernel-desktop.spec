@@ -56,9 +56,9 @@
 %define		xen_version		3.0.2
 
 %if %{with laptop}
-%define		alt_kernel	laptop
+%define		alt_kernel	laptop%{?with_preemptrt:_rt}
 %else
-%define		alt_kernel	desktop
+%define		alt_kernel	desktop%{?with_preemptrt:_rt}
 %endif
 
 Summary:	The Linux kernel (the core of the Linux operating system)
