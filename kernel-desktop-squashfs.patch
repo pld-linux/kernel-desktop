@@ -151,7 +151,7 @@ diff --new-file -urp linux-2.6.8.1/fs/squashfs/inode.c linux-2.6.8.1-squashfs3.1
 +				int readahead_blks, char *block_list,
 +				unsigned short **block_p, unsigned int *bsize);
 +static int squashfs_get_sb(struct file_system_type *, int,
-+				const char *, void *);
++				const char *, void *, struct vfsmount *);
 +
 +static struct file_system_type squashfs_fs_type = {
 +	.owner = THIS_MODULE,
