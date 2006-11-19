@@ -67267,7 +67267,7 @@
 +	reiser4_inode_object *obj;
 +
 +	assert("nikita-1696", super != NULL);
-+	obj = kmem_cache_alloc(inode_cache, reiser4_ctx_gfp_mask_get());
++	obj = kmem_cache_alloc(inode_cache, get_gfp_mask());
 +	if (obj != NULL) {
 +		reiser4_inode *info;
 +
