@@ -858,3 +858,22 @@ diff -Nru linux-2.6.17.orig/net/ipv6/netfilter/ip6t_IMQ.c linux-2.6.17/net/ipv6/
 +MODULE_AUTHOR("http://www.linuximq.net");
 +MODULE_DESCRIPTION("Pseudo-driver for the intermediate queue device. See http://www.linuximq.net/ for more information.");
 +MODULE_LICENSE("GPL");
+--- linux-2.6.18/net/sched/sch_generic.c~	2006-11-19 02:08:08.000000000 +0000
++++ linux-2.6.18/net/sched/sch_generic.c	2006-11-19 02:56:19.202150237 +0000
+@@ -88,7 +88,7 @@
+    NOTE: Called under dev->queue_lock with locally disabled BH.
+ */
+ 
+-static inline int qdisc_restart(struct net_device *dev)
++int qdisc_restart(struct net_device *dev)
+ {
+ 	struct Qdisc *q = dev->qdisc;
+ 	struct sk_buff *skb;
+@@ -606,6 +606,7 @@
+ 	qdisc_unlock_tree(dev);
+ }
+ 
++EXPORT_SYMBOL(qdisc_restart);
+ EXPORT_SYMBOL(__netdev_watchdog_up);
+ EXPORT_SYMBOL(netif_carrier_on);
+ EXPORT_SYMBOL(netif_carrier_off);
