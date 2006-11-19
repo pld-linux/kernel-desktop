@@ -161,7 +161,7 @@ Patch66:	kernel-desktop-pom-ng-rpc.patch
 ########	End netfilter
 
 # net software
-Patch70:	kernel-desktop-imq2.patch
+Patch70:	kernel-desktop-imq.patch
 Patch71:	kernel-desktop-esfq.patch
 Patch72:	kernel-desktop-atm-vbr.patch
 Patch73:	kernel-desktop-atmdd.patch
@@ -170,7 +170,6 @@ Patch73:	kernel-desktop-atmdd.patch
 Patch85:	kernel-desktop-cpuset_virtualization.patch
 
 # fixes
-Patch90:	kernel-desktop-sco-mtu.patch
 Patch91:	kernel-desktop-fbcon-margins.patch
 Patch92:	kernel-desktop-static-dev.patch
 Patch100:	kernel-desktop-small_fixes.patch
@@ -635,8 +634,8 @@ exit 1
 %endif
 
 # filesystems
-#%%patch10 -p1	NEEDS UPDATE - fails to build
-#%%patch11 -p1	NEEDS UPDATE - fails to build
+%patch10 -p1
+%patch11 -p1
 
 # hardware
 %patch20 -p1
@@ -680,7 +679,7 @@ exit 1
 ### end of netfilter
 
 # net software
-#%%patch70 -p1	NEEDS UPDATE
+%patch70 -p1
 %patch71 -p1
 %patch72 -p1
 %patch73 -p1
@@ -688,7 +687,6 @@ exit 1
 #%%patch80 -p1	NEEDS a lot of work
 
 # fixes
-#%%patch90 -p1	NEEDS UPDATE
 %patch91 -p1
 %patch92 -p1
 %patch100 -p1
