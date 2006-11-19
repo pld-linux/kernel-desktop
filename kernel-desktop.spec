@@ -639,7 +639,7 @@ exit 1
 
 # hardware
 %patch20 -p1
-#%%patch21 -p1	NEEDS UPDATE
+%patch21 -p1
 %patch22 -p1
 %patch23 -p1
 
