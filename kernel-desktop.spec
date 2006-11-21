@@ -55,7 +55,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
-%define		suspend_version		2.2.8.2
+%define		suspend_version		2.2.8.5
 
 %define		xen_version		3.0.2
 
@@ -71,7 +71,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel-%{alt_kernel}
 %define		_basever	2.6.18
-%define		_postver	.2
+%define		_postver	.3
 %define		_rel		0.1
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -85,10 +85,10 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	296a6d150d260144639c3664d127d174
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	70c23255c697aa18a6e6ce97dc4eeb9b
+# Source1-md5:	43915b499164c0e2560d147638fd21ac
 %endif
-Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.patch.bz2
-# Source2-md5:	b74c386616b33d5be2e39ad727490e5c
+Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.2.patch.bz2
+# Source2-md5:	b9a8bdf25b61f80a8bb63bc5d92e94d0
 
 Source3:	kernel-desktop-autoconf.h
 Source4:	kernel-desktop-config.h
