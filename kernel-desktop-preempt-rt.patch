@@ -3319,9 +3319,9 @@ Index: linux/arch/i386/kernel/io_apic.c
 --- linux.orig/arch/i386/kernel/io_apic.c
 +++ linux/arch/i386/kernel/io_apic.c
 @@ -31,6 +31,7 @@
- #include <linux/acpi.h>
  #include <linux/module.h>
  #include <linux/sysdev.h>
+ #include <linux/freezer.h>
 +#include <linux/pci.h>
  
  #include <asm/io.h>
