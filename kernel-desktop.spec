@@ -115,8 +115,6 @@ Source46:	kernel-desktop-grsec.config
 
 Patch0:		kernel-desktop-preempt-rt.patch
 
-Patch3:		kernel-desktop-suspend2.patch
-
 # Con Kolivas patchset
 Patch6:		kernel-desktop-fcache.patch
 Patch7:		kernel-desktop-ck.patch
