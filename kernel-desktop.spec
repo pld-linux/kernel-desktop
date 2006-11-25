@@ -55,7 +55,7 @@
 %define		drm_xfree_version	4.3.0
 
 %define		squashfs_version	3.0
-%define		suspend_version		2.2.8.5
+%define		suspend_version		2.2.9
 
 %define		xen_version		3.0.2
 
@@ -87,8 +87,8 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	43915b499164c0e2560d147638fd21ac
 %endif
-Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.2.patch.bz2
-# Source2-md5:	b9a8bdf25b61f80a8bb63bc5d92e94d0
+Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.3.patch.bz2
+# Source2-md5:	8c4fe8e338051954623f9fb0c5ecc274
 
 Source3:	kernel-desktop-autoconf.h
 Source4:	kernel-desktop-config.h
