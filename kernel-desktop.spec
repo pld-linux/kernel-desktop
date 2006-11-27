@@ -56,6 +56,7 @@
 
 %define		squashfs_version	3.0
 %define		suspend_version		2.2.9
+%define		suspend_kernel		%{version}
 
 %define		xen_version		3.0.2
 
@@ -72,7 +73,7 @@ Summary(pl):	J±dro Linuksa
 Name:		kernel-%{alt_kernel}
 %define		_basever	2.6.18
 %define		_postver	.3
-%define		_rel		0.1
+%define		_rel		0.2
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
@@ -87,7 +88,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	43915b499164c0e2560d147638fd21ac
 %endif
-Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{_basever}.3.patch.bz2
+Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	8c4fe8e338051954623f9fb0c5ecc274
 
 Source3:	kernel-desktop-autoconf.h
@@ -240,6 +241,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define __features Enabled features:\
 %{?debug: - DEBUG}\
+- suspend2 %{suspend_version}\
 %{?with_preemptrt: - realtime-preempt patch by Ingo Molar}\
 %{?with_ck: - desktop patchset by Con Kolivas}\
 %{?with_grsec_minimal: - grsecurity minimal}\
