@@ -241,7 +241,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define __features Enabled features:\
 %{?debug: - DEBUG}\
-- suspend2 %{suspend_version}\
+ - suspend2 %{suspend_version}\
 %{?with_preemptrt: - realtime-preempt patch by Ingo Molar}\
 %{?with_ck: - desktop patchset by Con Kolivas}\
 %{?with_grsec_minimal: - grsecurity minimal}\
