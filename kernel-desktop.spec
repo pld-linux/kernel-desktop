@@ -56,7 +56,7 @@
 
 %define		squashfs_version	3.0
 %define		suspend_version		2.2.9
-%define		suspend_kernel		%{version}
+%define		suspend_kernel		%{_basever}.3
 
 %define		xen_version		3.0.2
 
@@ -72,7 +72,7 @@ Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel-%{alt_kernel}
 %define		_basever	2.6.18
-%define		_postver	.3
+%define		_postver	.4
 %define		_rel		0.2
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
@@ -86,7 +86,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	296a6d150d260144639c3664d127d174
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	43915b499164c0e2560d147638fd21ac
+# Source1-md5:	84e18b05475fc79cc6aa191d5a133585
 %endif
 Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	8c4fe8e338051954623f9fb0c5ecc274
