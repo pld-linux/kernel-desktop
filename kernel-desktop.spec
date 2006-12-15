@@ -66,20 +66,20 @@
 %define		alt_kernel	desktop%{?with_preemptrt:_rt}
 %endif
 
+%define		_basever	2.6.18
+%define		_postver	.4
+%define		_rel		0.2
+%define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl):	J±dro Linuksa
 Name:		kernel-%{alt_kernel}
-%define		_basever	2.6.18
-%define		_postver	.4
-%define		_rel		0.2
 Version:	%{_basever}%{_postver}
 Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-%define		_rc	%{nil}
 #define		_rc	-rc6
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{_basever}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
@@ -179,7 +179,6 @@ Patch100:	kernel-desktop-small_fixes.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
-BuildRequires:	diffutils
 BuildRequires:	gcc >= 5:3.2
 BuildRequires:	module-init-tools
 # for hostname command
@@ -595,8 +594,8 @@ also build a custom kernel that is better tuned to your particular
 hardware.
 
 %description source -l de
-Das Kernel-Source-Packet enthält den source code (C/Assembler-Code) des
-Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
+Das Kernel-Source-Packet enthält den source code (C/Assembler-Code)
+des Linux-Kernels. Die Source-Dateien werden gebraucht, um viele
 C-Programme zu kompilieren, da sie auf Konstanten zurückgreifen, die
 im Kernel-Source definiert sind. Die Source-Dateien können auch
 benutzt werden, um einen Kernel zu kompilieren, der besser auf Ihre
@@ -626,8 +625,8 @@ This is the documentation for the Linux kernel, as found in
 Documentation directory.
 
 %description doc -l de
-Dies ist die Kernel Dokumentation wie sie im 'Documentation' Verzeichniss
-vorgefunden werden kann.
+Dies ist die Kernel Dokumentation wie sie im 'Documentation'
+Verzeichniss vorgefunden werden kann.
 
 %description doc -l pl
 Pakiet zawiera dokumentacjê do j±dra Linuksa pochodz±c± z katalogu
@@ -792,7 +791,7 @@ BuildConfig() {
 	TuneUpConfigForIX86 .config "$smp"
 
 	# preempt
-%if %{with preemptrt}	
+%if %{with preemptrt}
 	cat %{SOURCE41} >> .config
 %else
 	cat %{SOURCE42} >> .config
