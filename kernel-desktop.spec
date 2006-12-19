@@ -67,8 +67,8 @@
 %endif
 
 %define		_basever	2.6.18
-%define		_postver	.4
-%define		_rel		0.2
+%define		_postver	.6
+%define		_rel		1
 %define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -86,7 +86,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	296a6d150d260144639c3664d127d174
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	84e18b05475fc79cc6aa191d5a133585
+# Source1-md5:	0290e7814031c52aaae09f3713fa3828
 %endif
 Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	8c4fe8e338051954623f9fb0c5ecc274
