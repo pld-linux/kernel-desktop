@@ -227,7 +227,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 # modules will be looked from /lib/modules/%{kernel_release}%{?smp}
 # _localversion is just that without version for "> localversion"
 %define		_localversion %{release}
-%define		kernel_release %{version}-%{alt_kernel}-%{_localversion}
+%define		kernel_release %{version}_%{alt_kernel}-%{_localversion}
 %define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
 
 %define	CommonOpts	HOSTCC="%{__cc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
