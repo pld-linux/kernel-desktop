@@ -132,6 +132,8 @@ Patch20:	kernel-desktop-tahoe9xx.patch
 Patch21:	kernel-desktop-sk98lin.patch
 Patch22:	kernel-desktop-vesafb-tng.patch
 Patch23:	kernel-desktop-dmi-decode-and-save-oem-string-information.patch
+# from http://www.zen24593.zen.co.uk/hdaps/hdaps_protect-2.6.18.3-2.patch
+Patch24:	kernel-desktop-hdaps_protect.patch
 
 # console
 Patch30:	kernel-desktop-bootsplash.patch
@@ -681,6 +683,7 @@ exit 1
 %patch21 -p1
 %patch22 -p1
 %patch23 -p1
+%patch24 -p1
 
 # console
 %if %{with bootsplash}
