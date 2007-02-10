@@ -178,6 +178,7 @@ Patch85:	kernel-desktop-cpuset_virtualization.patch
 Patch91:	kernel-desktop-fbcon-margins.patch
 Patch92:	kernel-desktop-static-dev.patch
 Patch100:	kernel-desktop-small_fixes.patch
+Patch101:	kernel-bcm43xx-pcie-2.6_18.1.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -732,6 +733,7 @@ exit 1
 %patch91 -p1
 %patch92 -p1
 %patch100 -p1
+%patch101 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
