@@ -1703,9 +1703,10 @@ Index: linux-2.6.20-ck1/kernel/sched.c
 -		}
 -	}
 -	next->sleep_type = SLEEP_NORMAL;
- 	if (dependent_sleeper(cpu, rq, next))
+-	if (rq->nr_running == 1 && dependent_sleeper(cpu, rq, next))
++	if (dependent_sleeper(cpu, rq, next)) { if (rq->nr_running == 1)
  		next = rq->idle;
-+	else {
++	} else {
 +		prefetch(next);
 +		prefetch_stack(next);
 +	}
@@ -1727,7 +1728,7 @@ Index: linux-2.6.20-ck1/kernel/sched.c
  	sched_info_switch(prev, next);
  	if (likely(prev != next)) {
 +		rq->preempted = rq->cache_ticks = 0;
- 		next->timestamp = now;
+ 		next->timestamp = next->last_ran = now;
  		rq->nr_switches++;
  		rq->curr = next;
 @@ -3978,29 +3856,21 @@ EXPORT_SYMBOL(sleep_on_timeout);
