@@ -5,7 +5,7 @@
 
 %bcond_with	preemptrt	# use realtime-preempt patch
 %bcond_without	ck		# don't use Con Kolivas patchset
-%bcond_without	grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
+%bcond_with	grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
 %bcond_with	bootsplash	# build with bootsplash instead of fbsplash
 %bcond_with	laptop		# build with HZ=100
 %bcond_with	verbose		# verbose build (V=1)
@@ -599,32 +599,32 @@ echo "CONFIG_LOCALVERSION=\"-%{_localversion}\"" >> .config
 
 %ifarch %{ix86}
 	%ifnarch i386
-	sed -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' $1
+	sed -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' .config
 	%endif
 	%ifarch i486
-	sed -i 's:# CONFIG_M486 is not set:CONFIG_M486=y:' $1
+	sed -i 's:# CONFIG_M486 is not set:CONFIG_M486=y:' .config
 	%endif
 	%ifarch i586
-	sed -i 's:# CONFIG_M586 is not set:CONFIG_M586=y:' $1
+	sed -i 's:# CONFIG_M586 is not set:CONFIG_M586=y:' .config
 	%endif
 	%ifarch i686
-	sed -i 's:# CONFIG_M686 is not set:CONFIG_M686=y:' $1
+	sed -i 's:# CONFIG_M686 is not set:CONFIG_M686=y:' .config
 	%endif
 	%ifarch pentium3
-	sed -i 's:# CONFIG_MPENTIUMIII is not set:CONFIG_MPENTIUMIII=y:' $1
+	sed -i 's:# CONFIG_MPENTIUMIII is not set:CONFIG_MPENTIUMIII=y:' .config
 	%endif
 	%ifarch pentium4
-	sed -i 's:# CONFIG_MPENTIUM4 is not set:CONFIG_MPENTIUM4=y:' $1
+	sed -i 's:# CONFIG_MPENTIUM4 is not set:CONFIG_MPENTIUM4=y:' .config
 	%endif
 	%ifarch athlon
-	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
+	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' .config
 	%endif
 	%ifarch i686 athlon pentium3 pentium4
 	%if %{with smp} || %{with pae}
-		sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
-		sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
+		sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" .config
+		sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" .config
 	%endif
-	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
+	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' .config
 	%endif
 %endif
 
