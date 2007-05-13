@@ -79,7 +79,7 @@ index ee277dd..93d6e6e 100644
   
   Linux_kernel_mode_number = VESA_mode_number + 0x200
  
-@@ -56,15 +67,15 @@ So the table for the Kernel mode numbers
+@@ -56,15 +67,15 @@ So the table for the Kernel mode numbers are:
  
      | 640x480  800x600  1024x768 1280x1024
  ----+-------------------------------------
@@ -103,7 +103,7 @@ index ee277dd..93d6e6e 100644
  
  If this does not work, this might be because your BIOS does not support
  linear framebuffers or because it does not support this mode at all.
-@@ -72,11 +83,12 @@ Even if your board does, it might be the
+@@ -72,11 +83,12 @@ Even if your board does, it might be the BIOS which does not.  VESA BIOS
  Extensions v2.0 are required, 1.2 is NOT sufficient.  You will get a
  "bad mode number" message if something goes wrong.
  
@@ -117,7 +117,7 @@ index ee277dd..93d6e6e 100644
  X11
  ===
  
-@@ -84,98 +96,164 @@ XF68_FBDev should work just fine, but it
+@@ -84,98 +96,164 @@ XF68_FBDev should work just fine, but it is non-accelerated.  Running
  another (accelerated) X-Server like XF86_SVGA might or might not work.
  It depends on X-Server and graphics board.
  
@@ -351,7 +351,7 @@ diff --git a/arch/i386/boot/video.S b/arch/i386/boot/video.S
 index 2c5b5cc..2c2d4b5 100644
 --- a/arch/i386/boot/video.S
 +++ b/arch/i386/boot/video.S
-@@ -163,10 +163,12 @@ # This is done by asking the BIOS except
+@@ -163,10 +163,12 @@ basret:	ret
  # parameters in the default 80x25 mode -- these are set directly,
  # because some very obscure BIOSes supply insane values.
  mode_params:
@@ -364,7 +364,7 @@ index 2c5b5cc..2c2d4b5 100644
  	movb	$0x03, %ah			# Read cursor position
  	xorb	%bh, %bh
  	int	$0x10
-@@ -199,6 +201,7 @@ mopar2: movb	%al, %fs:(PARAM_VIDEO_LINES
+@@ -199,6 +201,7 @@ mopar2: movb	%al, %fs:(PARAM_VIDEO_LINES)
  	ret
  
  #ifdef CONFIG_VIDEO_SELECT
@@ -372,7 +372,7 @@ index 2c5b5cc..2c2d4b5 100644
  # Fetching of VESA frame buffer parameters
  mopar_gr:
  	leaw	modelist+1024, %di
-@@ -281,6 +284,7 @@ # get protected mode interface informati
+@@ -281,6 +284,7 @@ dac_done:
  	movw	%es, %fs:(PARAM_VESAPM_SEG)
  	movw	%di, %fs:(PARAM_VESAPM_OFF)
  no_pm:	ret
@@ -412,23 +412,23 @@ index 2c5b5cc..2c2d4b5 100644
  # Recalculate vertical display end registers -- this fixes various
  # inconsistencies of extended modes on many adapters. Called when
 diff --git a/drivers/char/sysrq.c b/drivers/char/sysrq.c
-index 5f49280..df69fe5 100644
+index 1393523..8a05f95 100644
 --- a/drivers/char/sysrq.c
 +++ b/drivers/char/sysrq.c
-@@ -201,7 +201,7 @@ static void send_sig_all(int sig)
+@@ -240,7 +240,7 @@ static void send_sig_all(int sig)
  	struct task_struct *p;
  
  	for_each_process(p) {
--		if (p->mm && p->pid != 1)
-+		if (p->mm && p->pid != 1 && !(p->flags & PF_BORROWED_MM))
+-		if (p->mm && !is_init(p))
++		if (p->mm && !is_init(p) && !(p->flags & PF_BORROWED_MM))
  			/* Not swapper, init nor kernel thread */
  			force_sig(sig, p);
  	}
 diff --git a/drivers/video/Kconfig b/drivers/video/Kconfig
-index 7a43020..72a803b 100644
+index 4e83f01..ae122fd 100644
 --- a/drivers/video/Kconfig
 +++ b/drivers/video/Kconfig
-@@ -546,8 +546,22 @@ config FB_TGA
+@@ -547,8 +547,22 @@ config FB_TGA
  	  cards. Say Y if you have one of those.
  
  config FB_VESA
@@ -453,7 +453,7 @@ index 7a43020..72a803b 100644
  	select FB_CFB_FILLRECT
  	select FB_CFB_COPYAREA
  	select FB_CFB_IMAGEBLIT
-@@ -555,7 +569,43 @@ config FB_VESA
+@@ -557,7 +571,43 @@ config FB_VESA
  	  This is the frame buffer device driver for generic VESA 2.0
  	  compliant graphic cards. The older VESA 1.2 cards are not supported.
  	  You will get a boot time penguin logo at no additional cost. Please
@@ -499,11 +499,11 @@ index 7a43020..72a803b 100644
  config FB_IMAC
  	bool "Intel-based Macintosh Framebuffer Support"
 diff --git a/drivers/video/Makefile b/drivers/video/Makefile
-index a6980e9..3a3f3b3 100644
+index 309a26d..e57b0e7 100644
 --- a/drivers/video/Makefile
 +++ b/drivers/video/Makefile
-@@ -101,7 +101,11 @@ obj-$(CONFIG_FB_PNX4008_DUM)	  += pnx400
- obj-$(CONFIG_FB_PNX4008_DUM_RGB)  += pnx4008/
+@@ -102,7 +102,11 @@ obj-$(CONFIG_FB_PNX4008_DUM_RGB)  += pnx4008/
+ obj-$(CONFIG_FB_IBM_GXT4500)	  += gxt4500.o
  
  # Platform or fallback drivers go here
 -obj-$(CONFIG_FB_VESA)             += vesafb.o
@@ -516,7 +516,7 @@ index a6980e9..3a3f3b3 100644
  obj-$(CONFIG_FB_VGA16)            += vga16fb.o vgastate.o
  obj-$(CONFIG_FB_OF)               += offb.o
 diff --git a/drivers/video/fbmem.c b/drivers/video/fbmem.c
-index 93ffcdd..a74f535 100644
+index 3cfea31..bfb39cc 100644
 --- a/drivers/video/fbmem.c
 +++ b/drivers/video/fbmem.c
 @@ -1408,6 +1408,7 @@ fbmem_init(void)
@@ -528,10 +528,10 @@ index 93ffcdd..a74f535 100644
  }
  
 diff --git a/drivers/video/modedb.c b/drivers/video/modedb.c
-index d126790..702c3fc 100644
+index 5df41f6..f838a53 100644
 --- a/drivers/video/modedb.c
 +++ b/drivers/video/modedb.c
-@@ -674,6 +674,7 @@ void fb_var_to_videomode(struct fb_video
+@@ -674,6 +674,7 @@ void fb_var_to_videomode(struct fb_videomode *mode,
  {
  	u32 pixclock, hfreq, htotal, vtotal;
  
@@ -546,10 +546,10 @@ index d126790..702c3fc 100644
 +EXPORT_SYMBOL(fb_destroy_modelist);
 diff --git a/drivers/video/vesafb-thread.c b/drivers/video/vesafb-thread.c
 new file mode 100644
-index 0000000..ddc3d1c
+index 0000000..543e202
 --- /dev/null
 +++ b/drivers/video/vesafb-thread.c
-@@ -0,0 +1,722 @@
+@@ -0,0 +1,751 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards.
 + * Kernel thread and vm86 routines.
@@ -558,7 +558,6 @@ index 0000000..ddc3d1c
 + *
 + */
 +
-+#include <linux/slab.h>
 +#include <linux/workqueue.h>
 +#include <linux/completion.h>
 +#include <linux/module.h>
@@ -567,6 +566,7 @@ index 0000000..ddc3d1c
 +#include <linux/mm.h>
 +#include <linux/delay.h>
 +#include <linux/signal.h>
++#include <linux/freezer.h>
 +#include <linux/suspend.h>
 +#include <linux/unistd.h>
 +#include <video/vesa.h>
@@ -579,6 +579,8 @@ index 0000000..ddc3d1c
 +#include <asm/mmu_context.h>
 +#include "edid.h"
 +
++static int errno;
++
 +static DECLARE_COMPLETION(vesafb_th_completion);
 +static DECLARE_MUTEX(vesafb_task_list_sem);
 +static LIST_HEAD(vesafb_task_list);
@@ -586,9 +588,6 @@ index 0000000..ddc3d1c
 +
 +static struct vm86_struct vm86;
 +static int vesafb_pid = 0;
-+
-+_syscall3(int,ioperm,unsigned long, a, unsigned long, b, unsigned long, c);
-+_syscall1(int,vm86old,struct vm86_struct __user*, v86);
 +
 +#define DEFAULT_VM86_FLAGS (IF_MASK | IOPL_MASK)
 +#define VM86_PUSHW(x)					\
@@ -621,6 +620,36 @@ index 0000000..ddc3d1c
 +#define BUF_ADDR	(RET_CODE_ADDR + RET_CODE_SIZE)
 +
 +#define FLAG_D 		(1 << 10)
++
++/* Syscalls used by the vesafb thread */
++static int vm86old(struct vm86_struct __user* v86)
++{
++	long res;
++	__asm__ volatile ("push %%ebx; movl %2, %%ebx ; int $0x80 ; pop %%ebx"
++			: "=a" (res)
++			: "0" (__NR_vm86old), "ri" ((long)(v86)) : "memory");
++
++	if ((unsigned long)(res) >= (unsigned long)(-MAX_ERRNO)) {
++		errno = -res;
++		res = -1;
++	}
++	return (int)res;
++}
++
++static int ioperm(unsigned long a, unsigned long b, unsigned long c)
++{
++	long res;
++	__asm__ volatile ("push %%ebx; movl %2, %%ebx ; int $0x80 ; pop %%ebx"
++			: "=a" (res)
++			: "0" (__NR_ioperm), "ri" ((long)(a)), "c" ((long)(b)),
++			  "d" ((long)(c)) : "memory");
++
++	if ((unsigned long)(res) >= (unsigned long)(-MAX_ERRNO)) {
++		errno = -res;
++		res = -1;
++	}
++	return (int)res;
++}
 +
 +/* Segment prefix opcodes */
 +enum {
@@ -983,7 +1012,7 @@ index 0000000..ddc3d1c
 +	struct mm_struct *mm = current->mm;
 +	int ret = 0;
 +
-+	vma = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL);
++	vma = kmem_cache_alloc(vm_area_cachep, GFP_KERNEL);
 +	if (!vma)
 +		return -ENOMEM;
 +	memset(vma, 0, sizeof(*vma));
@@ -1274,10 +1303,10 @@ index 0000000..ddc3d1c
 +
 diff --git a/drivers/video/vesafb-tng.c b/drivers/video/vesafb-tng.c
 new file mode 100644
-index 0000000..63573d1
+index 0000000..b4d4394
 --- /dev/null
 +++ b/drivers/video/vesafb-tng.c
-@@ -0,0 +1,1598 @@
+@@ -0,0 +1,1586 @@
 +/*
 + * Framebuffer driver for VBE 2.0+ compliant graphic boards
 + *
@@ -2051,16 +2080,10 @@ index 0000000..63573d1
 +	int clen = 0, i;
 +
 +	for (i = 0; i < vbe_modes_cnt; i++) {
-+		clen += sprintf(buf + clen, "%dx%d-%d\n", vbe_modes[i].x_res,
-+				vbe_modes[i].y_res, vbe_modes[i].depth);
++		clen += min(snprintf(buf + clen, len - clen, "%dx%d-%d\n", vbe_modes[i].x_res,
++				vbe_modes[i].y_res, vbe_modes[i].depth), len - clen);
 +	}
-+	*start = buf + offset;
-+
-+	if (clen > offset) {
-+		clen -= offset;
-+	} else {
-+		clen = 0;
-+	}
++	*eof = 1;
 +	return clen;
 +}
 +
@@ -2069,25 +2092,19 @@ index 0000000..63573d1
 +{
 +	int clen = 0;
 +
-+	clen += sprintf(buf + clen, "Version:    %d.%d\n",
++	clen += min(snprintf(buf + clen, len, "Version:    %d.%d\n",
 +			((vbe_ib.vbe_version & 0xff00) >> 8),
-+			vbe_ib.vbe_version & 0xff);
-+	clen += sprintf(buf + clen, "Vendor:     %s\n",
-+			(char*)vbe_ib.oem_vendor_name_ptr);
-+	clen += sprintf(buf + clen, "Product:    %s\n",
-+			(char*)vbe_ib.oem_product_name_ptr);
-+	clen += sprintf(buf + clen, "OEM rev:    %s\n",
-+			(char*)vbe_ib.oem_product_rev_ptr);
-+	clen += sprintf(buf + clen, "OEM string: %s\n",
-+			(char*)vbe_ib.oem_string_ptr);
++			vbe_ib.vbe_version & 0xff), len);
++	clen += min(snprintf(buf + clen, len - clen, "Vendor:     %s\n",
++			(char*)vbe_ib.oem_vendor_name_ptr), len - clen);
++	clen += min(snprintf(buf + clen, len - clen, "Product:    %s\n",
++			(char*)vbe_ib.oem_product_name_ptr), len - clen);
++	clen += min(snprintf(buf + clen, len - clen, "OEM rev:    %s\n",
++			(char*)vbe_ib.oem_product_rev_ptr), len - clen);
++	clen += min(snprintf(buf + clen, len - clen, "OEM string: %s\n",
++			(char*)vbe_ib.oem_string_ptr), len - clen);
 +
-+	*start = buf + offset;
-+
-+	if (clen > offset) {
-+		clen -= offset;
-+	} else {
-+		clen = 0;
-+	}
++	*eof = 1;
 +	return clen;
 +}
 +
@@ -2877,10 +2894,10 @@ index 0000000..63573d1
 +MODULE_DESCRIPTION("Framebuffer driver for VBE2.0+ compliant graphics boards");
 +
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 6735c1c..c7a49c7 100644
+index 4463735..7283e48 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -1351,6 +1351,8 @@ extern void mmput(struct mm_struct *);
+@@ -1390,6 +1390,8 @@ extern void mmput(struct mm_struct *);
  extern struct mm_struct *get_task_mm(struct task_struct *task);
  /* Remove the current tasks stale references to the old mm_struct */
  extern void mm_release(struct task_struct *, struct mm_struct *);
@@ -3046,18 +3063,18 @@ index 0000000..bb5abcf
 +};
 +
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 29ebb30..334c66f 100644
+index fc723e5..dc8f93b 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -99,6 +99,7 @@ kmem_cache_t *fs_cachep;
+@@ -100,6 +100,7 @@ struct kmem_cache *fs_cachep;
  
  /* SLAB cache for vm_area_struct structures */
- kmem_cache_t *vm_area_cachep;
+ struct kmem_cache *vm_area_cachep;
 +EXPORT_SYMBOL_GPL(vm_area_cachep);
  
  /* SLAB cache for mm_struct structures (tsk->mm) */
- static kmem_cache_t *mm_cachep;
-@@ -398,6 +399,40 @@ void mmput(struct mm_struct *mm)
+ static struct kmem_cache *mm_cachep;
+@@ -399,6 +400,40 @@ void mmput(struct mm_struct *mm)
  EXPORT_SYMBOL_GPL(mmput);
  
  /**
@@ -3099,10 +3116,10 @@ index 29ebb30..334c66f 100644
   *
   * Returns %NULL if the task has no mm.  Checks PF_BORROWED_MM (meaning
 diff --git a/mm/memory.c b/mm/memory.c
-index 156861f..27e0dbc 100644
+index 563792f..a9519ea 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
-@@ -1183,6 +1183,7 @@ int zeromap_page_range(struct vm_area_st
+@@ -1193,6 +1193,7 @@ int zeromap_page_range(struct vm_area_struct *vma,
  	} while (pgd++, addr = next, addr != end);
  	return err;
  }
@@ -3111,10 +3128,10 @@ index 156861f..27e0dbc 100644
  pte_t * fastcall get_locked_pte(struct mm_struct *mm, unsigned long addr, spinlock_t **ptl)
  {
 diff --git a/mm/mmap.c b/mm/mmap.c
-index 497e502..97da9cf 100644
+index 9717337..6fa5b1c 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
-@@ -2021,6 +2021,7 @@ int insert_vm_struct(struct mm_struct * 
+@@ -2024,6 +2024,7 @@ int insert_vm_struct(struct mm_struct * mm, struct vm_area_struct * vma)
  	vma_link(mm, vma, prev, rb_link, rb_parent);
  	return 0;
  }
