@@ -67,7 +67,7 @@
 
 %define		_basever	2.6.20
 %define		_postver	.4
-%define		_rel		0.1
+%define		_rel		0.2
 %define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -530,7 +530,7 @@ exit 1
 # hardware
 #%%patch20 -p1
 #%%patch21 -p1
-#%%patch22 -p1
+%patch22 -p1
 #%%patch23 -p1
 #%%patch24 -p1
 
@@ -538,7 +538,7 @@ exit 1
 %if %{with bootsplash}
 #%%patch30 -p1
 %else
-#%%patch31 -p1
+%patch31 -p1
 %endif
 
 ### netfilter
