@@ -1,8 +1,8 @@
-diff -urN linux-2.6.15/drivers/char/keyboard.c linux-2.6.15-bootsplash/drivers/char/keyboard.c
---- linux-2.6.15/drivers/char/keyboard.c	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/char/keyboard.c	2006-01-03 09:37:50.480401000 -0800
-@@ -1062,6 +1062,15 @@
- 			if (keycode < BTN_MISC)
+diff -urN linux-2.6.22/drivers/char/keyboard.c linux-2.6.22.bootsplash/drivers/char/keyboard.c
+--- linux-2.6.22/drivers/char/keyboard.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/drivers/char/keyboard.c	2007-07-30 17:31:13.739437346 +0200
+@@ -1138,6 +1138,15 @@
+ 			if (keycode < BTN_MISC && printk_ratelimit())
  				printk(KERN_WARNING "keyboard.c: can't emulate rawmode for keycode %d\n", keycode);
  
 +#ifdef CONFIG_BOOTSPLASH
@@ -16,11 +16,11 @@ diff -urN linux-2.6.15/drivers/char/keyboard.c linux-2.6.15-bootsplash/drivers/c
 +
  #ifdef CONFIG_MAGIC_SYSRQ	       /* Handle the SysRq Hack */
  	if (keycode == KEY_SYSRQ && (sysrq_down || (down == 1 && sysrq_alt))) {
- 		sysrq_down = down;
-diff -urN linux-2.6.15/drivers/char/n_tty.c linux-2.6.15-bootsplash/drivers/char/n_tty.c
---- linux-2.6.15/drivers/char/n_tty.c	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/char/n_tty.c	2006-01-03 09:37:50.480401000 -0800
-@@ -1292,6 +1292,15 @@
+ 		if (!sysrq_down) {
+diff -urN linux-2.6.22/drivers/char/n_tty.c linux-2.6.22.bootsplash/drivers/char/n_tty.c
+--- linux-2.6.22/drivers/char/n_tty.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/drivers/char/n_tty.c	2007-07-30 17:31:13.747437310 +0200
+@@ -1297,6 +1297,15 @@
  			tty->minimum_to_wake = (minimum - (b - buf));
  		
  		if (!input_available_p(tty, 0)) {
@@ -36,10 +36,10 @@ diff -urN linux-2.6.15/drivers/char/n_tty.c linux-2.6.15-bootsplash/drivers/char
  			if (test_bit(TTY_OTHER_CLOSED, &tty->flags)) {
  				retval = -EIO;
  				break;
-diff -urN linux-2.6.15/drivers/char/vt.c linux-2.6.15-bootsplash/drivers/char/vt.c
---- linux-2.6.15/drivers/char/vt.c	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/char/vt.c	2006-01-03 09:37:50.512403000 -0800
-@@ -3260,6 +3260,31 @@
+diff -urN linux-2.6.22/drivers/char/vt.c linux-2.6.22.bootsplash/drivers/char/vt.c
+--- linux-2.6.22/drivers/char/vt.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/drivers/char/vt.c	2007-07-30 17:31:13.755437274 +0200
+@@ -3953,6 +3953,31 @@
  	}
  }
  
@@ -71,10 +71,10 @@ diff -urN linux-2.6.15/drivers/char/vt.c linux-2.6.15-bootsplash/drivers/char/vt
  /*
   *	Visible symbols for modules
   */
-diff -urN linux-2.6.15/drivers/video/bootsplash/bootsplash.c linux-2.6.15-bootsplash/drivers/video/bootsplash/bootsplash.c
---- linux-2.6.15/drivers/video/bootsplash/bootsplash.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/bootsplash/bootsplash.c	2006-01-03 11:50:49.213721750 -0800
-@@ -0,0 +1,984 @@
+diff -urN linux-2.6.22/drivers/video/bootsplash/bootsplash.c linux-2.6.22.bootsplash/drivers/video/bootsplash/bootsplash.c
+--- linux-2.6.22/drivers/video/bootsplash/bootsplash.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22.bootsplash/drivers/video/bootsplash/bootsplash.c	2007-07-30 17:31:13.775437184 +0200
+@@ -0,0 +1,983 @@
 +/* 
 + *           linux/drivers/video/bootsplash/bootsplash.c - 
 + *                 splash screen handling functions.
@@ -89,7 +89,6 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/bootsplash.c linux-2.6.15-bootsp
 + *  For more information on this code check http://www.bootsplash.org/
 + */
 +
-+#include <linux/config.h>
 +#include <linux/module.h>
 +#include <linux/types.h>
 +#include <linux/fb.h>
@@ -1059,9 +1058,9 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/bootsplash.c linux-2.6.15-bootsp
 +	return;
 +}
 +
-diff -urN linux-2.6.15/drivers/video/bootsplash/bootsplash.h linux-2.6.15-bootsplash/drivers/video/bootsplash/bootsplash.h
---- linux-2.6.15/drivers/video/bootsplash/bootsplash.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/bootsplash/bootsplash.h	2006-01-03 09:37:50.516403250 -0800
+diff -urN linux-2.6.22/drivers/video/bootsplash/bootsplash.h linux-2.6.22.bootsplash/drivers/video/bootsplash/bootsplash.h
+--- linux-2.6.22/drivers/video/bootsplash/bootsplash.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22.bootsplash/drivers/video/bootsplash/bootsplash.h	2007-07-30 17:31:13.775437184 +0200
 @@ -0,0 +1,44 @@
 +/* 
 + *    linux/drivers/video/bootsplash/bootsplash.h - splash screen definition.
@@ -1107,10 +1106,10 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/bootsplash.h linux-2.6.15-bootsp
 +extern void release_console_sem(void);
 +
 +#endif
-diff -urN linux-2.6.15/drivers/video/bootsplash/decode-jpg.c linux-2.6.15-bootsplash/drivers/video/bootsplash/decode-jpg.c
---- linux-2.6.15/drivers/video/bootsplash/decode-jpg.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/bootsplash/decode-jpg.c	2006-01-03 09:37:50.516403250 -0800
-@@ -0,0 +1,958 @@
+diff -urN linux-2.6.22/drivers/video/bootsplash/decode-jpg.c linux-2.6.22.bootsplash/drivers/video/bootsplash/decode-jpg.c
+--- linux-2.6.22/drivers/video/bootsplash/decode-jpg.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22.bootsplash/drivers/video/bootsplash/decode-jpg.c	2007-07-30 17:31:13.783437148 +0200
+@@ -0,0 +1,957 @@
 +/* 
 + *    linux/drivers/video/bootsplash/decode-jpg.c - a tiny jpeg decoder.
 + *      
@@ -1118,7 +1117,6 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/decode-jpg.c linux-2.6.15-bootsp
 + *                  
 + */
 +
-+#include <linux/config.h>
 +#include <linux/string.h>
 +#include <asm/byteorder.h>
 +
@@ -2069,9 +2067,9 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/decode-jpg.c linux-2.6.15-bootsp
 +		outy += 64 * 2 - 16 * 4;
 +	}
 +}
-diff -urN linux-2.6.15/drivers/video/bootsplash/decode-jpg.h linux-2.6.15-bootsplash/drivers/video/bootsplash/decode-jpg.h
---- linux-2.6.15/drivers/video/bootsplash/decode-jpg.h	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/bootsplash/decode-jpg.h	2006-01-03 09:37:50.516403250 -0800
+diff -urN linux-2.6.22/drivers/video/bootsplash/decode-jpg.h linux-2.6.22.bootsplash/drivers/video/bootsplash/decode-jpg.h
+--- linux-2.6.22/drivers/video/bootsplash/decode-jpg.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22.bootsplash/drivers/video/bootsplash/decode-jpg.h	2007-07-30 17:31:13.783437148 +0200
 @@ -0,0 +1,35 @@
 +/*
 + *    linux/drivers/video/bootsplash/decode-jpg.h - a tiny jpeg decoder.
@@ -2108,9 +2106,9 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/decode-jpg.h linux-2.6.15-bootsp
 +extern int jpeg_check_size(unsigned char *, int, int);
 +
 +#endif
-diff -urN linux-2.6.15/drivers/video/bootsplash/Kconfig linux-2.6.15-bootsplash/drivers/video/bootsplash/Kconfig
---- linux-2.6.15/drivers/video/bootsplash/Kconfig	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/bootsplash/Kconfig	2006-01-03 09:37:50.520403500 -0800
+diff -urN linux-2.6.22/drivers/video/bootsplash/Kconfig linux-2.6.22.bootsplash/drivers/video/bootsplash/Kconfig
+--- linux-2.6.22/drivers/video/bootsplash/Kconfig	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22.bootsplash/drivers/video/bootsplash/Kconfig	2007-07-30 17:31:13.783437148 +0200
 @@ -0,0 +1,17 @@
 +#
 +# Bootsplash configuration
@@ -2129,24 +2127,23 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/Kconfig linux-2.6.15-bootsplash/
 +          If you are unsure, say N
 +endmenu
 +
-diff -urN linux-2.6.15/drivers/video/bootsplash/Makefile linux-2.6.15-bootsplash/drivers/video/bootsplash/Makefile
---- linux-2.6.15/drivers/video/bootsplash/Makefile	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/bootsplash/Makefile	2006-01-03 09:37:50.520403500 -0800
+diff -urN linux-2.6.22/drivers/video/bootsplash/Makefile linux-2.6.22.bootsplash/drivers/video/bootsplash/Makefile
+--- linux-2.6.22/drivers/video/bootsplash/Makefile	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22.bootsplash/drivers/video/bootsplash/Makefile	2007-07-30 17:31:13.787437130 +0200
 @@ -0,0 +1,5 @@
 +# Makefile for the Linux bootsplash
 +
 +obj-$(CONFIG_BOOTSPLASH)		+= bootsplash.o
 +obj-$(CONFIG_BOOTSPLASH)		+= decode-jpg.o
 +obj-$(CONFIG_BOOTSPLASH)		+= render.o
-diff -urN linux-2.6.15/drivers/video/bootsplash/render.c linux-2.6.15-bootsplash/drivers/video/bootsplash/render.c
---- linux-2.6.15/drivers/video/bootsplash/render.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/bootsplash/render.c	2006-01-03 09:37:50.520403500 -0800
-@@ -0,0 +1,316 @@
+diff -urN linux-2.6.22/drivers/video/bootsplash/render.c linux-2.6.22.bootsplash/drivers/video/bootsplash/render.c
+--- linux-2.6.22/drivers/video/bootsplash/render.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22.bootsplash/drivers/video/bootsplash/render.c	2007-07-30 17:31:13.787437130 +0200
+@@ -0,0 +1,315 @@
 +/* 
 + *    linux/drivers/video/bootsplash/render.c - splash screen render functions.
 + */
 +
-+#include <linux/config.h>
 +#include <linux/module.h>
 +#include <linux/types.h>
 +#include <linux/fb.h>
@@ -2458,9 +2455,10 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/render.c linux-2.6.15-bootsplash
 +	}
 +}
 +
---- linux-2.6.16.20/drivers/video/console/bitblit.c.orig	2006-06-05 19:18:23.000000000 +0200
-+++ linux-2.6.16.20/drivers/video/console/bitblit.c	2006-06-18 00:47:25.491552000 +0200
-@@ -18,6 +18,9 @@
+diff -urN linux-2.6.22/drivers/video/console/bitblit.c linux-2.6.22.bootsplash/drivers/video/console/bitblit.c
+--- linux-2.6.22/drivers/video/console/bitblit.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/drivers/video/console/bitblit.c	2007-07-30 17:31:13.799437076 +0200
+@@ -17,6 +17,9 @@
  #include <linux/console.h>
  #include <asm/types.h>
  #include "fbcon.h"
@@ -2470,7 +2468,7 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/render.c linux-2.6.15-bootsplash
  
  /*
   * Accelerated handlers.
-@@ -48,6 +51,13 @@
+@@ -47,6 +50,13 @@
  {
  	struct fb_copyarea area;
  
@@ -2484,7 +2482,7 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/render.c linux-2.6.15-bootsplash
  	area.sx = sx * vc->vc_font.width;
  	area.sy = sy * vc->vc_font.height;
  	area.dx = dx * vc->vc_font.width;
-@@ -64,6 +74,13 @@
+@@ -63,6 +73,13 @@
  	int bgshift = (vc->vc_hi_font_mask) ? 13 : 12;
  	struct fb_fillrect region;
  
@@ -2498,7 +2496,7 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/render.c linux-2.6.15-bootsplash
  	region.color = attr_bgcol_ec(bgshift, vc);
  	region.dx = sx * vc->vc_font.width;
  	region.dy = sy * vc->vc_font.height;
-@@ -161,6 +178,13 @@
+@@ -160,6 +177,13 @@
  	image.height = vc->vc_font.height;
  	image.depth = 1;
  
@@ -2512,7 +2510,7 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/render.c linux-2.6.15-bootsplash
  	if (attribute) {
  		buf = kmalloc(cellsize, GFP_KERNEL);
  		if (!buf)
-@@ -214,6 +238,13 @@
+@@ -213,6 +237,13 @@
  	unsigned int bs = info->var.yres - bh;
  	struct fb_fillrect region;
  
@@ -2526,45 +2524,46 @@ diff -urN linux-2.6.15/drivers/video/bootsplash/render.c linux-2.6.15-bootsplash
  	region.color = attr_bgcol_ec(bgshift, vc);
  	region.rop = ROP_COPY;
  
-@@ -380,6 +411,14 @@
+@@ -379,6 +410,14 @@
  	cursor.image.depth = 1;
  	cursor.rop = ROP_XOR;
  
 +#ifdef CONFIG_BOOTSPLASH
-+        if (info->splash_data) {
-+            splash_cursor(info->splash_data, info, &cursor);
-+            ops->cursor_reset = 0;
-+            return;
-+        }
++	if (info->splash_data) {
++		splash_cursor(info->splash_data, info, &cursor);
++		ops->cursor_reset = 0;
++		return;
++	}
 +#endif
 +
  	if (info->fbops->fb_cursor)
  		err = info->fbops->fb_cursor(info, &cursor);
  
-diff -urN linux-2.6.15/drivers/video/console/fbcon.c linux-2.6.15-bootsplash/drivers/video/console/fbcon.c
---- linux-2.6.15/drivers/video/console/fbcon.c	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/console/fbcon.c	2006-01-03 12:02:03.467860000 -0800
-@@ -93,6 +93,9 @@
- #endif
+diff -urN linux-2.6.22/drivers/video/console/fbcon.c linux-2.6.22.bootsplash/drivers/video/console/fbcon.c
+--- linux-2.6.22/drivers/video/console/fbcon.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/drivers/video/console/fbcon.c	2007-07-30 17:31:13.815437004 +0200
+@@ -91,6 +91,10 @@
  
  #include "fbcon.h"
+ 
 +#ifdef CONFIG_BOOTSPLASH
 +#include "../bootsplash/bootsplash.h"
 +#endif
- 
++
  #ifdef FBCONDEBUG
  #  define DPRINTK(fmt, args...) printk(KERN_DEBUG "%s: " fmt, __FUNCTION__ , ## args)
-@@ -108,7 +111,8 @@
+ #else
+@@ -104,8 +108,7 @@
+ };
  
  static struct display fb_display[MAX_NR_CONSOLES];
- 
+-
 -static signed char con2fb_map[MAX_NR_CONSOLES];
-+//static signed char con2fb_map[MAX_NR_CONSOLES];
-+extern signed char con2fb_map[MAX_NR_CONSOLES];
++signed char con2fb_map[MAX_NR_CONSOLES];
  static signed char con2fb_map_boot[MAX_NR_CONSOLES];
+ #ifndef MODULE
  static int logo_height;
- static int logo_lines;
-@@ -559,6 +563,10 @@
+@@ -565,6 +568,10 @@
  	for (i = first_fb_vc; i <= last_fb_vc; i++)
  		con2fb_map[i] = info_idx;
  
@@ -2574,25 +2573,25 @@ diff -urN linux-2.6.15/drivers/video/console/fbcon.c linux-2.6.15-bootsplash/dri
 +
  	err = take_over_console(&fb_con, first_fb_vc, last_fb_vc,
  				fbcon_is_default);
- 	if (err) {
-@@ -1101,6 +1109,16 @@
+ 
+@@ -1166,6 +1173,16 @@
  	new_rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
  	new_cols /= vc->vc_font.width;
  	new_rows /= vc->vc_font.height;
 +
 +#ifdef CONFIG_BOOTSPLASH
-+        if (vc->vc_splash_data && vc->vc_splash_data->splash_state) {
-+                new_cols = vc->vc_splash_data->splash_text_wi / vc->vc_font.width;
-+                new_rows = vc->vc_splash_data->splash_text_he / vc->vc_font.height;
-+                logo = 0;
-+                con_remap_def_color(vc, vc->vc_splash_data->splash_color << 4 | vc->vc_splash_data->splash_fg_color);
-+        }
++	if (vc->vc_splash_data && vc->vc_splash_data->splash_state) {
++		new_cols = vc->vc_splash_data->splash_text_wi / vc->vc_font.width;
++		new_rows = vc->vc_splash_data->splash_text_he / vc->vc_font.height;
++		logo = 0;
++		con_remap_def_color(vc, vc->vc_splash_data->splash_color << 4 | vc->vc_splash_data->splash_fg_color);
++	}
 +#endif
-+
++				
  	vc_resize(vc, new_cols, new_rows);
  
  	/*
-@@ -1718,6 +1736,10 @@
+@@ -1811,6 +1828,10 @@
  			fbcon_softback_note(vc, t, count);
  		if (logo_shown >= 0)
  			goto redraw_up;
@@ -2603,18 +2602,18 @@ diff -urN linux-2.6.15/drivers/video/console/fbcon.c linux-2.6.15-bootsplash/dri
  		switch (p->scrollmode) {
  		case SCROLL_MOVE:
  			ops->bmove(vc, info, t + count, 0, t, 0,
-@@ -1802,6 +1824,10 @@
+@@ -1895,6 +1916,10 @@
  	case SM_DOWN:
  		if (count > vc->vc_rows)	/* Maximum realistic size */
  			count = vc->vc_rows;
 +#ifdef CONFIG_BOOTSPLASH
-+                if (info->splash_data)
-+                      goto redraw_down;
-+#endif        
++		if (info->splash_data)
++			goto redraw_down;
++#endif
  		if (logo_shown >= 0)
  			goto redraw_down;
  		switch (p->scrollmode) {
-@@ -1946,6 +1972,14 @@
+@@ -2039,6 +2064,14 @@
  		}
  		return;
  	}
@@ -2629,7 +2628,7 @@ diff -urN linux-2.6.15/drivers/video/console/fbcon.c linux-2.6.15-bootsplash/dri
  	ops->bmove(vc, info, real_y(p, sy), sx, real_y(p, dy), dx,
  		   height, width);
  }
-@@ -2053,6 +2087,10 @@
+@@ -2147,6 +2180,10 @@
  	info = registered_fb[con2fb_map[vc->vc_num]];
  	ops = info->fbcon_par;
  
@@ -2640,10 +2639,10 @@ diff -urN linux-2.6.15/drivers/video/console/fbcon.c linux-2.6.15-bootsplash/dri
  	if (softback_top) {
  		if (softback_lines)
  			fbcon_set_origin(vc);
-@@ -2173,6 +2211,12 @@
- static void fbcon_generic_blank(struct vc_data *vc, struct fb_info *info,
- 				int blank)
+@@ -2276,6 +2313,12 @@
  {
+ 	struct fb_event event;
+ 
 +#ifdef CONFIG_BOOTSPLASH
 +	if (info->splash_data) {
 +		splash_blank(info->splash_data, vc, info, blank);
@@ -2653,25 +2652,30 @@ diff -urN linux-2.6.15/drivers/video/console/fbcon.c linux-2.6.15-bootsplash/dri
  	if (blank) {
  		unsigned short charmask = vc->vc_hi_font_mask ?
  			0x1ff : 0xff;
-@@ -2372,6 +2416,13 @@
- 
+@@ -2474,10 +2517,19 @@
  	if (resize) {
  		int cols, rows;
-+                u32 xres = info->var.xres, yres = info->var.yres;
-+#ifdef CONFIG_BOOTSPLASH
-+                if (info->splash_data) {
-+                        xres = info->splash_data->splash_text_wi;
-+                        yres = info->splash_data->splash_text_he;
-+                }
-+#endif        
  
++		u32 xres = info->var.xres, yres = info->var.yres;
  		cols = FBCON_SWAP(ops->rotate, info->var.xres, info->var.yres);
  		rows = FBCON_SWAP(ops->rotate, info->var.yres, info->var.xres);
-Binary files linux-2.6.15/drivers/video/console/.fbcon.c.swp and linux-2.6.15-bootsplash/drivers/video/console/.fbcon.c.swp differ
-diff -urN linux-2.6.15/drivers/video/console/fbcon.h linux-2.6.15-bootsplash/drivers/video/console/fbcon.h
---- linux-2.6.15/drivers/video/console/fbcon.h	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/console/fbcon.h	2006-01-03 12:01:50.427045000 -0800
-@@ -26,6 +26,35 @@
+ 		cols /= w;
+ 		rows /= h;
++
++#ifdef CONFIG_BOOTSPLASH
++		if (info->splash_data) {
++			xres = info->splash_data->splash_text_wi;
++			yres = info->splash_data->splash_text_he;
++		}
++#endif
++					
+ 		vc_resize(vc, cols, rows);
+ 		if (CON_IS_VISIBLE(vc) && softback_buf)
+ 			fbcon_update_softback(vc);
+diff -urN linux-2.6.22/drivers/video/console/fbcon.h linux-2.6.22.bootsplash/drivers/video/console/fbcon.h
+--- linux-2.6.22/drivers/video/console/fbcon.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/drivers/video/console/fbcon.h	2007-07-30 17:31:13.819436986 +0200
+@@ -25,6 +25,34 @@
      *    low-level frame buffer device
      */
  
@@ -2701,17 +2705,16 @@ diff -urN linux-2.6.15/drivers/video/console/fbcon.h linux-2.6.15-bootsplash/dri
 +    unsigned char *splash_sboxes;
 +    int splash_sboxcount;
 +};
-+static signed char con2fb_map[MAX_NR_CONSOLES];
 +#endif
 +
  struct display {
      /* Filled in by the low-level console driver */
      const u_char *fontdata;
-diff -urN linux-2.6.15/drivers/video/Kconfig linux-2.6.15-bootsplash/drivers/video/Kconfig
---- linux-2.6.15/drivers/video/Kconfig	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/Kconfig	2006-01-03 09:37:50.528404000 -0800
-@@ -1469,5 +1469,9 @@
- 	source "drivers/video/backlight/Kconfig"
+diff -urN linux-2.6.22/drivers/video/Kconfig linux-2.6.22.bootsplash/drivers/video/Kconfig
+--- linux-2.6.22/drivers/video/Kconfig	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/drivers/video/Kconfig	2007-07-30 17:31:13.839436896 +0200
+@@ -1851,5 +1851,9 @@
+ 	source "drivers/video/logo/Kconfig"
  endif
  
 +if FB
@@ -2720,22 +2723,22 @@ diff -urN linux-2.6.15/drivers/video/Kconfig linux-2.6.15-bootsplash/drivers/vid
 +
  endmenu
  
-diff -urN linux-2.6.15/drivers/video/Makefile linux-2.6.15-bootsplash/drivers/video/Makefile
---- linux-2.6.15/drivers/video/Makefile	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/Makefile	2006-01-03 09:37:50.532404250 -0800
-@@ -7,6 +7,7 @@
+diff -urN linux-2.6.22/drivers/video/Makefile linux-2.6.22.bootsplash/drivers/video/Makefile
+--- linux-2.6.22/drivers/video/Makefile	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/drivers/video/Makefile	2007-07-30 17:32:08.831189432 +0200
+@@ -14,6 +14,7 @@
  obj-$(CONFIG_VT)		  += console/
  obj-$(CONFIG_LOGO)		  += logo/
- obj-$(CONFIG_SYSFS)		  += backlight/
+ obj-y				  += backlight/ display/
 +obj-$(CONFIG_BOOTSPLASH)	  += bootsplash/
  
- obj-$(CONFIG_FB)                  += fb.o
- fb-y                              := fbmem.o fbmon.o fbcmap.o fbsysfs.o \
-diff -urN linux-2.6.15/drivers/video/vesafb.c linux-2.6.15-bootsplash/drivers/video/vesafb.c
---- linux-2.6.15/drivers/video/vesafb.c	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/drivers/video/vesafb.c	2006-01-03 09:37:50.532404250 -0800
-@@ -201,7 +201,10 @@
- 	return 0;
+ obj-$(CONFIG_FB_CFB_FILLRECT)  += cfbfillrect.o
+ obj-$(CONFIG_FB_CFB_COPYAREA)  += cfbcopyarea.o
+diff -urN linux-2.6.22/drivers/video/vesafb.c linux-2.6.22.bootsplash/drivers/video/vesafb.c
+--- linux-2.6.22/drivers/video/vesafb.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/drivers/video/vesafb.c	2007-07-30 17:31:13.859436806 +0200
+@@ -174,7 +174,10 @@
+ 	return err;
  }
  
 -static struct fb_ops vesafb_ops = {
@@ -2746,33 +2749,37 @@ diff -urN linux-2.6.15/drivers/video/vesafb.c linux-2.6.15-bootsplash/drivers/vi
  	.owner		= THIS_MODULE,
  	.fb_setcolreg	= vesafb_setcolreg,
  	.fb_pan_display	= vesafb_pan_display,
-@@ -285,6 +288,9 @@
+@@ -258,6 +261,11 @@
  	 *                 option to simply use size_total as that
  	 *                 wastes plenty of kernel address space. */
  	size_remap  = size_vmode * 2;
++	
 +#ifdef CONFIG_BOOTSPLASH
 +	size_remap *= 2;	/* some more for the images */
 +#endif
++
  	if (vram_remap)
  		size_remap = vram_remap * 1024 * 1024;
  	if (size_remap < size_vmode)
-diff -urN linux-2.6.15/include/linux/console_struct.h linux-2.6.15-bootsplash/include/linux/console_struct.h
---- linux-2.6.15/include/linux/console_struct.h	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/include/linux/console_struct.h	2006-01-03 09:37:50.532404250 -0800
-@@ -97,6 +97,9 @@
+diff -urN linux-2.6.22/include/linux/console_struct.h linux-2.6.22.bootsplash/include/linux/console_struct.h
+--- linux-2.6.22/include/linux/console_struct.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/include/linux/console_struct.h	2007-07-30 17:31:13.859436806 +0200
+@@ -105,6 +105,11 @@
  	struct vc_data **vc_display_fg;		/* [!] Ptr to var holding fg console for this display */
  	unsigned long	vc_uni_pagedir;
  	unsigned long	*vc_uni_pagedir_loc;  /* [!] Location of uni_pagedir variable for this console */
++	
 +#ifdef CONFIG_BOOTSPLASH
 +        struct splash_data *vc_splash_data;
 +#endif
++
  	/* additional information is in vt_kern.h */
  };
  
-diff -urN linux-2.6.15/include/linux/fb.h linux-2.6.15-bootsplash/include/linux/fb.h
---- linux-2.6.15/include/linux/fb.h	2006-01-02 19:21:10.000000000 -0800
-+++ linux-2.6.15-bootsplash/include/linux/fb.h	2006-01-03 09:37:50.536404500 -0800
-@@ -771,6 +771,14 @@
+diff -urN linux-2.6.22/include/linux/fb.h linux-2.6.22.bootsplash/include/linux/fb.h
+--- linux-2.6.22/include/linux/fb.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.bootsplash/include/linux/fb.h	2007-07-30 17:31:13.863436788 +0200
+@@ -830,6 +830,14 @@
  	void *fbcon_par;                /* fbcon use-only private area */
  	/* From here on everything is device dependent */
  	void *par;	
