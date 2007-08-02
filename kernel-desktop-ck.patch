@@ -1,7 +1,769 @@
-Index: linux-2.6.22-ck1/include/linux/sched.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/linux/sched.h	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/include/linux/sched.h	2007-07-10 14:55:21.000000000 +1000
+diff -urN linux-2.6.22.suspend2/arch/i386/defconfig linux-2.6.22.ck/arch/i386/defconfig
+--- linux-2.6.22.suspend2/arch/i386/defconfig	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/arch/i386/defconfig	2007-08-02 13:23:45.865825786 +0200
+@@ -226,10 +226,10 @@
+ # CONFIG_IRQBALANCE is not set
+ CONFIG_SECCOMP=y
+ # CONFIG_HZ_100 is not set
+-CONFIG_HZ_250=y
++# CONFIG_HZ_250 is not set
+ # CONFIG_HZ_300 is not set
+-# CONFIG_HZ_1000 is not set
+-CONFIG_HZ=250
++CONFIG_HZ_1000=y
++CONFIG_HZ=1000
+ # CONFIG_KEXEC is not set
+ # CONFIG_CRASH_DUMP is not set
+ CONFIG_PHYSICAL_START=0x100000
+diff -urN linux-2.6.22.suspend2/arch/i386/Kconfig linux-2.6.22.ck/arch/i386/Kconfig
+--- linux-2.6.22.suspend2/arch/i386/Kconfig	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/arch/i386/Kconfig	2007-08-02 13:23:45.861825804 +0200
+@@ -550,7 +550,7 @@
+ 
+ choice
+ 	depends on EXPERIMENTAL
+-	prompt "Memory split" if EMBEDDED
++	prompt "Memory split"
+ 	default VMSPLIT_3G
+ 	help
+ 	  Select the desired split between kernel and user memory.
+@@ -569,17 +569,17 @@
+ 	  option alone!
+ 
+ 	config VMSPLIT_3G
+-		bool "3G/1G user/kernel split"
++		bool "Default 896MB lowmem (3G/1G user/kernel split)"
+ 	config VMSPLIT_3G_OPT
+ 		depends on !HIGHMEM
+-		bool "3G/1G user/kernel split (for full 1G low memory)"
++		bool "1GB lowmem (3G/1G user/kernel split)"
+ 	config VMSPLIT_2G
+-		bool "2G/2G user/kernel split"
++		bool "2GB lowmem (2G/2G user/kernel split)"
+ 	config VMSPLIT_2G_OPT
+ 		depends on !HIGHMEM
+-		bool "2G/2G user/kernel split (for full 2G low memory)"
++		bool "2GB lowmem (2G/2G user/kernel split)"
+ 	config VMSPLIT_1G
+-		bool "1G/3G user/kernel split"
++		bool "3GB lowmem (1G/3G user/kernel split)"
+ endchoice
+ 
+ config PAGE_OFFSET
+diff -urN linux-2.6.22.suspend2/arch/i386/kernel/cpu/proc.c linux-2.6.22.ck/arch/i386/kernel/cpu/proc.c
+--- linux-2.6.22.suspend2/arch/i386/kernel/cpu/proc.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/arch/i386/kernel/cpu/proc.c	2007-08-02 13:23:45.917825552 +0200
+@@ -157,7 +157,7 @@
+ 
+ 	seq_printf(m, "\nbogomips\t: %lu.%02lu\n",
+ 		     c->loops_per_jiffy/(500000/HZ),
+-		     (c->loops_per_jiffy/(5000/HZ)) % 100);
++		     (c->loops_per_jiffy * 10/(50000/HZ)) % 100);
+ 	seq_printf(m, "clflush size\t: %u\n\n", c->x86_clflush_size);
+ 
+ 	return 0;
+diff -urN linux-2.6.22.suspend2/arch/i386/kernel/smpboot.c linux-2.6.22.ck/arch/i386/kernel/smpboot.c
+--- linux-2.6.22.suspend2/arch/i386/kernel/smpboot.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/arch/i386/kernel/smpboot.c	2007-08-02 13:23:45.945825426 +0200
+@@ -1094,7 +1094,7 @@
+ 		"Total of %d processors activated (%lu.%02lu BogoMIPS).\n",
+ 		cpucount+1,
+ 		bogosum/(500000/HZ),
+-		(bogosum/(5000/HZ))%100);
++		(bogosum * 10/(50000/HZ))%100);
+ 	
+ 	Dprintk("Before bogocount - setting activated=1.\n");
+ 
+diff -urN linux-2.6.22.suspend2/arch/x86_64/defconfig linux-2.6.22.ck/arch/x86_64/defconfig
+--- linux-2.6.22.suspend2/arch/x86_64/defconfig	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/arch/x86_64/defconfig	2007-08-02 13:23:45.885825696 +0200
+@@ -185,10 +185,10 @@
+ CONFIG_SECCOMP=y
+ # CONFIG_CC_STACKPROTECTOR is not set
+ # CONFIG_HZ_100 is not set
+-CONFIG_HZ_250=y
++# CONFIG_HZ_250 is not set
+ # CONFIG_HZ_300 is not set
+-# CONFIG_HZ_1000 is not set
+-CONFIG_HZ=250
++CONFIG_HZ_1000=y
++CONFIG_HZ=1000
+ CONFIG_K8_NB=y
+ CONFIG_GENERIC_HARDIRQS=y
+ CONFIG_GENERIC_IRQ_PROBE=y
+diff -urN linux-2.6.22.suspend2/arch/x86_64/kernel/setup.c linux-2.6.22.ck/arch/x86_64/kernel/setup.c
+--- linux-2.6.22.suspend2/arch/x86_64/kernel/setup.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/arch/x86_64/kernel/setup.c	2007-08-02 13:23:45.957825372 +0200
+@@ -1047,7 +1047,7 @@
+ 		
+ 	seq_printf(m, "\nbogomips\t: %lu.%02lu\n",
+ 		   c->loops_per_jiffy/(500000/HZ),
+-		   (c->loops_per_jiffy/(5000/HZ)) % 100);
++		   (c->loops_per_jiffy * 10/(50000/HZ)) % 100);
+ 
+ 	if (c->x86_tlbsize > 0) 
+ 		seq_printf(m, "TLB size\t: %d 4K pages\n", c->x86_tlbsize);
+diff -urN linux-2.6.22.suspend2/block/cfq-iosched.c linux-2.6.22.ck/block/cfq-iosched.c
+--- linux-2.6.22.suspend2/block/cfq-iosched.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/block/cfq-iosched.c	2007-08-02 13:23:45.737826362 +0200
+@@ -1276,10 +1276,12 @@
+ 			printk(KERN_ERR "cfq: bad prio %x\n", ioprio_class);
+ 		case IOPRIO_CLASS_NONE:
+ 			/*
+-			 * no prio set, place us in the middle of the BE classes
++			 * Select class and ioprio according to policy and nice
+ 			 */
++			cfqq->ioprio_class = task_policy_ioprio_class(tsk);
+ 			cfqq->ioprio = task_nice_ioprio(tsk);
+-			cfqq->ioprio_class = IOPRIO_CLASS_BE;
++			if (cfqq->ioprio_class == IOPRIO_CLASS_IDLE)
++				cfq_clear_cfqq_idle_window(cfqq);
+ 			break;
+ 		case IOPRIO_CLASS_RT:
+ 			cfqq->ioprio = task_ioprio(tsk);
+diff -urN linux-2.6.22.suspend2/Documentation/filesystems/proc.txt linux-2.6.22.ck/Documentation/filesystems/proc.txt
+--- linux-2.6.22.suspend2/Documentation/filesystems/proc.txt	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/Documentation/filesystems/proc.txt	2007-08-02 13:23:45.817826002 +0200
+@@ -1333,6 +1333,14 @@
+ As this is a non-destructive operation and dirty objects are not freeable, the
+ user should run `sync' first.
+ 
++tail_largefiles
++---------------
++
++When enabled reads from large files to the tail end of the inactive lru list.
++This means that any cache from reading large files is dropped very quickly,
++preventing loss of mapped ram and useful pagecache when large files are read.
++This does, however, make caching less effective when working with large files.
++
+ 
+ 2.5 /proc/sys/dev - Device specific parameters
+ ----------------------------------------------
+diff -urN linux-2.6.22.suspend2/Documentation/sched-design.txt linux-2.6.22.ck/Documentation/sched-design.txt
+--- linux-2.6.22.suspend2/Documentation/sched-design.txt	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/Documentation/sched-design.txt	2007-08-02 13:23:45.633826830 +0200
+@@ -1,11 +1,14 @@
+-		   Goals, Design and Implementation of the
+-		      new ultra-scalable O(1) scheduler
++ Goals, Design and Implementation of the ultra-scalable O(1) scheduler by
++ Ingo Molnar and theStaircase Deadline cpu scheduler policy designed by
++ Con Kolivas.
+ 
+ 
+-  This is an edited version of an email Ingo Molnar sent to
+-  lkml on 4 Jan 2002.  It describes the goals, design, and
+-  implementation of Ingo's new ultra-scalable O(1) scheduler.
+-  Last Updated: 18 April 2002.
++  This was originally an edited version of an email Ingo Molnar sent to
++  lkml on 4 Jan 2002.  It describes the goals, design, and implementation
++  of Ingo's ultra-scalable O(1) scheduler. It now contains a description
++  of the Staircase Deadline priority scheduler that was built on this
++  design.
++  Last Updated: Fri, 4 May 2007
+ 
+ 
+ Goal
+@@ -163,3 +166,222 @@
+ code is smaller than the old one.
+ 
+ 	Ingo
++
++
++Staircase Deadline cpu scheduler policy
++================================================
++
++Design summary
++==============
++
++A novel design which incorporates a foreground-background descending priority
++system (the staircase) via a bandwidth allocation matrix according to nice
++level.
++
++
++Features
++========
++
++A starvation free, strict fairness O(1) scalable design with interactivity
++as good as the above restrictions can provide. There is no interactivity
++estimator, no sleep/run measurements and only simple fixed accounting.
++The design has strict enough a design and accounting that task behaviour
++can be modelled and maximum scheduling latencies can be predicted by
++the virtual deadline mechanism that manages runqueues. The prime concern
++in this design is to maintain fairness at all costs determined by nice level,
++yet to maintain as good interactivity as can be allowed within the
++constraints of strict fairness.
++
++
++Design description
++==================
++
++SD works off the principle of providing each task a quota of runtime that it is
++allowed to run at a number of priority levels determined by its static priority
++(ie. its nice level). If the task uses up its quota it has its priority
++decremented to the next level determined by a priority matrix. Once every
++runtime quota has been consumed of every priority level, a task is queued on the
++"expired" array. When no other tasks exist with quota, the expired array is
++activated and fresh quotas are handed out. This is all done in O(1).
++
++Design details
++==============
++
++Each task keeps a record of its own entitlement of cpu time. Most of the rest of
++these details apply to non-realtime tasks as rt task management is straight
++forward.
++
++Each runqueue keeps a record of what major epoch it is up to in the
++rq->prio_rotation field which is incremented on each major epoch. It also
++keeps a record of the current prio_level for each static priority task.
++
++Each task keeps a record of what major runqueue epoch it was last running
++on in p->rotation. It also keeps a record of what priority levels it has
++already been allocated quota from during this epoch in a bitmap p->bitmap.
++
++The only tunable that determines all other details is the RR_INTERVAL. This
++is set to 8ms, and is scaled gently upwards with more cpus. This value is
++tunable via a /proc interface.
++
++All tasks are initially given a quota based on RR_INTERVAL. This is equal to
++RR_INTERVAL between nice values of -6 and 0, half that size above nice 0, and
++progressively larger for nice values from -1 to -20. This is assigned to
++p->quota and only changes with changes in nice level.
++
++As a task is first queued, it checks in recalc_task_prio to see if it has run at
++this runqueue's current priority rotation. If it has not, it will have its
++p->prio level set according to the first slot in a "priority matrix" and will be
++given a p->time_slice equal to the p->quota, and has its allocation bitmap bit
++set in p->bitmap for this prio level. It is then queued on the current active
++priority array.
++
++If a task has already been running during this major epoch, and it has
++p->time_slice left and the rq->prio_quota for the task's p->prio still
++has quota, it will be placed back on the active array, but no more quota
++will be added.
++
++If a task has been running during this major epoch, but does not have
++p->time_slice left, it will find the next lowest priority in its bitmap that it
++has not been allocated quota from. It then gets the a full quota in
++p->time_slice. It is then queued on the current active priority array at the
++newly determined lower priority.
++
++If a task has been running during this major epoch, and does not have
++any entitlement left in p->bitmap and no time_slice left, it will have its
++bitmap cleared, and be queued at its best prio again, but on the expired
++priority array.
++
++When a task is queued, it has its relevant bit set in the array->prio_bitmap.
++
++p->time_slice is stored in nanosconds and is updated via update_cpu_clock on
++schedule() and scheduler_tick. If p->time_slice is below zero then the
++recalc_task_prio is readjusted and the task rescheduled.
++
++
++Priority Matrix
++===============
++
++In order to minimise the latencies between tasks of different nice levels
++running concurrently, the dynamic priority slots where different nice levels
++are queued are dithered instead of being sequential. What this means is that
++there are 40 priority slots where a task may run during one major rotation,
++and the allocation of slots is dependant on nice level. In the
++following table, a zero represents a slot where the task may run.
++
++PRIORITY:0..................20.................39
++nice -20 0000000000000000000000000000000000000000
++nice -10 1000100010001000100010001000100010010000
++nice   0 1010101010101010101010101010101010101010
++nice   5 1011010110110101101101011011010110110110
++nice  10 1110111011101110111011101110111011101110
++nice  15 1111111011111110111111101111111011111110
++nice  19 1111111111111111111111111111111111111110
++
++As can be seen, a nice -20 task runs in every priority slot whereas a nice 19
++task only runs one slot per major rotation. This dithered table allows for the
++smallest possible maximum latencies between tasks of varying nice levels, thus
++allowing vastly different nice levels to be used.
++
++SCHED_BATCH tasks are managed slightly differently, receiving only the top
++slots from its priority bitmap giving it equal cpu as SCHED_NORMAL, but
++slightly higher latencies.
++
++
++Modelling deadline behaviour
++============================
++
++As the accounting in this design is hard and not modified by sleep average
++calculations or interactivity modifiers, it is possible to accurately
++predict the maximum latency that a task may experience under different
++conditions. This is a virtual deadline mechanism enforced by mandatory
++timeslice expiration and not outside bandwidth measurement.
++
++The maximum duration a task can run during one major epoch is determined by its
++nice value. Nice 0 tasks can run at 19 different priority levels for RR_INTERVAL
++duration during each epoch. Nice 10 tasks can run at 9 priority levels for each
++epoch, and so on. The table in the priority matrix above demonstrates how this
++is enforced.
++
++Therefore the maximum duration a runqueue epoch can take is determined by
++the number of tasks running, and their nice level. After that, the maximum
++duration it can take before a task can wait before it get scheduled is
++determined by the position of its first slot on the matrix.
++
++In the following examples, these are _worst case scenarios_ and would rarely
++occur, but can be modelled nonetheless to determine the maximum possible
++latency.
++
++So for example, if two nice 0 tasks are running, and one has just expired as
++another is activated for the first time receiving a full quota for this
++runqueue rotation, the first task will wait:
++
++nr_tasks * max_duration + nice_difference * rr_interval
++1 * 19 * RR_INTERVAL + 0 = 152ms
++
++In the presence of a nice 10 task, a nice 0 task would wait a maximum of
++1 * 10 * RR_INTERVAL + 0 = 80ms
++
++In the presence of a nice 0 task, a nice 10 task would wait a maximum of
++1 * 19 * RR_INTERVAL + 1 * RR_INTERVAL = 160ms
++
++More useful than these values, though, are the average latencies which are
++a matter of determining the average distance between priority slots of
++different nice values and multiplying them by the tasks' quota. For example
++in the presence of a nice -10 task, a nice 0 task will wait either one or
++two slots. Given that nice -10 tasks have a quota 2.5 times the RR_INTERVAL,
++this means the latencies will alternate between 2.5 and 5 RR_INTERVALs or
++20 and 40ms respectively (on uniprocessor at 1000HZ).
++
++
++Achieving interactivity
++=======================
++
++A requirement of this scheduler design was to achieve good interactivity
++despite being a completely fair deadline based design. The disadvantage of
++designs that try to achieve interactivity is that they usually do so at
++the expense of maintaining fairness. As cpu speeds increase, the requirement
++for some sort of metered unfairness towards interactive tasks becomes a less
++desirable phenomenon, but low latency and fairness remains mandatory to
++good interactive performance.
++
++This design relies on the fact that interactive tasks, by their nature,
++sleep often. Most fair scheduling designs end up penalising such tasks
++indirectly giving them less than their fair possible share because of the
++sleep, and have to use a mechanism of bonusing their priority to offset
++this based on the duration they sleep. This becomes increasingly inaccurate
++as the number of running tasks rises and more tasks spend time waiting on
++runqueues rather than sleeping, and it is impossible to tell whether the
++task that's waiting on a runqueue only intends to run for a short period and
++then sleep again after than runqueue wait. Furthermore, all such designs rely
++on a period of time to pass to accumulate some form of statistic on the task
++before deciding on how much to give them preference. The shorter this period,
++the more rapidly bursts of cpu ruin the interactive tasks behaviour. The
++longer this period, the longer it takes for interactive tasks to get low
++scheduling latencies and fair cpu.
++
++This design does not measure sleep time at all. Interactive tasks that sleep
++often will wake up having consumed very little if any of their quota for
++the current major priority rotation. The longer they have slept, the less
++likely they are to even be on the current major priority rotation. Once
++woken up, though, they get to use up a their full quota for that epoch,
++whether part of a quota remains or a full quota. Overall, however, they
++can still only run as much cpu time for that epoch as any other task of the
++same nice level. This means that two tasks behaving completely differently
++from fully cpu bound to waking/sleeping extremely frequently will still
++get the same quota of cpu, but the latter will be using its quota for that
++epoch in bursts rather than continuously. This guarantees that interactive
++tasks get the same amount of cpu as cpu bound ones.
++
++The other requirement of interactive tasks is also to obtain low latencies
++for when they are scheduled. Unlike fully cpu bound tasks and the maximum
++latencies possible described in the modelling deadline behaviour section
++above, tasks that sleep will wake up with quota available usually at the
++current runqueue's priority_level or better. This means that the most latency
++they are likely to see is one RR_INTERVAL, and often they will preempt the
++current task if it is not of a sleeping nature. This then guarantees very
++low latency for interactive tasks, and the lowest latencies for the least
++cpu bound tasks.
++
++
++Fri, 4 May 2007
++Con Kolivas <kernel@kolivas.org>
+diff -urN linux-2.6.22.suspend2/Documentation/sysctl/kernel.txt linux-2.6.22.ck/Documentation/sysctl/kernel.txt
+--- linux-2.6.22.suspend2/Documentation/sysctl/kernel.txt	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/Documentation/sysctl/kernel.txt	2007-08-02 13:23:45.653826740 +0200
+@@ -25,6 +25,9 @@
+ - domainname
+ - hostname
+ - hotplug
++- interactive
++- iso_cpu
++- iso_period
+ - java-appletviewer           [ binfmt_java, obsolete ]
+ - java-interpreter            [ binfmt_java, obsolete ]
+ - kstack_depth_to_print       [ X86 only ]
+@@ -43,6 +46,7 @@
+ - printk
+ - real-root-dev               ==> Documentation/initrd.txt
+ - reboot-cmd                  [ SPARC only ]
++- rr_interval
+ - rtsig-max
+ - rtsig-nr
+ - sem
+@@ -164,6 +168,40 @@
+ 
+ ==============================================================
+ 
++interactive:
++
++The staircase-deadline cpu scheduler can be set in either purely
++forward-looking mode for absolutely rigid fairness and cpu distribution
++according to nice level, or it can allow a small per-process history
++to smooth out cpu usage perturbations common in interactive tasks by
++enabling this sysctl. While small fairness issues can arise with this
++enabled, overall fairness is usually still strongly maintained and
++starvation is never possible. Enabling this can significantly smooth
++out 3d graphics and games.
++
++Default value is 1 (enabled).
++
++==============================================================
++
++iso_cpu:
++
++This sets the percentage cpu that the unprivileged SCHED_ISO tasks can
++run effectively at realtime priority, averaged over a rolling iso_period
++seconds.
++
++Set to 80 (percent) by default.
++
++==============================================================
++
++iso_period:
++
++This sets the number of seconds over which SCHED_ISO cpu usage is averaged
++to see if it exceeds its allocated cpu bandwidth.
++
++Set to 5 (seconds) by default.
++
++==============================================================
++
+ l2cr: (PPC only)
+ 
+ This flag controls the L2 cache of G3 processor boards. If
+@@ -288,6 +326,19 @@
+ 
+ ==============================================================
+ 
++rr_interval:
++
++This is the smallest duration that any cpu process scheduling unit
++will run for. Increasing this value can increase throughput of cpu
++bound tasks substantially but at the expense of increased latencies
++overall. This value is in milliseconds and the default value chosen
++depends on the number of cpus available at scheduler initialisation
++with a minimum of 8.
++
++Valid values are from 1-5000.
++
++==============================================================
++
+ rtsig-max & rtsig-nr:
+ 
+ The file rtsig-max can be used to tune the maximum number
+diff -urN linux-2.6.22.suspend2/Documentation/sysctl/vm.txt linux-2.6.22.ck/Documentation/sysctl/vm.txt
+--- linux-2.6.22.suspend2/Documentation/sysctl/vm.txt	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/Documentation/sysctl/vm.txt	2007-08-02 13:23:45.741826344 +0200
+@@ -22,6 +22,8 @@
+ - dirty_background_ratio
+ - dirty_expire_centisecs
+ - dirty_writeback_centisecs
++- hardmaplimit
++- mapped
+ - max_map_count
+ - min_free_kbytes
+ - laptop_mode
+@@ -31,12 +33,15 @@
+ - min_unmapped_ratio
+ - min_slab_ratio
+ - panic_on_oom
++- swap_prefetch
++- swap_prefetch_delay
++- swap_prefetch_sleep
+ 
+ ==============================================================
+ 
+ dirty_ratio, dirty_background_ratio, dirty_expire_centisecs,
+ dirty_writeback_centisecs, vfs_cache_pressure, laptop_mode,
+-block_dump, swap_token_timeout, drop-caches:
++block_dump, swap_token_timeout, drop-caches, tail_largefiles:
+ 
+ See Documentation/filesystems/proc.txt
+ 
+@@ -86,6 +91,27 @@
+ 
+ ==============================================================
+ 
++hardmaplimit:
++
++This flag makes the vm adhere to the mapped value as closely as possible
++except in the most extreme vm stress where doing so would provoke an out
++of memory condition (see mapped below).
++
++Enabled by default.
++
++==============================================================
++
++mapped:
++
++This is the percentage ram that is filled with mapped pages (applications)
++before the vm will start reclaiming mapped pages by moving them to swap.
++It is altered by the relative stress of the vm at the time so is not
++strictly adhered to to prevent provoking out of memory kills.
++
++Set to 66 by default.
++
++==============================================================
++
+ max_map_count:
+ 
+ This file contains the maximum number of memory map areas a process
+@@ -216,3 +242,37 @@
+ The default value is 0.
+ 1 and 2 are for failover of clustering. Please select either
+ according to your policy of failover.
++
++==============================================================
++
++swap_prefetch
++
++This enables or disables the swap prefetching feature. When the virtual
++memory subsystem has been extremely idle for at least swap_prefetch_sleep
++seconds it will start copying back pages from swap into the swapcache and keep
++a copy in swap. Valid values are 0 - 3. A value of 0 disables swap
++prefetching, 1 enables it unless laptop_mode is enabled, 2 enables it in the
++presence of laptop_mode, and 3 enables it unconditionally, ignoring whether
++the system is idle or not. If set to 0, swap prefetch wil not even try to keep
++record of ram swapped out to have the most minimal impact on performance.
++
++The default value is 1.
++
++==============================================================
++
++swap_prefetch_delay
++
++This is the time in seconds that swap prefetching is delayed upon finding
++the system is not idle (ie the vm is busy or non-niced cpu load is present).
++
++The default value is 1.
++
++==============================================================
++
++swap_prefetch_sleep
++
++This is the time in seconds that the swap prefetch kernel thread is put to
++sleep for when the ram is found to be full and it is unable to prefetch
++further.
++
++The default value is 5.
+diff -urN linux-2.6.22.suspend2/fs/buffer.c linux-2.6.22.ck/fs/buffer.c
+--- linux-2.6.22.suspend2/fs/buffer.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/fs/buffer.c	2007-08-02 13:23:45.793826110 +0200
+@@ -356,7 +356,7 @@
+ 	for_each_online_pgdat(pgdat) {
+ 		zones = pgdat->node_zonelists[gfp_zone(GFP_NOFS)].zones;
+ 		if (*zones)
+-			try_to_free_pages(zones, GFP_NOFS);
++			try_to_free_pages(zones, GFP_NOFS, NULL);
+ 	}
+ }
+ 
+diff -urN linux-2.6.22.suspend2/fs/pipe.c linux-2.6.22.ck/fs/pipe.c
+--- linux-2.6.22.suspend2/fs/pipe.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/fs/pipe.c	2007-08-02 13:23:45.673826650 +0200
+@@ -41,12 +41,7 @@
+ {
+ 	DEFINE_WAIT(wait);
+ 
+-	/*
+-	 * Pipes are system-local resources, so sleeping on them
+-	 * is considered a noninteractive wait:
+-	 */
+-	prepare_to_wait(&pipe->wait, &wait,
+-			TASK_INTERRUPTIBLE | TASK_NONINTERACTIVE);
++	prepare_to_wait(&pipe->wait, &wait, TASK_INTERRUPTIBLE);
+ 	if (pipe->inode)
+ 		mutex_unlock(&pipe->inode->i_mutex);
+ 	schedule();
+diff -urN linux-2.6.22.suspend2/fs/proc/array.c linux-2.6.22.ck/fs/proc/array.c
+--- linux-2.6.22.suspend2/fs/proc/array.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/fs/proc/array.c	2007-08-02 13:23:45.681826614 +0200
+@@ -165,7 +165,6 @@
+ 	rcu_read_lock();
+ 	buffer += sprintf(buffer,
+ 		"State:\t%s\n"
+-		"SleepAVG:\t%lu%%\n"
+ 		"Tgid:\t%d\n"
+ 		"Pid:\t%d\n"
+ 		"PPid:\t%d\n"
+@@ -173,7 +172,6 @@
+ 		"Uid:\t%d\t%d\t%d\t%d\n"
+ 		"Gid:\t%d\t%d\t%d\t%d\n",
+ 		get_task_state(p),
+-		(p->sleep_avg/1024)*100/(1020000000/1024),
+ 	       	p->tgid, p->pid,
+ 	       	pid_alive(p) ? rcu_dereference(p->real_parent)->tgid : 0,
+ 		pid_alive(p) && p->ptrace ? rcu_dereference(p->parent)->pid : 0,
+diff -urN linux-2.6.22.suspend2/include/linux/init_task.h linux-2.6.22.ck/include/linux/init_task.h
+--- linux-2.6.22.suspend2/include/linux/init_task.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/include/linux/init_task.h	2007-08-02 13:23:45.689826578 +0200
+@@ -125,13 +125,15 @@
+ 	.prio		= MAX_PRIO-20,					\
+ 	.static_prio	= MAX_PRIO-20,					\
+ 	.normal_prio	= MAX_PRIO-20,					\
++	.rotation	= 0,						\
+ 	.policy		= SCHED_NORMAL,					\
+ 	.cpus_allowed	= CPU_MASK_ALL,					\
+ 	.mm		= NULL,						\
+ 	.active_mm	= &init_mm,					\
+ 	.run_list	= LIST_HEAD_INIT(tsk.run_list),			\
+ 	.ioprio		= 0,						\
+-	.time_slice	= HZ,						\
++	.time_slice	= 1000000000,						\
++	.quota		= 1000000000,						\
+ 	.tasks		= LIST_HEAD_INIT(tsk.tasks),			\
+ 	.ptrace_children= LIST_HEAD_INIT(tsk.ptrace_children),		\
+ 	.ptrace_list	= LIST_HEAD_INIT(tsk.ptrace_list),		\
+@@ -158,6 +160,7 @@
+ 		.signal = {{0}}},					\
+ 	.blocked	= {{0}},					\
+ 	.alloc_lock	= __SPIN_LOCK_UNLOCKED(tsk.alloc_lock),		\
++	.mutexes_held	= 0,						\
+ 	.journal_info	= NULL,						\
+ 	.cpu_timers	= INIT_CPU_TIMERS(tsk.cpu_timers),		\
+ 	.fs_excl	= ATOMIC_INIT(0),				\
+diff -urN linux-2.6.22.suspend2/include/linux/ioprio.h linux-2.6.22.ck/include/linux/ioprio.h
+--- linux-2.6.22.suspend2/include/linux/ioprio.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/include/linux/ioprio.h	2007-08-02 13:23:45.741826344 +0200
+@@ -22,7 +22,7 @@
+  * class, the default for any process. IDLE is the idle scheduling class, it
+  * is only served when no one else is using the disk.
+  */
+-enum {
++enum ioprio_class {
+ 	IOPRIO_CLASS_NONE,
+ 	IOPRIO_CLASS_RT,
+ 	IOPRIO_CLASS_BE,
+@@ -51,8 +51,25 @@
+ 	return IOPRIO_PRIO_DATA(task->ioprio);
+ }
+ 
++static inline enum ioprio_class
++	task_policy_ioprio_class(struct task_struct *task)
++{
++	if (rt_task(task))
++		return IOPRIO_CLASS_RT;
++	if (idleprio_task(task))
++		return IOPRIO_CLASS_IDLE;
++	return IOPRIO_CLASS_BE;
++}
++
+ static inline int task_nice_ioprio(struct task_struct *task)
+ {
++	if (rt_task(task))
++		return (MAX_RT_PRIO - task->rt_priority) * IOPRIO_BE_NR /
++			(MAX_RT_PRIO + 1);
++	if (iso_task(task))
++		return 0;
++	if (idleprio_task(task))
++		return IOPRIO_BE_NR - 1;
+ 	return (task_nice(task) + 20) / 5;
+ }
+ 
+diff -urN linux-2.6.22.suspend2/include/linux/jiffies.h linux-2.6.22.ck/include/linux/jiffies.h
+--- linux-2.6.22.suspend2/include/linux/jiffies.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/include/linux/jiffies.h	2007-08-02 13:23:45.889825678 +0200
+@@ -29,6 +29,12 @@
+ # define SHIFT_HZ	9
+ #elif HZ >= 768 && HZ < 1536
+ # define SHIFT_HZ	10
++#elif HZ >= 1536 && HZ < 3072
++# define SHIFT_HZ	11
++#elif HZ >= 3072 && HZ < 6144
++# define SHIFT_HZ	12
++#elif HZ >= 6144 && HZ < 12288
++# define SHIFT_HZ	13
+ #else
+ # error You lose.
+ #endif
+diff -urN linux-2.6.22.suspend2/include/linux/mm_inline.h linux-2.6.22.ck/include/linux/mm_inline.h
+--- linux-2.6.22.suspend2/include/linux/mm_inline.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/include/linux/mm_inline.h	2007-08-02 13:23:45.761826254 +0200
+@@ -13,6 +13,13 @@
+ }
+ 
+ static inline void
++add_page_to_inactive_list_tail(struct zone *zone, struct page *page)
++{
++	list_add_tail(&page->lru, &zone->inactive_list);
++	__inc_zone_state(zone, NR_INACTIVE);
++}
++
++static inline void
+ del_page_from_active_list(struct zone *zone, struct page *page)
+ {
+ 	list_del(&page->lru);
+diff -urN linux-2.6.22.suspend2/include/linux/mmzone.h linux-2.6.22.ck/include/linux/mmzone.h
+--- linux-2.6.22.suspend2/include/linux/mmzone.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/include/linux/mmzone.h	2007-08-02 13:23:45.769826218 +0200
+@@ -13,6 +13,7 @@
+ #include <linux/init.h>
+ #include <linux/seqlock.h>
+ #include <linux/nodemask.h>
++#include <linux/timer.h>
+ #include <asm/atomic.h>
+ #include <asm/page.h>
+ 
+@@ -181,7 +182,7 @@
+ 
+ struct zone {
+ 	/* Fields commonly accessed by the page allocator */
+-	unsigned long		pages_min, pages_low, pages_high;
++	unsigned long		pages_min, pages_low, pages_high, pages_lots;
+ 	/*
+ 	 * We don't know if the memory that we're going to allocate will be freeable
+ 	 * or/and it will be released eventually, so to avoid totally wasting several
+@@ -452,6 +453,7 @@
+ 	wait_queue_head_t kswapd_wait;
+ 	struct task_struct *kswapd;
+ 	int kswapd_max_order;
++	struct timer_list watermark_timer;
+ } pg_data_t;
+ 
+ #define node_present_pages(nid)	(NODE_DATA(nid)->node_present_pages)
+@@ -468,7 +470,7 @@
+ void get_zone_counts(unsigned long *active, unsigned long *inactive,
+ 			unsigned long *free);
+ void build_all_zonelists(void);
+-void wakeup_kswapd(struct zone *zone, int order);
++void wakeup_kswapd(struct zone *zone, int order, struct task_struct *p);
+ int zone_watermark_ok(struct zone *z, int order, unsigned long mark,
+ 		int classzone_idx, int alloc_flags);
+ enum memmap_context {
+diff -urN linux-2.6.22.suspend2/include/linux/nfsd/stats.h linux-2.6.22.ck/include/linux/nfsd/stats.h
+--- linux-2.6.22.suspend2/include/linux/nfsd/stats.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/include/linux/nfsd/stats.h	2007-08-02 13:23:45.949825408 +0200
+@@ -35,8 +35,8 @@
+ 
+ };
+ 
+-/* thread usage wraps very million seconds (approx one fortnight) */
+-#define	NFSD_USAGE_WRAP	(HZ*1000000)
++/* thread usage wraps every one hundred thousand seconds (approx one day) */
++#define	NFSD_USAGE_WRAP	(HZ*100000)
+ 
+ #ifdef __KERNEL__
+ 
+diff -urN linux-2.6.22.suspend2/include/linux/sched.h linux-2.6.22.ck/include/linux/sched.h
+--- linux-2.6.22.suspend2/include/linux/sched.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/include/linux/sched.h	2007-08-02 13:23:45.549827208 +0200
 @@ -34,9 +34,14 @@
  #define SCHED_FIFO		1
  #define SCHED_RR		2
@@ -139,10 +901,407 @@ Index: linux-2.6.22-ck1/include/linux/sched.h
  extern int task_nice(const struct task_struct *p);
  extern int can_nice(const struct task_struct *p, const int nice);
  extern int task_curr(const struct task_struct *p);
-Index: linux-2.6.22-ck1/kernel/sched.c
-===================================================================
---- linux-2.6.22-ck1.orig/kernel/sched.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/kernel/sched.c	2007-07-10 14:55:24.000000000 +1000
+diff -urN linux-2.6.22.suspend2/include/linux/swap.h linux-2.6.22.ck/include/linux/swap.h
+--- linux-2.6.22.suspend2/include/linux/swap.h	2007-08-02 13:18:51.335151180 +0200
++++ linux-2.6.22.ck/include/linux/swap.h	2007-08-02 13:24:52.893524160 +0200
+@@ -180,6 +180,7 @@
+ /* linux/mm/swap.c */
+ extern void FASTCALL(lru_cache_add(struct page *));
+ extern void FASTCALL(lru_cache_add_active(struct page *));
++extern void FASTCALL(lru_cache_add_tail(struct page *));
+ extern void FASTCALL(activate_page(struct page *));
+ extern void FASTCALL(mark_page_accessed(struct page *));
+ extern void lru_add_drain(void);
+@@ -188,10 +189,12 @@
+ extern void swap_setup(void);
+ 
+ /* linux/mm/vmscan.c */
+-extern unsigned long try_to_free_pages(struct zone **, gfp_t);
++extern unsigned long try_to_free_pages(struct zone **, gfp_t,
++				       struct task_struct *p);
+ extern unsigned long shrink_all_memory(unsigned long nr_pages);
+ extern void shrink_one_zone(struct zone *zone, int desired_size);
+-extern int vm_swappiness;
++extern int vm_mapped;
++extern int vm_hardmaplimit;
+ extern int remove_mapping(struct address_space *mapping, struct page *page);
+ extern long vm_total_pages;
+ 
+@@ -238,6 +241,7 @@
+ extern struct page * lookup_swap_cache(swp_entry_t);
+ extern struct page * read_swap_cache_async(swp_entry_t, struct vm_area_struct *vma,
+ 					   unsigned long addr);
++extern int add_to_swap_cache(struct page *page, swp_entry_t entry);
+ /* linux/mm/swapfile.c */
+ extern long total_swap_pages;
+ extern unsigned int nr_swapfiles;
+diff -urN linux-2.6.22.suspend2/include/linux/swap-prefetch.h linux-2.6.22.ck/include/linux/swap-prefetch.h
+--- linux-2.6.22.suspend2/include/linux/swap-prefetch.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22.ck/include/linux/swap-prefetch.h	2007-08-02 13:23:45.761826254 +0200
+@@ -0,0 +1,53 @@
++#ifndef SWAP_PREFETCH_H_INCLUDED
++#define SWAP_PREFETCH_H_INCLUDED
++
++#ifdef CONFIG_SWAP_PREFETCH
++/* mm/swap_prefetch.c */
++extern int swap_prefetch;
++extern int swap_prefetch_delay;
++extern int swap_prefetch_sleep;
++
++struct swapped_entry {
++	swp_entry_t		swp_entry;	/* The actual swap entry */
++	struct list_head	swapped_list;	/* Linked list of entries */
++#if MAX_NUMNODES > 1
++	int			node;		/* Node id */
++#endif
++} __attribute__((packed));
++
++static inline void store_swap_entry_node(struct swapped_entry *entry,
++	struct page *page)
++{
++#if MAX_NUMNODES > 1
++	entry->node = page_to_nid(page);
++#endif
++}
++
++static inline int get_swap_entry_node(struct swapped_entry *entry)
++{
++#if MAX_NUMNODES > 1
++	return entry->node;
++#else
++	return 0;
++#endif
++}
++
++extern void add_to_swapped_list(struct page *page);
++extern void delay_swap_prefetch(void);
++extern void prepare_swap_prefetch(void);
++
++#else	/* CONFIG_SWAP_PREFETCH */
++static inline void add_to_swapped_list(struct page *__unused)
++{
++}
++
++static inline void prepare_swap_prefetch(void)
++{
++}
++
++static inline void delay_swap_prefetch(void)
++{
++}
++#endif	/* CONFIG_SWAP_PREFETCH */
++
++#endif		/* SWAP_PREFETCH_H_INCLUDED */
+diff -urN linux-2.6.22.suspend2/include/linux/sysctl.h linux-2.6.22.ck/include/linux/sysctl.h
+--- linux-2.6.22.suspend2/include/linux/sysctl.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/include/linux/sysctl.h	2007-08-02 13:23:45.765826236 +0200
+@@ -190,7 +190,7 @@
+ 	VM_OVERCOMMIT_RATIO=16, /* percent of RAM to allow overcommit in */
+ 	VM_PAGEBUF=17,		/* struct: Control pagebuf parameters */
+ 	VM_HUGETLB_PAGES=18,	/* int: Number of available Huge Pages */
+-	VM_SWAPPINESS=19,	/* Tendency to steal mapped memory */
++	VM_UNUSED19=19,		/* was: Tendency to steal mapped memory */
+ 	VM_LOWMEM_RESERVE_RATIO=20,/* reservation ratio for lower memory zones */
+ 	VM_MIN_FREE_KBYTES=21,	/* Minimum free kilobytes to maintain */
+ 	VM_MAX_MAP_COUNT=22,	/* int: Maximum number of mmaps/address-space */
+diff -urN linux-2.6.22.suspend2/include/net/inet_timewait_sock.h linux-2.6.22.ck/include/net/inet_timewait_sock.h
+--- linux-2.6.22.suspend2/include/net/inet_timewait_sock.h	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/include/net/inet_timewait_sock.h	2007-08-02 13:23:45.889825678 +0200
+@@ -38,8 +38,8 @@
+  * If time > 4sec, it is "slow" path, no recycling is required,
+  * so that we select tick to get range about 4 seconds.
+  */
+-#if HZ <= 16 || HZ > 4096
+-# error Unsupported: HZ <= 16 or HZ > 4096
++#if HZ <= 16 || HZ > 16384
++# error Unsupported: HZ <= 16 or HZ > 16384
+ #elif HZ <= 32
+ # define INET_TWDR_RECYCLE_TICK (5 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
+ #elif HZ <= 64
+@@ -54,8 +54,12 @@
+ # define INET_TWDR_RECYCLE_TICK (10 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
+ #elif HZ <= 2048
+ # define INET_TWDR_RECYCLE_TICK (11 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
+-#else
++#elif HZ <= 4096
+ # define INET_TWDR_RECYCLE_TICK (12 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
++#elif HZ <= 8192
++# define INET_TWDR_RECYCLE_TICK (13 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
++#else
++# define INET_TWDR_RECYCLE_TICK (14 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
+ #endif
+ 
+ /* TIME_WAIT reaping mechanism. */
+diff -urN linux-2.6.22.suspend2/init/calibrate.c linux-2.6.22.ck/init/calibrate.c
+--- linux-2.6.22.suspend2/init/calibrate.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/init/calibrate.c	2007-08-02 13:23:45.889825678 +0200
+@@ -122,12 +122,12 @@
+ 		printk("Calibrating delay loop (skipped)... "
+ 			"%lu.%02lu BogoMIPS preset\n",
+ 			loops_per_jiffy/(500000/HZ),
+-			(loops_per_jiffy/(5000/HZ)) % 100);
++			(loops_per_jiffy * 10/(50000/HZ)) % 100);
+ 	} else if ((loops_per_jiffy = calibrate_delay_direct()) != 0) {
+ 		printk("Calibrating delay using timer specific routine.. ");
+ 		printk("%lu.%02lu BogoMIPS (lpj=%lu)\n",
+ 			loops_per_jiffy/(500000/HZ),
+-			(loops_per_jiffy/(5000/HZ)) % 100,
++			(loops_per_jiffy * 10/(50000/HZ)) % 100,
+ 			loops_per_jiffy);
+ 	} else {
+ 		loops_per_jiffy = (1<<12);
+@@ -166,7 +166,7 @@
+ 		/* Round the value and print it */
+ 		printk("%lu.%02lu BogoMIPS (lpj=%lu)\n",
+ 			loops_per_jiffy/(500000/HZ),
+-			(loops_per_jiffy/(5000/HZ)) % 100,
++			(loops_per_jiffy * 10/(50000/HZ)) % 100,
+ 			loops_per_jiffy);
+ 	}
+ 
+diff -urN linux-2.6.22.suspend2/init/Kconfig linux-2.6.22.ck/init/Kconfig
+--- linux-2.6.22.suspend2/init/Kconfig	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/init/Kconfig	2007-08-02 13:23:45.749826308 +0200
+@@ -105,6 +105,28 @@
+ 	  used to provide more virtual memory than the actual RAM present
+ 	  in your computer.  If unsure say Y.
+ 
++config SWAP_PREFETCH
++	bool "Support for prefetching swapped memory"
++	depends on SWAP
++	default y
++	---help---
++	  This option will allow the kernel to prefetch swapped memory pages
++	  when idle. The pages will be kept on both swap and in swap_cache
++	  thus avoiding the need for further I/O if either ram or swap space
++	  is required.
++
++	  What this will do on workstations is slowly bring back applications
++	  that have swapped out after memory intensive workloads back into
++	  physical ram if you have free ram at a later stage and the machine
++	  is relatively idle. This means that when you come back to your
++	  computer after leaving it idle for a while, applications will come
++	  to life faster. Note that your swap usage will appear to increase
++	  but these are cached pages, can be dropped freely by the vm, and it
++	  should stabilise around 50% swap usage maximum.
++
++	  Workstations and multiuser workstation servers will most likely want
++	  to say Y.
++
+ config SYSVIPC
+ 	bool "System V IPC"
+ 	---help---
+diff -urN linux-2.6.22.suspend2/kernel/fork.c linux-2.6.22.ck/kernel/fork.c
+--- linux-2.6.22.suspend2/kernel/fork.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/kernel/fork.c	2007-08-02 13:23:45.697826542 +0200
+@@ -1063,6 +1063,7 @@
+ 	p->io_context = NULL;
+ 	p->io_wait = NULL;
+ 	p->audit_context = NULL;
++	p->mutexes_held = 0;
+ 	cpuset_fork(p);
+ #ifdef CONFIG_NUMA
+  	p->mempolicy = mpol_copy(p->mempolicy);
+diff -urN linux-2.6.22.suspend2/kernel/Kconfig.hz linux-2.6.22.ck/kernel/Kconfig.hz
+--- linux-2.6.22.suspend2/kernel/Kconfig.hz	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/kernel/Kconfig.hz	2007-08-02 13:23:45.861825804 +0200
+@@ -4,7 +4,7 @@
+ 
+ choice
+ 	prompt "Timer frequency"
+-	default HZ_250
++	default HZ_1000
+ 	help
+ 	 Allows the configuration of the timer frequency. It is customary
+ 	 to have the timer interrupt run at 1000 Hz but 100 Hz may be more
+@@ -13,8 +13,7 @@
+ 	 contention and cacheline bounces as a result of timer interrupts.
+ 	 Note that the timer interrupt occurs on each processor in an SMP
+ 	 environment leading to NR_CPUS * HZ number of timer interrupts
+-	 per second.
+-
++	 per second.Laptops may also show improved battery life.
+ 
+ 	config HZ_100
+ 		bool "100 HZ"
+@@ -23,13 +22,14 @@
+ 	  with lots of processors that may show reduced performance if
+ 	  too many timer interrupts are occurring.
+ 
+-	config HZ_250
++	config HZ_250_NODEFAULT
+ 		bool "250 HZ"
+ 	help
+-	 250 Hz is a good compromise choice allowing server performance
+-	 while also showing good interactive responsiveness even
+-	 on SMP and NUMA systems. If you are going to be using NTSC video
+-	 or multimedia, selected 300Hz instead.
++	 250 HZ is a lousy compromise choice allowing server interactivity
++	 while also showing desktop throughput and no extra power saving on
++	 laptops. Good for when you can't make up your mind.
++
++	 Recommend 100 or 1000 instead.
+ 
+ 	config HZ_300
+ 		bool "300 HZ"
+@@ -45,12 +45,76 @@
+ 	 1000 Hz is the preferred choice for desktop systems and other
+ 	 systems requiring fast interactive responses to events.
+ 
++	config HZ_1500
++		bool "1500 HZ"
++	help
++	 1500 Hz is an insane value to use to run broken software that is Hz
++	 limited.
++
++	 Being over 1000, driver breakage is likely.
++
++	config HZ_2000
++		bool "2000 HZ"
++	help
++	 2000 Hz is an insane value to use to run broken software that is Hz
++	 limited.
++
++	 Being over 1000, driver breakage is likely.
++
++	config HZ_3000
++		bool "3000 HZ"
++	help
++	 3000 Hz is an insane value to use to run broken software that is Hz
++	 limited.
++
++	 Being over 1000, driver breakage is likely.
++
++	config HZ_4000
++		bool "4000 HZ"
++	help
++	 4000 Hz is an insane value to use to run broken software that is Hz
++	 limited.
++
++	 Being over 1000, driver breakage is likely.
++
++	config HZ_5000
++		bool "5000 HZ"
++	help
++	 5000 Hz is an obscene value to use to run broken software that is Hz
++	 limited.
++
++	 Being over 1000, driver breakage is likely.
++
++	config HZ_7500
++		bool "7500 HZ"
++	help
++	 7500 Hz is an obscene value to use to run broken software that is Hz
++	 limited.
++
++	 Being over 1000, driver breakage is likely.
++
++	config HZ_10000
++		bool "10000 HZ"
++	help
++	 10000 Hz is an obscene value to use to run broken software that is Hz
++	 limited.
++
++	 Being over 1000, driver breakage is likely.
++
++
+ endchoice
+ 
+ config HZ
+ 	int
+ 	default 100 if HZ_100
+-	default 250 if HZ_250
++	default 250 if HZ_250_NODEFAULT
+ 	default 300 if HZ_300
+ 	default 1000 if HZ_1000
++	default 1500 if HZ_1500
++	default 2000 if HZ_2000
++	default 3000 if HZ_3000
++	default 4000 if HZ_4000
++	default 5000 if HZ_5000
++	default 7500 if HZ_7500
++	default 10000 if HZ_10000
+ 
+diff -urN linux-2.6.22.suspend2/kernel/kthread.c linux-2.6.22.ck/kernel/kthread.c
+--- linux-2.6.22.suspend2/kernel/kthread.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/kernel/kthread.c	2007-08-02 13:23:45.693826560 +0200
+@@ -223,7 +223,6 @@
+ 
+ 	ignore_signals(tsk);
+ 
+-	set_user_nice(tsk, -5);
+ 	set_cpus_allowed(tsk, CPU_MASK_ALL);
+ }
+ 
+diff -urN linux-2.6.22.suspend2/kernel/mutex.c linux-2.6.22.ck/kernel/mutex.c
+--- linux-2.6.22.suspend2/kernel/mutex.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/kernel/mutex.c	2007-08-02 13:23:45.697826542 +0200
+@@ -60,6 +60,16 @@
+ static void fastcall noinline __sched
+ __mutex_lock_slowpath(atomic_t *lock_count);
+ 
++static inline void inc_mutex_count(void)
++{
++	current->mutexes_held++;
++}
++
++static inline void dec_mutex_count(void)
++{
++	current->mutexes_held--;
++}
++
+ /***
+  * mutex_lock - acquire the mutex
+  * @lock: the mutex to be acquired
+@@ -89,6 +99,7 @@
+ 	 * 'unlocked' into 'locked' state.
+ 	 */
+ 	__mutex_fastpath_lock(&lock->count, __mutex_lock_slowpath);
++	inc_mutex_count();
+ }
+ 
+ EXPORT_SYMBOL(mutex_lock);
+@@ -114,6 +125,7 @@
+ 	 * into 'unlocked' state:
+ 	 */
+ 	__mutex_fastpath_unlock(&lock->count, __mutex_unlock_slowpath);
++	dec_mutex_count();
+ }
+ 
+ EXPORT_SYMBOL(mutex_unlock);
+@@ -283,9 +295,14 @@
+  */
+ int fastcall __sched mutex_lock_interruptible(struct mutex *lock)
+ {
++	int ret;
++
+ 	might_sleep();
+-	return __mutex_fastpath_lock_retval
++	ret = __mutex_fastpath_lock_retval
+ 			(&lock->count, __mutex_lock_interruptible_slowpath);
++	if (likely(!ret))
++		inc_mutex_count();
++	return ret;
+ }
+ 
+ EXPORT_SYMBOL(mutex_lock_interruptible);
+@@ -340,8 +357,12 @@
+  */
+ int fastcall __sched mutex_trylock(struct mutex *lock)
+ {
+-	return __mutex_fastpath_trylock(&lock->count,
++	int ret = __mutex_fastpath_trylock(&lock->count,
+ 					__mutex_trylock_slowpath);
++
++	if (likely(ret))
++		inc_mutex_count();
++	return ret;
+ }
+ 
+ EXPORT_SYMBOL(mutex_trylock);
+diff -urN linux-2.6.22.suspend2/kernel/sched.c linux-2.6.22.ck/kernel/sched.c
+--- linux-2.6.22.suspend2/kernel/sched.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/kernel/sched.c	2007-08-02 13:23:45.573827100 +0200
 @@ -16,6 +16,7 @@
   *		by Davide Libenzi, preemptible kernel bits by Robert Love.
   *  2003-09-03	Interactivity tuning by Con Kolivas.
@@ -2523,10 +3682,21 @@ Index: linux-2.6.22-ck1/kernel/sched.c
  			__activate_task(p, task_rq(p));
  			resched_task(rq->curr);
  		}
-Index: linux-2.6.22-ck1/kernel/sysctl.c
-===================================================================
---- linux-2.6.22-ck1.orig/kernel/sysctl.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/kernel/sysctl.c	2007-07-10 14:55:23.000000000 +1000
+diff -urN linux-2.6.22.suspend2/kernel/softirq.c linux-2.6.22.ck/kernel/softirq.c
+--- linux-2.6.22.suspend2/kernel/softirq.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/kernel/softirq.c	2007-08-02 13:23:45.689826578 +0200
+@@ -488,7 +488,7 @@
+ 
+ static int ksoftirqd(void * __bind_cpu)
+ {
+-	set_user_nice(current, 19);
++	set_user_nice(current, 15);
+ 	current->flags |= PF_NOFREEZE;
+ 
+ 	set_current_state(TASK_INTERRUPTIBLE);
+diff -urN linux-2.6.22.suspend2/kernel/sysctl.c linux-2.6.22.ck/kernel/sysctl.c
+--- linux-2.6.22.suspend2/kernel/sysctl.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/kernel/sysctl.c	2007-08-02 13:23:45.577827082 +0200
 @@ -22,6 +22,7 @@
  #include <linux/mm.h>
  #include <linux/swap.h>
@@ -2702,421 +3872,9 @@ Index: linux-2.6.22-ck1/kernel/sysctl.c
  	{ .ctl_name = 0 }
  };
  
-Index: linux-2.6.22-ck1/Documentation/sched-design.txt
-===================================================================
---- linux-2.6.22-ck1.orig/Documentation/sched-design.txt	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/Documentation/sched-design.txt	2007-07-10 14:55:02.000000000 +1000
-@@ -1,11 +1,14 @@
--		   Goals, Design and Implementation of the
--		      new ultra-scalable O(1) scheduler
-+ Goals, Design and Implementation of the ultra-scalable O(1) scheduler by
-+ Ingo Molnar and theStaircase Deadline cpu scheduler policy designed by
-+ Con Kolivas.
- 
- 
--  This is an edited version of an email Ingo Molnar sent to
--  lkml on 4 Jan 2002.  It describes the goals, design, and
--  implementation of Ingo's new ultra-scalable O(1) scheduler.
--  Last Updated: 18 April 2002.
-+  This was originally an edited version of an email Ingo Molnar sent to
-+  lkml on 4 Jan 2002.  It describes the goals, design, and implementation
-+  of Ingo's ultra-scalable O(1) scheduler. It now contains a description
-+  of the Staircase Deadline priority scheduler that was built on this
-+  design.
-+  Last Updated: Fri, 4 May 2007
- 
- 
- Goal
-@@ -163,3 +166,222 @@
- code is smaller than the old one.
- 
- 	Ingo
-+
-+
-+Staircase Deadline cpu scheduler policy
-+================================================
-+
-+Design summary
-+==============
-+
-+A novel design which incorporates a foreground-background descending priority
-+system (the staircase) via a bandwidth allocation matrix according to nice
-+level.
-+
-+
-+Features
-+========
-+
-+A starvation free, strict fairness O(1) scalable design with interactivity
-+as good as the above restrictions can provide. There is no interactivity
-+estimator, no sleep/run measurements and only simple fixed accounting.
-+The design has strict enough a design and accounting that task behaviour
-+can be modelled and maximum scheduling latencies can be predicted by
-+the virtual deadline mechanism that manages runqueues. The prime concern
-+in this design is to maintain fairness at all costs determined by nice level,
-+yet to maintain as good interactivity as can be allowed within the
-+constraints of strict fairness.
-+
-+
-+Design description
-+==================
-+
-+SD works off the principle of providing each task a quota of runtime that it is
-+allowed to run at a number of priority levels determined by its static priority
-+(ie. its nice level). If the task uses up its quota it has its priority
-+decremented to the next level determined by a priority matrix. Once every
-+runtime quota has been consumed of every priority level, a task is queued on the
-+"expired" array. When no other tasks exist with quota, the expired array is
-+activated and fresh quotas are handed out. This is all done in O(1).
-+
-+Design details
-+==============
-+
-+Each task keeps a record of its own entitlement of cpu time. Most of the rest of
-+these details apply to non-realtime tasks as rt task management is straight
-+forward.
-+
-+Each runqueue keeps a record of what major epoch it is up to in the
-+rq->prio_rotation field which is incremented on each major epoch. It also
-+keeps a record of the current prio_level for each static priority task.
-+
-+Each task keeps a record of what major runqueue epoch it was last running
-+on in p->rotation. It also keeps a record of what priority levels it has
-+already been allocated quota from during this epoch in a bitmap p->bitmap.
-+
-+The only tunable that determines all other details is the RR_INTERVAL. This
-+is set to 8ms, and is scaled gently upwards with more cpus. This value is
-+tunable via a /proc interface.
-+
-+All tasks are initially given a quota based on RR_INTERVAL. This is equal to
-+RR_INTERVAL between nice values of -6 and 0, half that size above nice 0, and
-+progressively larger for nice values from -1 to -20. This is assigned to
-+p->quota and only changes with changes in nice level.
-+
-+As a task is first queued, it checks in recalc_task_prio to see if it has run at
-+this runqueue's current priority rotation. If it has not, it will have its
-+p->prio level set according to the first slot in a "priority matrix" and will be
-+given a p->time_slice equal to the p->quota, and has its allocation bitmap bit
-+set in p->bitmap for this prio level. It is then queued on the current active
-+priority array.
-+
-+If a task has already been running during this major epoch, and it has
-+p->time_slice left and the rq->prio_quota for the task's p->prio still
-+has quota, it will be placed back on the active array, but no more quota
-+will be added.
-+
-+If a task has been running during this major epoch, but does not have
-+p->time_slice left, it will find the next lowest priority in its bitmap that it
-+has not been allocated quota from. It then gets the a full quota in
-+p->time_slice. It is then queued on the current active priority array at the
-+newly determined lower priority.
-+
-+If a task has been running during this major epoch, and does not have
-+any entitlement left in p->bitmap and no time_slice left, it will have its
-+bitmap cleared, and be queued at its best prio again, but on the expired
-+priority array.
-+
-+When a task is queued, it has its relevant bit set in the array->prio_bitmap.
-+
-+p->time_slice is stored in nanosconds and is updated via update_cpu_clock on
-+schedule() and scheduler_tick. If p->time_slice is below zero then the
-+recalc_task_prio is readjusted and the task rescheduled.
-+
-+
-+Priority Matrix
-+===============
-+
-+In order to minimise the latencies between tasks of different nice levels
-+running concurrently, the dynamic priority slots where different nice levels
-+are queued are dithered instead of being sequential. What this means is that
-+there are 40 priority slots where a task may run during one major rotation,
-+and the allocation of slots is dependant on nice level. In the
-+following table, a zero represents a slot where the task may run.
-+
-+PRIORITY:0..................20.................39
-+nice -20 0000000000000000000000000000000000000000
-+nice -10 1000100010001000100010001000100010010000
-+nice   0 1010101010101010101010101010101010101010
-+nice   5 1011010110110101101101011011010110110110
-+nice  10 1110111011101110111011101110111011101110
-+nice  15 1111111011111110111111101111111011111110
-+nice  19 1111111111111111111111111111111111111110
-+
-+As can be seen, a nice -20 task runs in every priority slot whereas a nice 19
-+task only runs one slot per major rotation. This dithered table allows for the
-+smallest possible maximum latencies between tasks of varying nice levels, thus
-+allowing vastly different nice levels to be used.
-+
-+SCHED_BATCH tasks are managed slightly differently, receiving only the top
-+slots from its priority bitmap giving it equal cpu as SCHED_NORMAL, but
-+slightly higher latencies.
-+
-+
-+Modelling deadline behaviour
-+============================
-+
-+As the accounting in this design is hard and not modified by sleep average
-+calculations or interactivity modifiers, it is possible to accurately
-+predict the maximum latency that a task may experience under different
-+conditions. This is a virtual deadline mechanism enforced by mandatory
-+timeslice expiration and not outside bandwidth measurement.
-+
-+The maximum duration a task can run during one major epoch is determined by its
-+nice value. Nice 0 tasks can run at 19 different priority levels for RR_INTERVAL
-+duration during each epoch. Nice 10 tasks can run at 9 priority levels for each
-+epoch, and so on. The table in the priority matrix above demonstrates how this
-+is enforced.
-+
-+Therefore the maximum duration a runqueue epoch can take is determined by
-+the number of tasks running, and their nice level. After that, the maximum
-+duration it can take before a task can wait before it get scheduled is
-+determined by the position of its first slot on the matrix.
-+
-+In the following examples, these are _worst case scenarios_ and would rarely
-+occur, but can be modelled nonetheless to determine the maximum possible
-+latency.
-+
-+So for example, if two nice 0 tasks are running, and one has just expired as
-+another is activated for the first time receiving a full quota for this
-+runqueue rotation, the first task will wait:
-+
-+nr_tasks * max_duration + nice_difference * rr_interval
-+1 * 19 * RR_INTERVAL + 0 = 152ms
-+
-+In the presence of a nice 10 task, a nice 0 task would wait a maximum of
-+1 * 10 * RR_INTERVAL + 0 = 80ms
-+
-+In the presence of a nice 0 task, a nice 10 task would wait a maximum of
-+1 * 19 * RR_INTERVAL + 1 * RR_INTERVAL = 160ms
-+
-+More useful than these values, though, are the average latencies which are
-+a matter of determining the average distance between priority slots of
-+different nice values and multiplying them by the tasks' quota. For example
-+in the presence of a nice -10 task, a nice 0 task will wait either one or
-+two slots. Given that nice -10 tasks have a quota 2.5 times the RR_INTERVAL,
-+this means the latencies will alternate between 2.5 and 5 RR_INTERVALs or
-+20 and 40ms respectively (on uniprocessor at 1000HZ).
-+
-+
-+Achieving interactivity
-+=======================
-+
-+A requirement of this scheduler design was to achieve good interactivity
-+despite being a completely fair deadline based design. The disadvantage of
-+designs that try to achieve interactivity is that they usually do so at
-+the expense of maintaining fairness. As cpu speeds increase, the requirement
-+for some sort of metered unfairness towards interactive tasks becomes a less
-+desirable phenomenon, but low latency and fairness remains mandatory to
-+good interactive performance.
-+
-+This design relies on the fact that interactive tasks, by their nature,
-+sleep often. Most fair scheduling designs end up penalising such tasks
-+indirectly giving them less than their fair possible share because of the
-+sleep, and have to use a mechanism of bonusing their priority to offset
-+this based on the duration they sleep. This becomes increasingly inaccurate
-+as the number of running tasks rises and more tasks spend time waiting on
-+runqueues rather than sleeping, and it is impossible to tell whether the
-+task that's waiting on a runqueue only intends to run for a short period and
-+then sleep again after than runqueue wait. Furthermore, all such designs rely
-+on a period of time to pass to accumulate some form of statistic on the task
-+before deciding on how much to give them preference. The shorter this period,
-+the more rapidly bursts of cpu ruin the interactive tasks behaviour. The
-+longer this period, the longer it takes for interactive tasks to get low
-+scheduling latencies and fair cpu.
-+
-+This design does not measure sleep time at all. Interactive tasks that sleep
-+often will wake up having consumed very little if any of their quota for
-+the current major priority rotation. The longer they have slept, the less
-+likely they are to even be on the current major priority rotation. Once
-+woken up, though, they get to use up a their full quota for that epoch,
-+whether part of a quota remains or a full quota. Overall, however, they
-+can still only run as much cpu time for that epoch as any other task of the
-+same nice level. This means that two tasks behaving completely differently
-+from fully cpu bound to waking/sleeping extremely frequently will still
-+get the same quota of cpu, but the latter will be using its quota for that
-+epoch in bursts rather than continuously. This guarantees that interactive
-+tasks get the same amount of cpu as cpu bound ones.
-+
-+The other requirement of interactive tasks is also to obtain low latencies
-+for when they are scheduled. Unlike fully cpu bound tasks and the maximum
-+latencies possible described in the modelling deadline behaviour section
-+above, tasks that sleep will wake up with quota available usually at the
-+current runqueue's priority_level or better. This means that the most latency
-+they are likely to see is one RR_INTERVAL, and often they will preempt the
-+current task if it is not of a sleeping nature. This then guarantees very
-+low latency for interactive tasks, and the lowest latencies for the least
-+cpu bound tasks.
-+
-+
-+Fri, 4 May 2007
-+Con Kolivas <kernel@kolivas.org>
-Index: linux-2.6.22-ck1/Documentation/sysctl/kernel.txt
-===================================================================
---- linux-2.6.22-ck1.orig/Documentation/sysctl/kernel.txt	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/Documentation/sysctl/kernel.txt	2007-07-10 14:55:20.000000000 +1000
-@@ -25,6 +25,9 @@
- - domainname
- - hostname
- - hotplug
-+- interactive
-+- iso_cpu
-+- iso_period
- - java-appletviewer           [ binfmt_java, obsolete ]
- - java-interpreter            [ binfmt_java, obsolete ]
- - kstack_depth_to_print       [ X86 only ]
-@@ -43,6 +46,7 @@
- - printk
- - real-root-dev               ==> Documentation/initrd.txt
- - reboot-cmd                  [ SPARC only ]
-+- rr_interval
- - rtsig-max
- - rtsig-nr
- - sem
-@@ -164,6 +168,40 @@
- 
- ==============================================================
- 
-+interactive:
-+
-+The staircase-deadline cpu scheduler can be set in either purely
-+forward-looking mode for absolutely rigid fairness and cpu distribution
-+according to nice level, or it can allow a small per-process history
-+to smooth out cpu usage perturbations common in interactive tasks by
-+enabling this sysctl. While small fairness issues can arise with this
-+enabled, overall fairness is usually still strongly maintained and
-+starvation is never possible. Enabling this can significantly smooth
-+out 3d graphics and games.
-+
-+Default value is 1 (enabled).
-+
-+==============================================================
-+
-+iso_cpu:
-+
-+This sets the percentage cpu that the unprivileged SCHED_ISO tasks can
-+run effectively at realtime priority, averaged over a rolling iso_period
-+seconds.
-+
-+Set to 80 (percent) by default.
-+
-+==============================================================
-+
-+iso_period:
-+
-+This sets the number of seconds over which SCHED_ISO cpu usage is averaged
-+to see if it exceeds its allocated cpu bandwidth.
-+
-+Set to 5 (seconds) by default.
-+
-+==============================================================
-+
- l2cr: (PPC only)
- 
- This flag controls the L2 cache of G3 processor boards. If
-@@ -288,6 +326,19 @@
- 
- ==============================================================
- 
-+rr_interval:
-+
-+This is the smallest duration that any cpu process scheduling unit
-+will run for. Increasing this value can increase throughput of cpu
-+bound tasks substantially but at the expense of increased latencies
-+overall. This value is in milliseconds and the default value chosen
-+depends on the number of cpus available at scheduler initialisation
-+with a minimum of 8.
-+
-+Valid values are from 1-5000.
-+
-+==============================================================
-+
- rtsig-max & rtsig-nr:
- 
- The file rtsig-max can be used to tune the maximum number
-Index: linux-2.6.22-ck1/fs/pipe.c
-===================================================================
---- linux-2.6.22-ck1.orig/fs/pipe.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/fs/pipe.c	2007-07-10 14:55:02.000000000 +1000
-@@ -41,12 +41,7 @@
- {
- 	DEFINE_WAIT(wait);
- 
--	/*
--	 * Pipes are system-local resources, so sleeping on them
--	 * is considered a noninteractive wait:
--	 */
--	prepare_to_wait(&pipe->wait, &wait,
--			TASK_INTERRUPTIBLE | TASK_NONINTERACTIVE);
-+	prepare_to_wait(&pipe->wait, &wait, TASK_INTERRUPTIBLE);
- 	if (pipe->inode)
- 		mutex_unlock(&pipe->inode->i_mutex);
- 	schedule();
-Index: linux-2.6.22-ck1/fs/proc/array.c
-===================================================================
---- linux-2.6.22-ck1.orig/fs/proc/array.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/fs/proc/array.c	2007-07-10 14:55:02.000000000 +1000
-@@ -165,7 +165,6 @@
- 	rcu_read_lock();
- 	buffer += sprintf(buffer,
- 		"State:\t%s\n"
--		"SleepAVG:\t%lu%%\n"
- 		"Tgid:\t%d\n"
- 		"Pid:\t%d\n"
- 		"PPid:\t%d\n"
-@@ -173,7 +172,6 @@
- 		"Uid:\t%d\t%d\t%d\t%d\n"
- 		"Gid:\t%d\t%d\t%d\t%d\n",
- 		get_task_state(p),
--		(p->sleep_avg/1024)*100/(1020000000/1024),
- 	       	p->tgid, p->pid,
- 	       	pid_alive(p) ? rcu_dereference(p->real_parent)->tgid : 0,
- 		pid_alive(p) && p->ptrace ? rcu_dereference(p->parent)->pid : 0,
-Index: linux-2.6.22-ck1/include/linux/init_task.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/linux/init_task.h	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/include/linux/init_task.h	2007-07-10 14:55:20.000000000 +1000
-@@ -125,13 +125,15 @@
- 	.prio		= MAX_PRIO-20,					\
- 	.static_prio	= MAX_PRIO-20,					\
- 	.normal_prio	= MAX_PRIO-20,					\
-+	.rotation	= 0,						\
- 	.policy		= SCHED_NORMAL,					\
- 	.cpus_allowed	= CPU_MASK_ALL,					\
- 	.mm		= NULL,						\
- 	.active_mm	= &init_mm,					\
- 	.run_list	= LIST_HEAD_INIT(tsk.run_list),			\
- 	.ioprio		= 0,						\
--	.time_slice	= HZ,						\
-+	.time_slice	= 1000000000,						\
-+	.quota		= 1000000000,						\
- 	.tasks		= LIST_HEAD_INIT(tsk.tasks),			\
- 	.ptrace_children= LIST_HEAD_INIT(tsk.ptrace_children),		\
- 	.ptrace_list	= LIST_HEAD_INIT(tsk.ptrace_list),		\
-@@ -158,6 +160,7 @@
- 		.signal = {{0}}},					\
- 	.blocked	= {{0}},					\
- 	.alloc_lock	= __SPIN_LOCK_UNLOCKED(tsk.alloc_lock),		\
-+	.mutexes_held	= 0,						\
- 	.journal_info	= NULL,						\
- 	.cpu_timers	= INIT_CPU_TIMERS(tsk.cpu_timers),		\
- 	.fs_excl	= ATOMIC_INIT(0),				\
-Index: linux-2.6.22-ck1/kernel/softirq.c
-===================================================================
---- linux-2.6.22-ck1.orig/kernel/softirq.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/kernel/softirq.c	2007-07-10 14:55:02.000000000 +1000
-@@ -488,7 +488,7 @@
- 
- static int ksoftirqd(void * __bind_cpu)
- {
--	set_user_nice(current, 19);
-+	set_user_nice(current, 15);
- 	current->flags |= PF_NOFREEZE;
- 
- 	set_current_state(TASK_INTERRUPTIBLE);
-Index: linux-2.6.22-ck1/kernel/workqueue.c
-===================================================================
---- linux-2.6.22-ck1.orig/kernel/workqueue.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/kernel/workqueue.c	2007-07-10 14:55:02.000000000 +1000
+diff -urN linux-2.6.22.suspend2/kernel/workqueue.c linux-2.6.22.ck/kernel/workqueue.c
+--- linux-2.6.22.suspend2/kernel/workqueue.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/kernel/workqueue.c	2007-08-02 13:23:45.693826560 +0200
 @@ -285,8 +285,6 @@
  	if (!cwq->wq->freezeable)
  		current->flags |= PF_NOFREEZE;
@@ -3126,322 +3884,101 @@ Index: linux-2.6.22-ck1/kernel/workqueue.c
  	for (;;) {
  		prepare_to_wait(&cwq->more_work, &wait, TASK_INTERRUPTIBLE);
  		if (!freezing(current) &&
-Index: linux-2.6.22-ck1/kernel/kthread.c
-===================================================================
---- linux-2.6.22-ck1.orig/kernel/kthread.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/kernel/kthread.c	2007-07-10 14:55:02.000000000 +1000
-@@ -223,7 +223,6 @@
+diff -urN linux-2.6.22.suspend2/Makefile linux-2.6.22.ck/Makefile
+--- linux-2.6.22.suspend2/Makefile	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/Makefile	2007-08-02 13:23:45.985825246 +0200
+@@ -1,8 +1,9 @@
+ VERSION = 2
+ PATCHLEVEL = 6
+ SUBLEVEL = 22
+-EXTRAVERSION =
+-NAME = Holy Dancing Manatees, Batman!
++EXTRAVERSION = -ck1
++NAME = So long, and thanks for all the fish
++JANAME = さようなら、いままで魚をありがとう
  
- 	ignore_signals(tsk);
- 
--	set_user_nice(tsk, -5);
- 	set_cpus_allowed(tsk, CPU_MASK_ALL);
+ # *DOCUMENTATION*
+ # To see a list of typical targets execute "make help"
+diff -urN linux-2.6.22.suspend2/mm/filemap.c linux-2.6.22.ck/mm/filemap.c
+--- linux-2.6.22.suspend2/mm/filemap.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/mm/filemap.c	2007-08-02 13:23:45.797826092 +0200
+@@ -466,6 +466,16 @@
+ 	return ret;
  }
  
-Index: linux-2.6.22-ck1/kernel/fork.c
-===================================================================
---- linux-2.6.22-ck1.orig/kernel/fork.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/kernel/fork.c	2007-07-10 14:55:20.000000000 +1000
-@@ -1063,6 +1063,7 @@
- 	p->io_context = NULL;
- 	p->io_wait = NULL;
- 	p->audit_context = NULL;
-+	p->mutexes_held = 0;
- 	cpuset_fork(p);
++int add_to_page_cache_lru_tail(struct page *page,
++	struct address_space *mapping, pgoff_t offset, gfp_t gfp_mask)
++{
++	int ret = add_to_page_cache(page, mapping, offset, gfp_mask);
++
++	if (ret == 0)
++		lru_cache_add_tail(page);
++	return ret;
++}
++
  #ifdef CONFIG_NUMA
-  	p->mempolicy = mpol_copy(p->mempolicy);
-Index: linux-2.6.22-ck1/kernel/mutex.c
-===================================================================
---- linux-2.6.22-ck1.orig/kernel/mutex.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/kernel/mutex.c	2007-07-10 14:55:20.000000000 +1000
-@@ -60,6 +60,16 @@
- static void fastcall noinline __sched
- __mutex_lock_slowpath(atomic_t *lock_count);
+ struct page *__page_cache_alloc(gfp_t gfp)
+ {
+@@ -839,6 +849,34 @@
+ 	ra->ra_pages /= 4;
+ }
  
-+static inline void inc_mutex_count(void)
++/*
++ * Sysctl which determines whether we should read from large files to the
++ * tail of the inactive lru list.
++ */
++int vm_tail_largefiles __read_mostly = 1;
++
++static inline int nr_mapped(void)
 +{
-+	current->mutexes_held++;
++	return global_page_state(NR_FILE_MAPPED) +
++		global_page_state(NR_ANON_PAGES);
 +}
 +
-+static inline void dec_mutex_count(void)
++/*
++ * This examines how large in pages a file size is and returns 1 if it is
++ * more than half the unmapped ram. Avoid doing read_page_state which is
++ * expensive unless we already know it is likely to be large enough.
++ */
++static int large_isize(unsigned long nr_pages)
 +{
-+	current->mutexes_held--;
++	if (nr_pages * 6 > vm_total_pages) {
++		 unsigned long unmapped_ram = vm_total_pages - nr_mapped();
++
++		if (nr_pages * 2 > unmapped_ram)
++			return 1;
++	}
++	return 0;
 +}
 +
- /***
-  * mutex_lock - acquire the mutex
-  * @lock: the mutex to be acquired
-@@ -89,6 +99,7 @@
- 	 * 'unlocked' into 'locked' state.
- 	 */
- 	__mutex_fastpath_lock(&lock->count, __mutex_lock_slowpath);
-+	inc_mutex_count();
- }
- 
- EXPORT_SYMBOL(mutex_lock);
-@@ -114,6 +125,7 @@
- 	 * into 'unlocked' state:
- 	 */
- 	__mutex_fastpath_unlock(&lock->count, __mutex_unlock_slowpath);
-+	dec_mutex_count();
- }
- 
- EXPORT_SYMBOL(mutex_unlock);
-@@ -283,9 +295,14 @@
-  */
- int fastcall __sched mutex_lock_interruptible(struct mutex *lock)
- {
-+	int ret;
+ /**
+  * do_generic_mapping_read - generic file read routine
+  * @mapping:	address_space to be read
+@@ -1051,8 +1089,19 @@
+ 				goto out;
+ 			}
+ 		}
+-		error = add_to_page_cache_lru(cached_page, mapping,
+-						index, GFP_KERNEL);
 +
- 	might_sleep();
--	return __mutex_fastpath_lock_retval
-+	ret = __mutex_fastpath_lock_retval
- 			(&lock->count, __mutex_lock_interruptible_slowpath);
-+	if (likely(!ret))
-+		inc_mutex_count();
-+	return ret;
- }
- 
- EXPORT_SYMBOL(mutex_lock_interruptible);
-@@ -340,8 +357,12 @@
-  */
- int fastcall __sched mutex_trylock(struct mutex *lock)
- {
--	return __mutex_fastpath_trylock(&lock->count,
-+	int ret = __mutex_fastpath_trylock(&lock->count,
- 					__mutex_trylock_slowpath);
-+
-+	if (likely(ret))
-+		inc_mutex_count();
-+	return ret;
- }
- 
- EXPORT_SYMBOL(mutex_trylock);
-Index: linux-2.6.22-ck1/block/cfq-iosched.c
-===================================================================
---- linux-2.6.22-ck1.orig/block/cfq-iosched.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/block/cfq-iosched.c	2007-07-10 14:55:21.000000000 +1000
-@@ -1276,10 +1276,12 @@
- 			printk(KERN_ERR "cfq: bad prio %x\n", ioprio_class);
- 		case IOPRIO_CLASS_NONE:
- 			/*
--			 * no prio set, place us in the middle of the BE classes
-+			 * Select class and ioprio according to policy and nice
- 			 */
-+			cfqq->ioprio_class = task_policy_ioprio_class(tsk);
- 			cfqq->ioprio = task_nice_ioprio(tsk);
--			cfqq->ioprio_class = IOPRIO_CLASS_BE;
-+			if (cfqq->ioprio_class == IOPRIO_CLASS_IDLE)
-+				cfq_clear_cfqq_idle_window(cfqq);
- 			break;
- 		case IOPRIO_CLASS_RT:
- 			cfqq->ioprio = task_ioprio(tsk);
-Index: linux-2.6.22-ck1/include/linux/ioprio.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/linux/ioprio.h	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/include/linux/ioprio.h	2007-07-10 14:55:21.000000000 +1000
-@@ -22,7 +22,7 @@
-  * class, the default for any process. IDLE is the idle scheduling class, it
-  * is only served when no one else is using the disk.
-  */
--enum {
-+enum ioprio_class {
- 	IOPRIO_CLASS_NONE,
- 	IOPRIO_CLASS_RT,
- 	IOPRIO_CLASS_BE,
-@@ -51,8 +51,25 @@
- 	return IOPRIO_PRIO_DATA(task->ioprio);
- }
- 
-+static inline enum ioprio_class
-+	task_policy_ioprio_class(struct task_struct *task)
-+{
-+	if (rt_task(task))
-+		return IOPRIO_CLASS_RT;
-+	if (idleprio_task(task))
-+		return IOPRIO_CLASS_IDLE;
-+	return IOPRIO_CLASS_BE;
-+}
-+
- static inline int task_nice_ioprio(struct task_struct *task)
- {
-+	if (rt_task(task))
-+		return (MAX_RT_PRIO - task->rt_priority) * IOPRIO_BE_NR /
-+			(MAX_RT_PRIO + 1);
-+	if (iso_task(task))
-+		return 0;
-+	if (idleprio_task(task))
-+		return IOPRIO_BE_NR - 1;
- 	return (task_nice(task) + 20) / 5;
- }
- 
-Index: linux-2.6.22-ck1/Documentation/sysctl/vm.txt
-===================================================================
---- linux-2.6.22-ck1.orig/Documentation/sysctl/vm.txt	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/Documentation/sysctl/vm.txt	2007-07-10 14:55:23.000000000 +1000
-@@ -22,6 +22,8 @@
- - dirty_background_ratio
- - dirty_expire_centisecs
- - dirty_writeback_centisecs
-+- hardmaplimit
-+- mapped
- - max_map_count
- - min_free_kbytes
- - laptop_mode
-@@ -31,12 +33,15 @@
- - min_unmapped_ratio
- - min_slab_ratio
- - panic_on_oom
-+- swap_prefetch
-+- swap_prefetch_delay
-+- swap_prefetch_sleep
- 
- ==============================================================
- 
- dirty_ratio, dirty_background_ratio, dirty_expire_centisecs,
- dirty_writeback_centisecs, vfs_cache_pressure, laptop_mode,
--block_dump, swap_token_timeout, drop-caches:
-+block_dump, swap_token_timeout, drop-caches, tail_largefiles:
- 
- See Documentation/filesystems/proc.txt
- 
-@@ -86,6 +91,27 @@
- 
- ==============================================================
- 
-+hardmaplimit:
-+
-+This flag makes the vm adhere to the mapped value as closely as possible
-+except in the most extreme vm stress where doing so would provoke an out
-+of memory condition (see mapped below).
-+
-+Enabled by default.
-+
-+==============================================================
-+
-+mapped:
-+
-+This is the percentage ram that is filled with mapped pages (applications)
-+before the vm will start reclaiming mapped pages by moving them to swap.
-+It is altered by the relative stress of the vm at the time so is not
-+strictly adhered to to prevent provoking out of memory kills.
-+
-+Set to 66 by default.
-+
-+==============================================================
-+
- max_map_count:
- 
- This file contains the maximum number of memory map areas a process
-@@ -216,3 +242,37 @@
- The default value is 0.
- 1 and 2 are for failover of clustering. Please select either
- according to your policy of failover.
-+
-+==============================================================
-+
-+swap_prefetch
-+
-+This enables or disables the swap prefetching feature. When the virtual
-+memory subsystem has been extremely idle for at least swap_prefetch_sleep
-+seconds it will start copying back pages from swap into the swapcache and keep
-+a copy in swap. Valid values are 0 - 3. A value of 0 disables swap
-+prefetching, 1 enables it unless laptop_mode is enabled, 2 enables it in the
-+presence of laptop_mode, and 3 enables it unconditionally, ignoring whether
-+the system is idle or not. If set to 0, swap prefetch wil not even try to keep
-+record of ram swapped out to have the most minimal impact on performance.
-+
-+The default value is 1.
-+
-+==============================================================
-+
-+swap_prefetch_delay
-+
-+This is the time in seconds that swap prefetching is delayed upon finding
-+the system is not idle (ie the vm is busy or non-niced cpu load is present).
-+
-+The default value is 1.
-+
-+==============================================================
-+
-+swap_prefetch_sleep
-+
-+This is the time in seconds that the swap prefetch kernel thread is put to
-+sleep for when the ram is found to be full and it is unable to prefetch
-+further.
-+
-+The default value is 5.
-Index: linux-2.6.22-ck1/include/linux/swap.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/linux/swap.h	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/include/linux/swap.h	2007-07-10 14:55:22.000000000 +1000
-@@ -180,6 +180,7 @@
- /* linux/mm/swap.c */
- extern void FASTCALL(lru_cache_add(struct page *));
- extern void FASTCALL(lru_cache_add_active(struct page *));
-+extern void FASTCALL(lru_cache_add_tail(struct page *));
- extern void FASTCALL(activate_page(struct page *));
- extern void FASTCALL(mark_page_accessed(struct page *));
- extern void lru_add_drain(void);
-@@ -188,9 +189,11 @@
- extern void swap_setup(void);
- 
- /* linux/mm/vmscan.c */
--extern unsigned long try_to_free_pages(struct zone **, gfp_t);
-+extern unsigned long try_to_free_pages(struct zone **, gfp_t,
-+				       struct task_struct *p);
- extern unsigned long shrink_all_memory(unsigned long nr_pages);
--extern int vm_swappiness;
-+extern int vm_mapped;
-+extern int vm_hardmaplimit;
- extern int remove_mapping(struct address_space *mapping, struct page *page);
- extern long vm_total_pages;
- 
-@@ -237,6 +240,7 @@
- extern struct page * lookup_swap_cache(swp_entry_t);
- extern struct page * read_swap_cache_async(swp_entry_t, struct vm_area_struct *vma,
- 					   unsigned long addr);
-+extern int add_to_swap_cache(struct page *page, swp_entry_t entry);
- /* linux/mm/swapfile.c */
- extern long total_swap_pages;
- extern unsigned int nr_swapfiles;
-Index: linux-2.6.22-ck1/init/Kconfig
-===================================================================
---- linux-2.6.22-ck1.orig/init/Kconfig	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/init/Kconfig	2007-07-10 14:55:22.000000000 +1000
-@@ -105,6 +105,28 @@
- 	  used to provide more virtual memory than the actual RAM present
- 	  in your computer.  If unsure say Y.
- 
-+config SWAP_PREFETCH
-+	bool "Support for prefetching swapped memory"
-+	depends on SWAP
-+	default y
-+	---help---
-+	  This option will allow the kernel to prefetch swapped memory pages
-+	  when idle. The pages will be kept on both swap and in swap_cache
-+	  thus avoiding the need for further I/O if either ram or swap space
-+	  is required.
-+
-+	  What this will do on workstations is slowly bring back applications
-+	  that have swapped out after memory intensive workloads back into
-+	  physical ram if you have free ram at a later stage and the machine
-+	  is relatively idle. This means that when you come back to your
-+	  computer after leaving it idle for a while, applications will come
-+	  to life faster. Note that your swap usage will appear to increase
-+	  but these are cached pages, can be dropped freely by the vm, and it
-+	  should stabilise around 50% swap usage maximum.
-+
-+	  Workstations and multiuser workstation servers will most likely want
-+	  to say Y.
-+
- config SYSVIPC
- 	bool "System V IPC"
- 	---help---
-Index: linux-2.6.22-ck1/mm/Makefile
-===================================================================
---- linux-2.6.22-ck1.orig/mm/Makefile	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/mm/Makefile	2007-07-10 14:55:22.000000000 +1000
++		/*
++		 * If we know the file is large we add the pages read to the
++		 * end of the lru as we're unlikely to be able to cache the
++		 * whole file in ram so make those pages the first to be
++		 * dropped if not referenced soon.
++		 */
++		if (vm_tail_largefiles && large_isize(end_index))
++			error = add_to_page_cache_lru_tail(cached_page,
++						mapping, index, GFP_KERNEL);
++		else
++			error = add_to_page_cache_lru(cached_page, mapping,
++							index, GFP_KERNEL);
+ 		if (error) {
+ 			if (error == -EEXIST)
+ 				goto find_page;
+diff -urN linux-2.6.22.suspend2/mm/Makefile linux-2.6.22.ck/mm/Makefile
+--- linux-2.6.22.suspend2/mm/Makefile	2007-08-02 13:18:51.447150676 +0200
++++ linux-2.6.22.ck/mm/Makefile	2007-08-02 13:23:45.749826308 +0200
 @@ -17,6 +17,7 @@
  obj-y			+= bounce.o
  endif
@@ -3450,10 +3987,73 @@ Index: linux-2.6.22-ck1/mm/Makefile
  obj-$(CONFIG_HUGETLBFS)	+= hugetlb.o
  obj-$(CONFIG_NUMA) 	+= mempolicy.o
  obj-$(CONFIG_SPARSEMEM)	+= sparse.o
-Index: linux-2.6.22-ck1/mm/swap.c
-===================================================================
---- linux-2.6.22-ck1.orig/mm/swap.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/mm/swap.c	2007-07-10 14:55:23.000000000 +1000
+diff -urN linux-2.6.22.suspend2/mm/page_alloc.c linux-2.6.22.ck/mm/page_alloc.c
+--- linux-2.6.22.suspend2/mm/page_alloc.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/mm/page_alloc.c	2007-08-02 13:23:45.773826200 +0200
+@@ -1250,7 +1250,7 @@
+ 		goto nopage;
+ 
+ 	for (z = zonelist->zones; *z; z++)
+-		wakeup_kswapd(*z, order);
++		wakeup_kswapd(*z, order, p);
+ 
+ 	/*
+ 	 * OK, we're below the kswapd watermark and have kicked background
+@@ -1314,7 +1314,7 @@
+ 	reclaim_state.reclaimed_slab = 0;
+ 	p->reclaim_state = &reclaim_state;
+ 
+-	did_some_progress = try_to_free_pages(zonelist->zones, gfp_mask);
++	did_some_progress = try_to_free_pages(zonelist->zones, gfp_mask, p);
+ 
+ 	p->reclaim_state = NULL;
+ 	p->flags &= ~PF_MEMALLOC;
+@@ -1570,6 +1570,7 @@
+ 			" min:%lukB"
+ 			" low:%lukB"
+ 			" high:%lukB"
++			" lots:%lukB"
+ 			" active:%lukB"
+ 			" inactive:%lukB"
+ 			" present:%lukB"
+@@ -1581,6 +1582,7 @@
+ 			K(zone->pages_min),
+ 			K(zone->pages_low),
+ 			K(zone->pages_high),
++			K(zone->pages_lots),
+ 			K(zone_page_state(zone, NR_ACTIVE)),
+ 			K(zone_page_state(zone, NR_INACTIVE)),
+ 			K(zone->present_pages),
+@@ -3142,6 +3144,7 @@
+ 
+ 		zone->pages_low   = zone->pages_min + (tmp >> 2);
+ 		zone->pages_high  = zone->pages_min + (tmp >> 1);
++		zone->pages_lots  = zone->pages_min + tmp;
+ 		spin_unlock_irqrestore(&zone->lru_lock, flags);
+ 	}
+ 
+diff -urN linux-2.6.22.suspend2/mm/page_io.c linux-2.6.22.ck/mm/page_io.c
+--- linux-2.6.22.suspend2/mm/page_io.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/mm/page_io.c	2007-08-02 13:23:45.765826236 +0200
+@@ -17,6 +17,7 @@
+ #include <linux/bio.h>
+ #include <linux/swapops.h>
+ #include <linux/writeback.h>
++#include <linux/swap-prefetch.h>
+ #include <asm/pgtable.h>
+ 
+ static struct bio *get_swap_bio(gfp_t gfp_flags, pgoff_t index,
+@@ -118,6 +119,7 @@
+ 		ret = -ENOMEM;
+ 		goto out;
+ 	}
++	add_to_swapped_list(page);
+ 	if (wbc->sync_mode == WB_SYNC_ALL)
+ 		rw |= (1 << BIO_RW_SYNC);
+ 	count_vm_event(PSWPOUT);
+diff -urN linux-2.6.22.suspend2/mm/swap.c linux-2.6.22.ck/mm/swap.c
+--- linux-2.6.22.suspend2/mm/swap.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/mm/swap.c	2007-08-02 13:23:45.749826308 +0200
 @@ -17,6 +17,7 @@
  #include <linux/sched.h>
  #include <linux/kernel_stat.h>
@@ -3543,10 +4143,9 @@ Index: linux-2.6.22-ck1/mm/swap.c
  #ifdef CONFIG_HOTPLUG_CPU
  	hotcpu_notifier(cpu_swap_callback, 0);
  #endif
-Index: linux-2.6.22-ck1/mm/swap_prefetch.c
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.22-ck1/mm/swap_prefetch.c	2007-07-10 14:55:22.000000000 +1000
+diff -urN linux-2.6.22.suspend2/mm/swap_prefetch.c linux-2.6.22.ck/mm/swap_prefetch.c
+--- linux-2.6.22.suspend2/mm/swap_prefetch.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22.ck/mm/swap_prefetch.c	2007-08-02 13:23:45.753826290 +0200
 @@ -0,0 +1,542 @@
 +/*
 + * linux/mm/swap_prefetch.c
@@ -4090,10 +4689,9 @@ Index: linux-2.6.22-ck1/mm/swap_prefetch.c
 +
 +module_init(kprefetchd_init);
 +module_exit(kprefetchd_exit);
-Index: linux-2.6.22-ck1/mm/swap_state.c
-===================================================================
---- linux-2.6.22-ck1.orig/mm/swap_state.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/mm/swap_state.c	2007-07-10 14:55:22.000000000 +1000
+diff -urN linux-2.6.22.suspend2/mm/swap_state.c linux-2.6.22.ck/mm/swap_state.c
+--- linux-2.6.22.suspend2/mm/swap_state.c	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22.ck/mm/swap_state.c	2007-08-02 13:23:45.757826272 +0200
 @@ -10,6 +10,7 @@
  #include <linux/mm.h>
  #include <linux/kernel_stat.h>
@@ -4131,10 +4729,9 @@ Index: linux-2.6.22-ck1/mm/swap_state.c
  	do {
  		/*
  		 * First check the swap cache.  Since this is normally
-Index: linux-2.6.22-ck1/mm/vmscan.c
-===================================================================
---- linux-2.6.22-ck1.orig/mm/vmscan.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/mm/vmscan.c	2007-07-10 14:55:23.000000000 +1000
+diff -urN linux-2.6.22.suspend2/mm/vmscan.c linux-2.6.22.ck/mm/vmscan.c
+--- linux-2.6.22.suspend2/mm/vmscan.c	2007-08-02 13:18:51.451150658 +0200
++++ linux-2.6.22.ck/mm/vmscan.c	2007-08-02 13:23:45.761826254 +0200
 @@ -16,6 +16,7 @@
  #include <linux/slab.h>
  #include <linux/kernel_stat.h>
@@ -4173,7 +4770,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  long vm_total_pages;	/* The total number of pages which the VM controls */
  
  static LIST_HEAD(shrinker_list);
-@@ -803,10 +806,14 @@
+@@ -810,10 +813,14 @@
  		 * The distress ratio is important - we don't want to start
  		 * going oom.
  		 *
@@ -4191,7 +4788,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  
  		/*
  		 * Now use this metric to decide whether to start moving mapped
-@@ -955,6 +962,41 @@
+@@ -962,6 +969,41 @@
  }
  
  /*
@@ -4233,7 +4830,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
   * This is the direct reclaim path, for page-allocating processes.  We only
   * try to reclaim pages from zones which will satisfy the caller's allocation
   * request.
-@@ -1011,7 +1053,8 @@
+@@ -1018,7 +1060,8 @@
   * holds filesystem locks which prevent writeout this might not work, and the
   * allocation attempt will fail.
   */
@@ -4243,7 +4840,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  {
  	int priority;
  	int ret = 0;
-@@ -1019,15 +1062,20 @@
+@@ -1026,15 +1069,20 @@
  	unsigned long nr_reclaimed = 0;
  	struct reclaim_state *reclaim_state = current->reclaim_state;
  	unsigned long lru_pages = 0;
@@ -4266,7 +4863,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  	count_vm_event(ALLOCSTALL);
  
  	for (i = 0; zones[i] != NULL; i++) {
-@@ -1040,7 +1088,7 @@
+@@ -1047,7 +1095,7 @@
  				+ zone_page_state(zone, NR_INACTIVE);
  	}
  
@@ -4275,7 +4872,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  		sc.nr_scanned = 0;
  		if (!priority)
  			disable_swap_token();
-@@ -1070,7 +1118,7 @@
+@@ -1077,7 +1125,7 @@
  		}
  
  		/* Take a nap, wait for some writeback to complete */
@@ -4284,7 +4881,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  			congestion_wait(WRITE, HZ/10);
  	}
  	/* top priority shrink_caches still had more to do? don't OOM, then */
-@@ -1120,9 +1168,9 @@
+@@ -1127,9 +1175,9 @@
   */
  static unsigned long balance_pgdat(pg_data_t *pgdat, int order)
  {
@@ -4296,7 +4893,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  	unsigned long total_scanned;
  	unsigned long nr_reclaimed;
  	struct reclaim_state *reclaim_state = current->reclaim_state;
-@@ -1130,7 +1178,7 @@
+@@ -1137,7 +1185,7 @@
  		.gfp_mask = GFP_KERNEL,
  		.may_swap = 1,
  		.swap_cluster_max = SWAP_CLUSTER_MAX,
@@ -4305,7 +4902,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  	};
  	/*
  	 * temp_priority is used to remember the scanning priority at which
-@@ -1138,6 +1186,8 @@
+@@ -1145,6 +1193,8 @@
  	 */
  	int temp_priority[MAX_NR_ZONES];
  
@@ -4314,7 +4911,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  loop_again:
  	total_scanned = 0;
  	nr_reclaimed = 0;
-@@ -1145,9 +1195,9 @@
+@@ -1152,9 +1202,9 @@
  	count_vm_event(PAGEOUTRUN);
  
  	for (i = 0; i < pgdat->nr_zones; i++)
@@ -4326,7 +4923,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  		int end_zone = 0;	/* Inclusive.  0 = ZONE_DMA */
  		unsigned long lru_pages = 0;
  
-@@ -1163,15 +1213,22 @@
+@@ -1170,15 +1220,22 @@
  		 */
  		for (i = pgdat->nr_zones - 1; i >= 0; i--) {
  			struct zone *zone = pgdat->node_zones + i;
@@ -4352,7 +4949,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  				end_zone = i;
  				break;
  			}
-@@ -1198,14 +1255,18 @@
+@@ -1205,14 +1262,18 @@
  		for (i = 0; i <= end_zone; i++) {
  			struct zone *zone = pgdat->node_zones + i;
  			int nr_slab;
@@ -4373,7 +4970,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  					       end_zone, 0))
  				all_zones_ok = 0;
  			temp_priority[i] = priority;
-@@ -1238,7 +1299,7 @@
+@@ -1245,7 +1306,7 @@
  		 * OK, kswapd is getting into trouble.  Take a nap, then take
  		 * another pass across the zones.
  		 */
@@ -4382,8 +4979,8 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  			congestion_wait(WRITE, HZ/10);
  
  		/*
-@@ -1272,6 +1333,8 @@
- 	return nr_reclaimed;
+@@ -1345,6 +1406,8 @@
+ 	}
  }
  
 +#define WT_EXPIRY	(HZ * 5)	/* Time to wakeup watermark_timer */
@@ -4391,7 +4988,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  /*
   * The background pageout daemon, started as a kernel thread
   * from the init process. 
-@@ -1319,6 +1382,8 @@
+@@ -1392,6 +1455,8 @@
  	for ( ; ; ) {
  		unsigned long new_order;
  
@@ -4400,7 +4997,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  		prepare_to_wait(&pgdat->kswapd_wait, &wait, TASK_INTERRUPTIBLE);
  		new_order = pgdat->kswapd_max_order;
  		pgdat->kswapd_max_order = 0;
-@@ -1332,6 +1397,7 @@
+@@ -1405,6 +1470,7 @@
  			if (!freezing(current))
  				schedule();
  
@@ -4408,7 +5005,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  			order = pgdat->kswapd_max_order;
  		}
  		finish_wait(&pgdat->kswapd_wait, &wait);
-@@ -1349,9 +1415,10 @@
+@@ -1422,9 +1488,10 @@
  /*
   * A zone is low on free memory, so wake its kswapd task to service it.
   */
@@ -4420,7 +5017,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  
  	if (!populated_zone(zone))
  		return;
-@@ -1363,7 +1430,9 @@
+@@ -1439,7 +1506,9 @@
  		pgdat->kswapd_max_order = order;
  	if (!cpuset_zone_allowed_hardwall(zone, GFP_KERNEL))
  		return;
@@ -4431,7 +5028,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  		return;
  	wake_up_interruptible(&pgdat->kswapd_wait);
  }
-@@ -1382,6 +1451,8 @@
+@@ -1543,6 +1612,8 @@
  	struct zone *zone;
  	unsigned long nr_to_scan, ret = 0;
  
@@ -4440,7 +5037,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  	for_each_zone(zone) {
  
  		if (!populated_zone(zone))
-@@ -1441,7 +1512,7 @@
+@@ -1602,7 +1673,7 @@
  		.may_swap = 0,
  		.swap_cluster_max = nr_pages,
  		.may_writepage = 1,
@@ -4449,7 +5046,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  	};
  
  	current->reclaim_state = &reclaim_state;
-@@ -1476,7 +1547,7 @@
+@@ -1637,7 +1708,7 @@
  		/* Force reclaiming mapped pages in the passes #3 and #4 */
  		if (pass > 2) {
  			sc.may_swap = 1;
@@ -4458,7 +5055,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  		}
  
  		for (prio = DEF_PRIORITY; prio >= 0; prio--) {
-@@ -1540,20 +1611,57 @@
+@@ -1701,20 +1772,57 @@
  }
  
  /*
@@ -4516,7 +5113,7 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  		BUG_ON(system_state == SYSTEM_BOOTING);
  		printk("Failed to start kswapd on node %d\n",nid);
  		ret = -1;
-@@ -1624,7 +1732,7 @@
+@@ -1785,7 +1893,7 @@
  		.swap_cluster_max = max_t(unsigned long, nr_pages,
  					SWAP_CLUSTER_MAX),
  		.gfp_mask = gfp_mask,
@@ -4525,643 +5122,3 @@ Index: linux-2.6.22-ck1/mm/vmscan.c
  	};
  	unsigned long slab_reclaimable;
  
-Index: linux-2.6.22-ck1/include/linux/mm_inline.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/linux/mm_inline.h	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/include/linux/mm_inline.h	2007-07-10 14:55:22.000000000 +1000
-@@ -13,6 +13,13 @@
- }
- 
- static inline void
-+add_page_to_inactive_list_tail(struct zone *zone, struct page *page)
-+{
-+	list_add_tail(&page->lru, &zone->inactive_list);
-+	__inc_zone_state(zone, NR_INACTIVE);
-+}
-+
-+static inline void
- del_page_from_active_list(struct zone *zone, struct page *page)
- {
- 	list_del(&page->lru);
-Index: linux-2.6.22-ck1/include/linux/swap-prefetch.h
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.22-ck1/include/linux/swap-prefetch.h	2007-07-10 14:55:22.000000000 +1000
-@@ -0,0 +1,53 @@
-+#ifndef SWAP_PREFETCH_H_INCLUDED
-+#define SWAP_PREFETCH_H_INCLUDED
-+
-+#ifdef CONFIG_SWAP_PREFETCH
-+/* mm/swap_prefetch.c */
-+extern int swap_prefetch;
-+extern int swap_prefetch_delay;
-+extern int swap_prefetch_sleep;
-+
-+struct swapped_entry {
-+	swp_entry_t		swp_entry;	/* The actual swap entry */
-+	struct list_head	swapped_list;	/* Linked list of entries */
-+#if MAX_NUMNODES > 1
-+	int			node;		/* Node id */
-+#endif
-+} __attribute__((packed));
-+
-+static inline void store_swap_entry_node(struct swapped_entry *entry,
-+	struct page *page)
-+{
-+#if MAX_NUMNODES > 1
-+	entry->node = page_to_nid(page);
-+#endif
-+}
-+
-+static inline int get_swap_entry_node(struct swapped_entry *entry)
-+{
-+#if MAX_NUMNODES > 1
-+	return entry->node;
-+#else
-+	return 0;
-+#endif
-+}
-+
-+extern void add_to_swapped_list(struct page *page);
-+extern void delay_swap_prefetch(void);
-+extern void prepare_swap_prefetch(void);
-+
-+#else	/* CONFIG_SWAP_PREFETCH */
-+static inline void add_to_swapped_list(struct page *__unused)
-+{
-+}
-+
-+static inline void prepare_swap_prefetch(void)
-+{
-+}
-+
-+static inline void delay_swap_prefetch(void)
-+{
-+}
-+#endif	/* CONFIG_SWAP_PREFETCH */
-+
-+#endif		/* SWAP_PREFETCH_H_INCLUDED */
-Index: linux-2.6.22-ck1/mm/page_io.c
-===================================================================
---- linux-2.6.22-ck1.orig/mm/page_io.c	2007-07-10 14:55:00.000000000 +1000
-+++ linux-2.6.22-ck1/mm/page_io.c	2007-07-10 14:55:22.000000000 +1000
-@@ -17,6 +17,7 @@
- #include <linux/bio.h>
- #include <linux/swapops.h>
- #include <linux/writeback.h>
-+#include <linux/swap-prefetch.h>
- #include <asm/pgtable.h>
- 
- static struct bio *get_swap_bio(gfp_t gfp_flags, pgoff_t index,
-@@ -118,6 +119,7 @@
- 		ret = -ENOMEM;
- 		goto out;
- 	}
-+	add_to_swapped_list(page);
- 	if (wbc->sync_mode == WB_SYNC_ALL)
- 		rw |= (1 << BIO_RW_SYNC);
- 	count_vm_event(PSWPOUT);
-Index: linux-2.6.22-ck1/include/linux/sysctl.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/linux/sysctl.h	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/include/linux/sysctl.h	2007-07-10 14:55:22.000000000 +1000
-@@ -190,7 +190,7 @@
- 	VM_OVERCOMMIT_RATIO=16, /* percent of RAM to allow overcommit in */
- 	VM_PAGEBUF=17,		/* struct: Control pagebuf parameters */
- 	VM_HUGETLB_PAGES=18,	/* int: Number of available Huge Pages */
--	VM_SWAPPINESS=19,	/* Tendency to steal mapped memory */
-+	VM_UNUSED19=19,		/* was: Tendency to steal mapped memory */
- 	VM_LOWMEM_RESERVE_RATIO=20,/* reservation ratio for lower memory zones */
- 	VM_MIN_FREE_KBYTES=21,	/* Minimum free kilobytes to maintain */
- 	VM_MAX_MAP_COUNT=22,	/* int: Maximum number of mmaps/address-space */
-Index: linux-2.6.22-ck1/include/linux/mmzone.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/linux/mmzone.h	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/include/linux/mmzone.h	2007-07-10 14:55:23.000000000 +1000
-@@ -13,6 +13,7 @@
- #include <linux/init.h>
- #include <linux/seqlock.h>
- #include <linux/nodemask.h>
-+#include <linux/timer.h>
- #include <asm/atomic.h>
- #include <asm/page.h>
- 
-@@ -181,7 +182,7 @@
- 
- struct zone {
- 	/* Fields commonly accessed by the page allocator */
--	unsigned long		pages_min, pages_low, pages_high;
-+	unsigned long		pages_min, pages_low, pages_high, pages_lots;
- 	/*
- 	 * We don't know if the memory that we're going to allocate will be freeable
- 	 * or/and it will be released eventually, so to avoid totally wasting several
-@@ -452,6 +453,7 @@
- 	wait_queue_head_t kswapd_wait;
- 	struct task_struct *kswapd;
- 	int kswapd_max_order;
-+	struct timer_list watermark_timer;
- } pg_data_t;
- 
- #define node_present_pages(nid)	(NODE_DATA(nid)->node_present_pages)
-@@ -468,7 +470,7 @@
- void get_zone_counts(unsigned long *active, unsigned long *inactive,
- 			unsigned long *free);
- void build_all_zonelists(void);
--void wakeup_kswapd(struct zone *zone, int order);
-+void wakeup_kswapd(struct zone *zone, int order, struct task_struct *p);
- int zone_watermark_ok(struct zone *z, int order, unsigned long mark,
- 		int classzone_idx, int alloc_flags);
- enum memmap_context {
-Index: linux-2.6.22-ck1/mm/page_alloc.c
-===================================================================
---- linux-2.6.22-ck1.orig/mm/page_alloc.c	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/mm/page_alloc.c	2007-07-10 14:55:22.000000000 +1000
-@@ -1250,7 +1250,7 @@
- 		goto nopage;
- 
- 	for (z = zonelist->zones; *z; z++)
--		wakeup_kswapd(*z, order);
-+		wakeup_kswapd(*z, order, p);
- 
- 	/*
- 	 * OK, we're below the kswapd watermark and have kicked background
-@@ -1314,7 +1314,7 @@
- 	reclaim_state.reclaimed_slab = 0;
- 	p->reclaim_state = &reclaim_state;
- 
--	did_some_progress = try_to_free_pages(zonelist->zones, gfp_mask);
-+	did_some_progress = try_to_free_pages(zonelist->zones, gfp_mask, p);
- 
- 	p->reclaim_state = NULL;
- 	p->flags &= ~PF_MEMALLOC;
-@@ -1570,6 +1570,7 @@
- 			" min:%lukB"
- 			" low:%lukB"
- 			" high:%lukB"
-+			" lots:%lukB"
- 			" active:%lukB"
- 			" inactive:%lukB"
- 			" present:%lukB"
-@@ -1581,6 +1582,7 @@
- 			K(zone->pages_min),
- 			K(zone->pages_low),
- 			K(zone->pages_high),
-+			K(zone->pages_lots),
- 			K(zone_page_state(zone, NR_ACTIVE)),
- 			K(zone_page_state(zone, NR_INACTIVE)),
- 			K(zone->present_pages),
-@@ -3142,6 +3144,7 @@
- 
- 		zone->pages_low   = zone->pages_min + (tmp >> 2);
- 		zone->pages_high  = zone->pages_min + (tmp >> 1);
-+		zone->pages_lots  = zone->pages_min + tmp;
- 		spin_unlock_irqrestore(&zone->lru_lock, flags);
- 	}
- 
-Index: linux-2.6.22-ck1/fs/buffer.c
-===================================================================
---- linux-2.6.22-ck1.orig/fs/buffer.c	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/fs/buffer.c	2007-07-10 14:55:22.000000000 +1000
-@@ -356,7 +356,7 @@
- 	for_each_online_pgdat(pgdat) {
- 		zones = pgdat->node_zonelists[gfp_zone(GFP_NOFS)].zones;
- 		if (*zones)
--			try_to_free_pages(zones, GFP_NOFS);
-+			try_to_free_pages(zones, GFP_NOFS, NULL);
- 	}
- }
- 
-Index: linux-2.6.22-ck1/mm/filemap.c
-===================================================================
---- linux-2.6.22-ck1.orig/mm/filemap.c	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/mm/filemap.c	2007-07-10 14:55:23.000000000 +1000
-@@ -466,6 +466,16 @@
- 	return ret;
- }
- 
-+int add_to_page_cache_lru_tail(struct page *page,
-+	struct address_space *mapping, pgoff_t offset, gfp_t gfp_mask)
-+{
-+	int ret = add_to_page_cache(page, mapping, offset, gfp_mask);
-+
-+	if (ret == 0)
-+		lru_cache_add_tail(page);
-+	return ret;
-+}
-+
- #ifdef CONFIG_NUMA
- struct page *__page_cache_alloc(gfp_t gfp)
- {
-@@ -839,6 +849,34 @@
- 	ra->ra_pages /= 4;
- }
- 
-+/*
-+ * Sysctl which determines whether we should read from large files to the
-+ * tail of the inactive lru list.
-+ */
-+int vm_tail_largefiles __read_mostly = 1;
-+
-+static inline int nr_mapped(void)
-+{
-+	return global_page_state(NR_FILE_MAPPED) +
-+		global_page_state(NR_ANON_PAGES);
-+}
-+
-+/*
-+ * This examines how large in pages a file size is and returns 1 if it is
-+ * more than half the unmapped ram. Avoid doing read_page_state which is
-+ * expensive unless we already know it is likely to be large enough.
-+ */
-+static int large_isize(unsigned long nr_pages)
-+{
-+	if (nr_pages * 6 > vm_total_pages) {
-+		 unsigned long unmapped_ram = vm_total_pages - nr_mapped();
-+
-+		if (nr_pages * 2 > unmapped_ram)
-+			return 1;
-+	}
-+	return 0;
-+}
-+
- /**
-  * do_generic_mapping_read - generic file read routine
-  * @mapping:	address_space to be read
-@@ -1051,8 +1089,19 @@
- 				goto out;
- 			}
- 		}
--		error = add_to_page_cache_lru(cached_page, mapping,
--						index, GFP_KERNEL);
-+
-+		/*
-+		 * If we know the file is large we add the pages read to the
-+		 * end of the lru as we're unlikely to be able to cache the
-+		 * whole file in ram so make those pages the first to be
-+		 * dropped if not referenced soon.
-+		 */
-+		if (vm_tail_largefiles && large_isize(end_index))
-+			error = add_to_page_cache_lru_tail(cached_page,
-+						mapping, index, GFP_KERNEL);
-+		else
-+			error = add_to_page_cache_lru(cached_page, mapping,
-+							index, GFP_KERNEL);
- 		if (error) {
- 			if (error == -EEXIST)
- 				goto find_page;
-Index: linux-2.6.22-ck1/Documentation/filesystems/proc.txt
-===================================================================
---- linux-2.6.22-ck1.orig/Documentation/filesystems/proc.txt	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/Documentation/filesystems/proc.txt	2007-07-10 14:55:23.000000000 +1000
-@@ -1333,6 +1333,14 @@
- As this is a non-destructive operation and dirty objects are not freeable, the
- user should run `sync' first.
- 
-+tail_largefiles
-+---------------
-+
-+When enabled reads from large files to the tail end of the inactive lru list.
-+This means that any cache from reading large files is dropped very quickly,
-+preventing loss of mapped ram and useful pagecache when large files are read.
-+This does, however, make caching less effective when working with large files.
-+
- 
- 2.5 /proc/sys/dev - Device specific parameters
- ----------------------------------------------
-Index: linux-2.6.22-ck1/arch/i386/Kconfig
-===================================================================
---- linux-2.6.22-ck1.orig/arch/i386/Kconfig	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/arch/i386/Kconfig	2007-07-10 14:55:23.000000000 +1000
-@@ -550,7 +550,7 @@
- 
- choice
- 	depends on EXPERIMENTAL
--	prompt "Memory split" if EMBEDDED
-+	prompt "Memory split"
- 	default VMSPLIT_3G
- 	help
- 	  Select the desired split between kernel and user memory.
-@@ -569,17 +569,17 @@
- 	  option alone!
- 
- 	config VMSPLIT_3G
--		bool "3G/1G user/kernel split"
-+		bool "Default 896MB lowmem (3G/1G user/kernel split)"
- 	config VMSPLIT_3G_OPT
- 		depends on !HIGHMEM
--		bool "3G/1G user/kernel split (for full 1G low memory)"
-+		bool "1GB lowmem (3G/1G user/kernel split)"
- 	config VMSPLIT_2G
--		bool "2G/2G user/kernel split"
-+		bool "2GB lowmem (2G/2G user/kernel split)"
- 	config VMSPLIT_2G_OPT
- 		depends on !HIGHMEM
--		bool "2G/2G user/kernel split (for full 2G low memory)"
-+		bool "2GB lowmem (2G/2G user/kernel split)"
- 	config VMSPLIT_1G
--		bool "1G/3G user/kernel split"
-+		bool "3GB lowmem (1G/3G user/kernel split)"
- endchoice
- 
- config PAGE_OFFSET
-Index: linux-2.6.22-ck1/kernel/Kconfig.hz
-===================================================================
---- linux-2.6.22-ck1.orig/kernel/Kconfig.hz	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/kernel/Kconfig.hz	2007-07-10 14:55:24.000000000 +1000
-@@ -4,7 +4,7 @@
- 
- choice
- 	prompt "Timer frequency"
--	default HZ_250
-+	default HZ_1000
- 	help
- 	 Allows the configuration of the timer frequency. It is customary
- 	 to have the timer interrupt run at 1000 Hz but 100 Hz may be more
-@@ -13,8 +13,7 @@
- 	 contention and cacheline bounces as a result of timer interrupts.
- 	 Note that the timer interrupt occurs on each processor in an SMP
- 	 environment leading to NR_CPUS * HZ number of timer interrupts
--	 per second.
--
-+	 per second.Laptops may also show improved battery life.
- 
- 	config HZ_100
- 		bool "100 HZ"
-@@ -23,13 +22,14 @@
- 	  with lots of processors that may show reduced performance if
- 	  too many timer interrupts are occurring.
- 
--	config HZ_250
-+	config HZ_250_NODEFAULT
- 		bool "250 HZ"
- 	help
--	 250 Hz is a good compromise choice allowing server performance
--	 while also showing good interactive responsiveness even
--	 on SMP and NUMA systems. If you are going to be using NTSC video
--	 or multimedia, selected 300Hz instead.
-+	 250 HZ is a lousy compromise choice allowing server interactivity
-+	 while also showing desktop throughput and no extra power saving on
-+	 laptops. Good for when you can't make up your mind.
-+
-+	 Recommend 100 or 1000 instead.
- 
- 	config HZ_300
- 		bool "300 HZ"
-@@ -45,12 +45,76 @@
- 	 1000 Hz is the preferred choice for desktop systems and other
- 	 systems requiring fast interactive responses to events.
- 
-+	config HZ_1500
-+		bool "1500 HZ"
-+	help
-+	 1500 Hz is an insane value to use to run broken software that is Hz
-+	 limited.
-+
-+	 Being over 1000, driver breakage is likely.
-+
-+	config HZ_2000
-+		bool "2000 HZ"
-+	help
-+	 2000 Hz is an insane value to use to run broken software that is Hz
-+	 limited.
-+
-+	 Being over 1000, driver breakage is likely.
-+
-+	config HZ_3000
-+		bool "3000 HZ"
-+	help
-+	 3000 Hz is an insane value to use to run broken software that is Hz
-+	 limited.
-+
-+	 Being over 1000, driver breakage is likely.
-+
-+	config HZ_4000
-+		bool "4000 HZ"
-+	help
-+	 4000 Hz is an insane value to use to run broken software that is Hz
-+	 limited.
-+
-+	 Being over 1000, driver breakage is likely.
-+
-+	config HZ_5000
-+		bool "5000 HZ"
-+	help
-+	 5000 Hz is an obscene value to use to run broken software that is Hz
-+	 limited.
-+
-+	 Being over 1000, driver breakage is likely.
-+
-+	config HZ_7500
-+		bool "7500 HZ"
-+	help
-+	 7500 Hz is an obscene value to use to run broken software that is Hz
-+	 limited.
-+
-+	 Being over 1000, driver breakage is likely.
-+
-+	config HZ_10000
-+		bool "10000 HZ"
-+	help
-+	 10000 Hz is an obscene value to use to run broken software that is Hz
-+	 limited.
-+
-+	 Being over 1000, driver breakage is likely.
-+
-+
- endchoice
- 
- config HZ
- 	int
- 	default 100 if HZ_100
--	default 250 if HZ_250
-+	default 250 if HZ_250_NODEFAULT
- 	default 300 if HZ_300
- 	default 1000 if HZ_1000
-+	default 1500 if HZ_1500
-+	default 2000 if HZ_2000
-+	default 3000 if HZ_3000
-+	default 4000 if HZ_4000
-+	default 5000 if HZ_5000
-+	default 7500 if HZ_7500
-+	default 10000 if HZ_10000
- 
-Index: linux-2.6.22-ck1/arch/i386/defconfig
-===================================================================
---- linux-2.6.22-ck1.orig/arch/i386/defconfig	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/arch/i386/defconfig	2007-07-10 14:55:23.000000000 +1000
-@@ -226,10 +226,10 @@
- # CONFIG_IRQBALANCE is not set
- CONFIG_SECCOMP=y
- # CONFIG_HZ_100 is not set
--CONFIG_HZ_250=y
-+# CONFIG_HZ_250 is not set
- # CONFIG_HZ_300 is not set
--# CONFIG_HZ_1000 is not set
--CONFIG_HZ=250
-+CONFIG_HZ_1000=y
-+CONFIG_HZ=1000
- # CONFIG_KEXEC is not set
- # CONFIG_CRASH_DUMP is not set
- CONFIG_PHYSICAL_START=0x100000
-Index: linux-2.6.22-ck1/arch/x86_64/defconfig
-===================================================================
---- linux-2.6.22-ck1.orig/arch/x86_64/defconfig	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/arch/x86_64/defconfig	2007-07-10 14:55:23.000000000 +1000
-@@ -185,10 +185,10 @@
- CONFIG_SECCOMP=y
- # CONFIG_CC_STACKPROTECTOR is not set
- # CONFIG_HZ_100 is not set
--CONFIG_HZ_250=y
-+# CONFIG_HZ_250 is not set
- # CONFIG_HZ_300 is not set
--# CONFIG_HZ_1000 is not set
--CONFIG_HZ=250
-+CONFIG_HZ_1000=y
-+CONFIG_HZ=1000
- CONFIG_K8_NB=y
- CONFIG_GENERIC_HARDIRQS=y
- CONFIG_GENERIC_IRQ_PROBE=y
-Index: linux-2.6.22-ck1/include/linux/jiffies.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/linux/jiffies.h	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/include/linux/jiffies.h	2007-07-10 14:55:24.000000000 +1000
-@@ -29,6 +29,12 @@
- # define SHIFT_HZ	9
- #elif HZ >= 768 && HZ < 1536
- # define SHIFT_HZ	10
-+#elif HZ >= 1536 && HZ < 3072
-+# define SHIFT_HZ	11
-+#elif HZ >= 3072 && HZ < 6144
-+# define SHIFT_HZ	12
-+#elif HZ >= 6144 && HZ < 12288
-+# define SHIFT_HZ	13
- #else
- # error You lose.
- #endif
-Index: linux-2.6.22-ck1/include/net/inet_timewait_sock.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/net/inet_timewait_sock.h	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/include/net/inet_timewait_sock.h	2007-07-10 14:55:24.000000000 +1000
-@@ -38,8 +38,8 @@
-  * If time > 4sec, it is "slow" path, no recycling is required,
-  * so that we select tick to get range about 4 seconds.
-  */
--#if HZ <= 16 || HZ > 4096
--# error Unsupported: HZ <= 16 or HZ > 4096
-+#if HZ <= 16 || HZ > 16384
-+# error Unsupported: HZ <= 16 or HZ > 16384
- #elif HZ <= 32
- # define INET_TWDR_RECYCLE_TICK (5 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
- #elif HZ <= 64
-@@ -54,8 +54,12 @@
- # define INET_TWDR_RECYCLE_TICK (10 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
- #elif HZ <= 2048
- # define INET_TWDR_RECYCLE_TICK (11 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
--#else
-+#elif HZ <= 4096
- # define INET_TWDR_RECYCLE_TICK (12 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
-+#elif HZ <= 8192
-+# define INET_TWDR_RECYCLE_TICK (13 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
-+#else
-+# define INET_TWDR_RECYCLE_TICK (14 + 2 - INET_TWDR_RECYCLE_SLOTS_LOG)
- #endif
- 
- /* TIME_WAIT reaping mechanism. */
-Index: linux-2.6.22-ck1/init/calibrate.c
-===================================================================
---- linux-2.6.22-ck1.orig/init/calibrate.c	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/init/calibrate.c	2007-07-10 14:55:24.000000000 +1000
-@@ -122,12 +122,12 @@
- 		printk("Calibrating delay loop (skipped)... "
- 			"%lu.%02lu BogoMIPS preset\n",
- 			loops_per_jiffy/(500000/HZ),
--			(loops_per_jiffy/(5000/HZ)) % 100);
-+			(loops_per_jiffy * 10/(50000/HZ)) % 100);
- 	} else if ((loops_per_jiffy = calibrate_delay_direct()) != 0) {
- 		printk("Calibrating delay using timer specific routine.. ");
- 		printk("%lu.%02lu BogoMIPS (lpj=%lu)\n",
- 			loops_per_jiffy/(500000/HZ),
--			(loops_per_jiffy/(5000/HZ)) % 100,
-+			(loops_per_jiffy * 10/(50000/HZ)) % 100,
- 			loops_per_jiffy);
- 	} else {
- 		loops_per_jiffy = (1<<12);
-@@ -166,7 +166,7 @@
- 		/* Round the value and print it */
- 		printk("%lu.%02lu BogoMIPS (lpj=%lu)\n",
- 			loops_per_jiffy/(500000/HZ),
--			(loops_per_jiffy/(5000/HZ)) % 100,
-+			(loops_per_jiffy * 10/(50000/HZ)) % 100,
- 			loops_per_jiffy);
- 	}
- 
-Index: linux-2.6.22-ck1/arch/i386/kernel/cpu/proc.c
-===================================================================
---- linux-2.6.22-ck1.orig/arch/i386/kernel/cpu/proc.c	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/arch/i386/kernel/cpu/proc.c	2007-07-10 14:55:24.000000000 +1000
-@@ -157,7 +157,7 @@
- 
- 	seq_printf(m, "\nbogomips\t: %lu.%02lu\n",
- 		     c->loops_per_jiffy/(500000/HZ),
--		     (c->loops_per_jiffy/(5000/HZ)) % 100);
-+		     (c->loops_per_jiffy * 10/(50000/HZ)) % 100);
- 	seq_printf(m, "clflush size\t: %u\n\n", c->x86_clflush_size);
- 
- 	return 0;
-Index: linux-2.6.22-ck1/arch/i386/kernel/smpboot.c
-===================================================================
---- linux-2.6.22-ck1.orig/arch/i386/kernel/smpboot.c	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/arch/i386/kernel/smpboot.c	2007-07-10 14:55:24.000000000 +1000
-@@ -1094,7 +1094,7 @@
- 		"Total of %d processors activated (%lu.%02lu BogoMIPS).\n",
- 		cpucount+1,
- 		bogosum/(500000/HZ),
--		(bogosum/(5000/HZ))%100);
-+		(bogosum * 10/(50000/HZ))%100);
- 	
- 	Dprintk("Before bogocount - setting activated=1.\n");
- 
-Index: linux-2.6.22-ck1/include/linux/nfsd/stats.h
-===================================================================
---- linux-2.6.22-ck1.orig/include/linux/nfsd/stats.h	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/include/linux/nfsd/stats.h	2007-07-10 14:55:24.000000000 +1000
-@@ -35,8 +35,8 @@
- 
- };
- 
--/* thread usage wraps very million seconds (approx one fortnight) */
--#define	NFSD_USAGE_WRAP	(HZ*1000000)
-+/* thread usage wraps every one hundred thousand seconds (approx one day) */
-+#define	NFSD_USAGE_WRAP	(HZ*100000)
- 
- #ifdef __KERNEL__
- 
-Index: linux-2.6.22-ck1/arch/x86_64/kernel/setup.c
-===================================================================
---- linux-2.6.22-ck1.orig/arch/x86_64/kernel/setup.c	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/arch/x86_64/kernel/setup.c	2007-07-10 14:55:24.000000000 +1000
-@@ -1047,7 +1047,7 @@
- 		
- 	seq_printf(m, "\nbogomips\t: %lu.%02lu\n",
- 		   c->loops_per_jiffy/(500000/HZ),
--		   (c->loops_per_jiffy/(5000/HZ)) % 100);
-+		   (c->loops_per_jiffy * 10/(50000/HZ)) % 100);
- 
- 	if (c->x86_tlbsize > 0) 
- 		seq_printf(m, "TLB size\t: %d 4K pages\n", c->x86_tlbsize);
-Index: linux-2.6.22-ck1/Makefile
-===================================================================
---- linux-2.6.22-ck1.orig/Makefile	2007-07-10 14:54:59.000000000 +1000
-+++ linux-2.6.22-ck1/Makefile	2007-07-10 14:55:24.000000000 +1000
-@@ -1,8 +1,9 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 22
--EXTRAVERSION =
--NAME = Holy Dancing Manatees, Batman!
-+EXTRAVERSION = -ck1
-+NAME = So long, and thanks for all the fish
-+JANAME = さようなら、いままで魚をありがとう
- 
- # *DOCUMENTATION*
- # To see a list of typical targets execute "make help"
