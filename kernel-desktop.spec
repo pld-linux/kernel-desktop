@@ -1,6 +1,18 @@
 #
+# TODO:
+# - investigate rejected sk98lin patch
+# - dmi-decode patch already in upstream kernel?
+# - investigate hdaps_protect -- doesn't apply
+# - patch85 -- wtf?
+# - check patches > 90
+# - update netfilter
+# - compare to kernel.spec and add any needed/missing patches
+# - put together a default .config that makes sense for desktops
+# - convert patches to common diff -uNp format
+# - make sure patch numbering is consistent and preapare it
+#   for the future
+#
 # Conditional build:
-%bcond_with	smp		# build SMP kernel instead of UP
 %bcond_without	source		# don't build kernel-source package
 
 %bcond_with	preemptrt	# use realtime-preempt patch
@@ -53,21 +65,19 @@
 %define		pcmcia_version		3.1.22
 %define		drm_xfree_version	4.3.0
 
-%define		squashfs_version	3.0
-%define		suspend_version		2.2.9
-%define		suspend_kernel		%{_basever}.3
-
-%define		xen_version		3.0.2
+%define		squashfs_version	3.2-r2
+%define		suspend_version		2.2.10.2
+%define		suspend_kernel		%{_basever}-rc6
 
 %if %{with laptop}
-%define		alt_kernel	laptop%{?with_preemptrt:_rt}%{?with_smp:_smp}
+%define		alt_kernel	laptop%{?with_preemptrt:_rt}
 %else
-%define		alt_kernel	desktop%{?with_preemptrt:_rt}%{?with_smp:_smp}
+%define		alt_kernel	desktop%{?with_preemptrt:_rt}
 %endif
 
-%define		_basever	2.6.20
-%define		_postver	.4
-%define		_rel		0.2
+%define		_basever	2.6.22
+%define		_postver	%{nil}
+%define		_rel		0.1
 %define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -82,24 +92,21 @@ Group:		Base/Kernel
 #define		_rc	-rc6
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{_basever}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	34b0f354819217e6a345f48ebbd8f13e
+# Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	5653a8ff0d117e89c6c1cf519a113f83
 %endif
-#Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
-## Source2-md5:	8c4fe8e338051954623f9fb0c5ecc274
+Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
+# Source2-md5:	f98f071b0f4e7897296d643854bb809f
 
 Source3:	kernel-desktop-autoconf.h
 Source4:	kernel-desktop-config.h
 Source5:	kernel-desktop-module-build.pl
 
 Source20:	kernel-desktop-common.config
-Source21:	kernel-desktop-i386.config
 Source22:	kernel-desktop-i386-smp.config
-Source23:	kernel-desktop-x86_64.config
 Source24:	kernel-desktop-x86_64-smp.config
-Source25:	kernel-desktop-ppc.config
 Source26:	kernel-desktop-ppc-smp.config
 
 Source41:	kernel-desktop-preempt-rt.config
@@ -116,6 +123,7 @@ Source46:	kernel-desktop-grsec.config
 Patch0:		kernel-desktop-preempt-rt.patch
 
 # Con Kolivas patchset
+# - fcache patch is proabely not a part of -ck anymore
 Patch6:		kernel-desktop-fcache.patch
 Patch7:		kernel-desktop-ck.patch
 Patch8:		kernel-desktop-nock-compat.patch
@@ -125,6 +133,7 @@ Patch9:		kernel-desktop-grsec-minimal.patch
 # filesystems
 Patch10:	kernel-desktop-reiser4.patch
 Patch11:	kernel-desktop-squashfs.patch
+Patch12:	kernel-desktop-supermount-ng.patch
 
 # hardware
 Patch20:	kernel-desktop-tahoe9xx.patch
@@ -133,6 +142,9 @@ Patch22:	kernel-desktop-vesafb-tng.patch
 Patch23:	kernel-desktop-dmi-decode-and-save-oem-string-information.patch
 # from http://www.zen24593.zen.co.uk/hdaps/hdaps_protect-2.6.18.3-2.patch
 Patch24:	kernel-desktop-hdaps_protect.patch
+# http://pred.dcaf-security.org/sata_nv-ncq-support-mcp51-mcp55-mcp61.patch
+# NCQ Functionality for newer nvidia chipsets (MCP{51,55,61}) by nvidia crew
+Patch25:	kernel-desktop-sata_nv-ncq.patch
 
 # console
 Patch30:	kernel-desktop-bootsplash.patch
@@ -498,7 +510,7 @@ Documentation.
 %endif
 
 # suspend 2
-#%{__bzip2} -dc %{SOURCE2} | %{__patch} -p1 -s
+%{__bzip2} -dc %{SOURCE2} | %{__patch} -p1 -s
 
 %if %{with preemptrt}
 %patch0 -p1
@@ -524,19 +536,23 @@ exit 1
 %endif
 
 # filesystems
-#%%patch10 -p1
-#%%patch11 -p1
+%patch10 -p1
+%patch11 -p1
+%patch12 -p1
 
 # hardware
-#%%patch20 -p1
+%patch20 -p1
+# Rejects hard -- neds further investigation
 #%%patch21 -p1
 %patch22 -p1
+# Already applied?
 #%%patch23 -p1
 #%%patch24 -p1
+%patch25 -p1
 
 # console
 %if %{with bootsplash}
-#%%patch30 -p1
+%patch30 -p1
 %else
 %patch31 -p1
 %endif
@@ -570,10 +586,10 @@ exit 1
 ### end of netfilter
 
 # net software
-#%%patch70 -p1
-#%%patch71 -p1
-#%%patch72 -p1
-#%%patch73 -p1
+%patch70 -p1
+%patch71 -p1
+%patch72 -p1
+%patch73 -p1
 
 #%%patch80 -p1	NEEDS a lot of work
 
@@ -591,7 +607,7 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 %build
 KERNEL_BUILD_DIR=`pwd`
 
-Config="%{_target_base_arch}%{?with_smp:-smp}"
+Config="%{_target_base_arch}"
 
 cat %{SOURCE20} > .config
 cat $RPM_SOURCE_DIR/kernel-desktop-$Config.config >> .config
@@ -620,10 +636,8 @@ echo "CONFIG_LOCALVERSION=\"-%{_localversion}\"" >> .config
 	sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' .config
 	%endif
 	%ifarch i686 athlon pentium3 pentium4
-	%if %{with smp} || %{with pae}
-		sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" .config
-		sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" .config
-	%endif
+	sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" .config
+	sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" .config
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' .config
 	%endif
 %endif
@@ -656,11 +670,11 @@ cat %{SOURCE45} >> .config
 		-i .config
 %endif
 
-%if %{with bootsplash}
-	sed -e 's:CONFIG_FB_SPLASH:CONFIG_BOOTSPLASH:'		\
-		-e 's:CONFIG_LOGO=y:# CONFIG_LOGO is not set:'	\
-		-i .config
-%endif
+#%if %{with bootsplash}
+#	sed -e 's:CONFIG_FB_SPLASH:CONFIG_BOOTSPLASH:'		\
+#		-e 's:CONFIG_LOGO=y:# CONFIG_LOGO is not set:'	\
+#		-i .config
+#%endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" .config}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" .config}
