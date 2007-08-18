@@ -1,12 +1,6 @@
- include/linux/netfilter_ipv4/ipt_u32.h |   40 +++++
- net/ipv4/netfilter/Kconfig             |   13 +
- net/ipv4/netfilter/Makefile            |    1 
- net/ipv4/netfilter/ipt_u32.c           |  233 +++++++++++++++++++++++++++++++++
- 4 files changed, 287 insertions(+)
-
-diff -Nur --exclude '*.orig' linux.org/include/linux/netfilter_ipv4/ipt_u32.h linux/include/linux/netfilter_ipv4/ipt_u32.h
---- linux.org/include/linux/netfilter_ipv4/ipt_u32.h	1970-01-01 01:00:00.000000000 +0100
-+++ linux/include/linux/netfilter_ipv4/ipt_u32.h	2006-05-04 10:30:23.000000000 +0200
+diff -Nru linux-2.6.22/include/linux/netfilter_ipv4/ipt_u32.h linux-2.6.22-pom2patch/include/linux/netfilter_ipv4/ipt_u32.h
+--- linux-2.6.22/include/linux/netfilter_ipv4/ipt_u32.h	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22-pom2patch/include/linux/netfilter_ipv4/ipt_u32.h	2007-08-07 18:40:11.000000000 +0200
 @@ -0,0 +1,40 @@
 +#ifndef _IPT_U32_H
 +#define _IPT_U32_H
@@ -48,37 +42,10 @@ diff -Nur --exclude '*.orig' linux.org/include/linux/netfilter_ipv4/ipt_u32.h li
 +};
 +
 +#endif /*_IPT_U32_H*/
-diff -Nur --exclude '*.orig' linux.org/net/ipv4/netfilter/Kconfig linux/net/ipv4/netfilter/Kconfig
---- linux.org/net/ipv4/netfilter/Kconfig	2006-05-02 23:38:44.000000000 +0200
-+++ linux/net/ipv4/netfilter/Kconfig	2006-05-04 10:30:23.000000000 +0200
-@@ -606,5 +606,18 @@
- 	  Allows altering the ARP packet payload: source and destination
- 	  hardware and network addresses.
- 
-+config IP_NF_MATCH_U32
-+	tristate  'U32 match support'
-+	depends on IP_NF_IPTABLES
-+	help
-+	  U32 allows you to extract quantities of up to 4 bytes from a packet,
-+	  AND them with specified masks, shift them by specified amounts and
-+	  test whether the results are in any of a set of specified ranges.
-+	  The specification of what to extract is general enough to skip over
-+	  headers with lengths stored in the packet, as in IP or TCP header
-+	  lengths.
-+	
-+	  Details and examples are in the kernel module source.
-+
- endmenu
- 
-diff -Nur --exclude '*.orig' linux.org/net/ipv4/netfilter/Makefile linux/net/ipv4/netfilter/Makefile
---- linux.org/net/ipv4/netfilter/Makefile	2006-05-02 23:38:44.000000000 +0200
-+++ linux/net/ipv4/netfilter/Makefile	2006-05-04 10:30:23.000000000 +0200
-@@ -0,0 +0,1 @@
-+obj-$(CONFIG_IP_NF_MATCH_U32) += ipt_u32.o
-diff -Nur --exclude '*.orig' linux.org/net/ipv4/netfilter/ipt_u32.c linux/net/ipv4/netfilter/ipt_u32.c
---- linux.org/net/ipv4/netfilter/ipt_u32.c	1970-01-01 01:00:00.000000000 +0100
-+++ linux/net/ipv4/netfilter/ipt_u32.c	2006-05-04 10:30:23.000000000 +0200
-@@ -0,0 +1,233 @@
+diff -Nru linux-2.6.22/net/ipv4/netfilter/ipt_u32.c linux-2.6.22-pom2patch/net/ipv4/netfilter/ipt_u32.c
+--- linux-2.6.22/net/ipv4/netfilter/ipt_u32.c	1970-01-01 01:00:00.000000000 +0100
++++ linux-2.6.22-pom2patch/net/ipv4/netfilter/ipt_u32.c	2007-08-07 18:40:11.000000000 +0200
+@@ -0,0 +1,237 @@
 +/* Kernel module to match u32 packet content. */
 +
 +/* 
@@ -201,6 +168,7 @@ diff -Nur --exclude '*.orig' linux.org/net/ipv4/netfilter/ipt_u32.c linux/net/ip
 +match(const struct sk_buff *skb,
 +      const struct net_device *in,
 +      const struct net_device *out,
++      const struct xt_match *match,
 +      const void *matchinfo,
 +      int offset,
 +      unsigned int protoff,
@@ -283,32 +251,68 @@ diff -Nur --exclude '*.orig' linux.org/net/ipv4/netfilter/ipt_u32.c linux/net/ip
 +
 +static int
 +checkentry(const char *tablename,
-+           const struct ipt_ip *ip,
++           const void *ip,
++           const struct xt_match *match,
 +           void *matchinfo,
-+           unsigned int matchsize,
++           /* unsigned int matchsize, */
 +           unsigned int hook_mask)
 +{
-+	if (matchsize != IPT_ALIGN(sizeof(struct ipt_u32)))
++	if (sizeof(struct ipt_u32) != IPT_ALIGN(sizeof(struct ipt_u32)))
 +		return 0;
 +	return 1;
 +}
 +
-+static struct ipt_match u32_match = { 
++static struct xt_match u32_match = { 
 +	.name 		= "u32",
++	.family         = AF_INET,
 +	.match		= &match,
++	.matchsize	= sizeof(struct ipt_u32),
 +	.checkentry	= &checkentry,
 +	.me		= THIS_MODULE
 +};
 +
 +static int __init init(void)
 +{
-+	return ipt_register_match(&u32_match);
++	return xt_register_match(&u32_match);
 +}
 +
 +static void __exit fini(void)
 +{
-+	ipt_unregister_match(&u32_match);
++	xt_unregister_match(&u32_match);
 +}
 +
 +module_init(init);
 +module_exit(fini);
+diff -Nru linux-2.6.22/net/ipv4/netfilter/Kconfig linux-2.6.22-pom2patch/net/ipv4/netfilter/Kconfig
+--- linux-2.6.22/net/ipv4/netfilter/Kconfig	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22-pom2patch/net/ipv4/netfilter/Kconfig	2007-08-07 18:40:11.000000000 +0200
+@@ -402,5 +402,18 @@
+ 	  Allows altering the ARP packet payload: source and destination
+ 	  hardware and network addresses.
+ 
++config IP_NF_MATCH_U32
++	tristate  'U32 match support'
++	depends on IP_NF_IPTABLES
++	help
++	  U32 allows you to extract quantities of up to 4 bytes from a packet,
++	  AND them with specified masks, shift them by specified amounts and
++	  test whether the results are in any of a set of specified ranges.
++	  The specification of what to extract is general enough to skip over
++	  headers with lengths stored in the packet, as in IP or TCP header
++	  lengths.
++	
++	  Details and examples are in the kernel module source.
++
+ endmenu
+ 
+diff -Nru linux-2.6.22/net/ipv4/netfilter/Makefile linux-2.6.22-pom2patch/net/ipv4/netfilter/Makefile
+--- linux-2.6.22/net/ipv4/netfilter/Makefile	2007-07-09 01:32:17.000000000 +0200
++++ linux-2.6.22-pom2patch/net/ipv4/netfilter/Makefile	2007-08-07 18:40:11.000000000 +0200
+@@ -45,6 +45,7 @@
+ obj-$(CONFIG_IP_NF_MATCH_OWNER) += ipt_owner.o
+ obj-$(CONFIG_IP_NF_MATCH_TOS) += ipt_tos.o
+ obj-$(CONFIG_IP_NF_MATCH_RECENT) += ipt_recent.o
++obj-$(CONFIG_IP_NF_MATCH_U32) += ipt_u32.o
+ obj-$(CONFIG_IP_NF_MATCH_ECN) += ipt_ecn.o
+ obj-$(CONFIG_IP_NF_MATCH_AH) += ipt_ah.o
+ obj-$(CONFIG_IP_NF_MATCH_TTL) += ipt_ttl.o
