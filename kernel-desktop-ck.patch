@@ -3891,9 +3891,9 @@ diff -urN linux-2.6.22.suspend2/Makefile linux-2.6.22.ck/Makefile
  VERSION = 2
  PATCHLEVEL = 6
  SUBLEVEL = 22
--EXTRAVERSION =
+-EXTRAVERSION = .3
 -NAME = Holy Dancing Manatees, Batman!
-+EXTRAVERSION = -ck1
++EXTRAVERSION = .3-ck1
 +NAME = So long, and thanks for all the fish
 +JANAME = さようなら、いままで魚をありがとう
  
