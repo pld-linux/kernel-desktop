@@ -55,7 +55,7 @@
 %define		_udev_ver		071
 
 
-%define		_netfilter_snap		20060504
+%define		_netfilter_snap		20061213
 %define		_nf_hipac_ver		0.9.1
 
 %define		_enable_debug_packages			0
@@ -97,7 +97,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	2ada3008a04887c7aac105644333bd31
 %endif
-Source2:	http://www.suspend2.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
+Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	f98f071b0f4e7897296d643854bb809f
 
 Source3:	kernel-desktop-autoconf.h
@@ -153,27 +153,27 @@ Patch31:	kernel-desktop-fbsplash.patch
 ########	netfilter snap
 ## base
 Patch40:	kernel-desktop-pom-ng-IPV4OPTSSTRIP.patch
-Patch41:	kernel-desktop-pom-ng-connlimit.patch
-Patch42:	kernel-desktop-pom-ng-expire.patch
-Patch43:	kernel-desktop-pom-ng-fuzzy.patch
-Patch44:	kernel-desktop-pom-ng-ipv4options.patch
-Patch45:	kernel-desktop-pom-ng-nth.patch
-Patch46:	kernel-desktop-pom-ng-osf.patch
-Patch47:	kernel-desktop-pom-ng-psd.patch
-Patch48:	kernel-desktop-pom-ng-quota.patch
-Patch49:	kernel-desktop-pom-ng-random.patch
-Patch50:	kernel-desktop-pom-ng-set.patch
+Patch41:	kernel-desktop-pom-ng-ipv4options.patch
+Patch42:	kernel-desktop-pom-ng-set.patch
+Patch43:	kernel-desktop-pom-ng-u32.patch
+Patch44:	kernel-desktop-pom-ng-ROUTE.patch
+Patch45:	kernel-desktop-pom-ng-TARPIT.patch
+Patch46:	kernel-desktop-pom-ng-mms-conntrack-nat.patch
+Patch47:	kernel-desktop-pom-ng-IPMARK.patch
+Patch48:	kernel-desktop-pom-ng-connlimit.patch
+Patch49:	kernel-desktop-pom-ng-geoip.patch
+Patch50:	kernel-desktop-pom-ng-ipp2p.patch
 Patch51:	kernel-desktop-pom-ng-time.patch
-Patch52:	kernel-desktop-pom-ng-u32.patch
+Patch52:	kernel-desktop-pom-ng-rsh.patch
+Patch53:	kernel-desktop-pom-ng-rpc.patch
 
-## extra
-Patch60:	kernel-desktop-pom-ng-ACCOUNT.patch
-Patch61:	kernel-desktop-pom-ng-IPMARK.patch
-Patch62:	kernel-desktop-pom-ng-ROUTE.patch
-Patch63:	kernel-desktop-pom-ng-TARPIT.patch
-Patch64:	kernel-desktop-pom-ng-account.patch
-Patch65:	kernel-desktop-pom-ng-ipp2p.patch
-Patch66:	kernel-desktop-pom-ng-rpc.patch
+# based on http://www.svn.barbara.eu.org/ipt_account/attachment/wiki/Software/ipt_account-0.1.21-20070804164729.tar.gz?format=raw
+Patch67:	kernel-desktop-ipt_account.patch
+
+# based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.10.tgz
+Patch68:	kernel-desktop-ipt_ACCOUNT.patch
+
+Patch69:	kernel-desktop-layer7.patch
 ########	End netfilter
 
 # net software
@@ -525,7 +525,7 @@ exit 1
 %patch7 -p1
 %endif
 %else
-%patch8 -p1
+#%patch8 -p1
 %endif
 
 # grsecurity
@@ -555,33 +555,63 @@ exit 1
 %patch31 -p1
 %endif
 
-### netfilter
-# base
-%if 0
+## netfilter
+#
+
+# kernel-pom-ng-IPV4OPTSSTRIP.patch
 %patch40 -p1
+
+# kernel-pom-ng-ipv4options.patch
 %patch41 -p1
-%patch42 -p1
+
+# kernel-pom-ng-u32.patch
 %patch43 -p1
+
+# kernel-pom-ng-ROUTE.patch
 %patch44 -p1
+
+# kernel-pom-ng-TARPIT.patch
 %patch45 -p1
+
+# kernel-pom-ng-mms-conntrack-nat.patch
 %patch46 -p1
+
+# kernel-pom-ng-IPMARK.patch
 %patch47 -p1
+
+# kernel-pom-ng-set.patch
+#patch42 -p1
+
+# kernel-pom-ng-connlimit.patch
 %patch48 -p1
+
+# kernel-pom-ng-geoip.patch
 %patch49 -p1
+
+# kernel-pom-ng-ipp2p.patch
 %patch50 -p1
+
+# kernel-pom-ng-time.patch
 %patch51 -p1
+
+# kernel-pom-ng-rsh.patch
 %patch52 -p1
 
-## extra
-%patch60 -p1
-%patch61 -p1
-%patch62 -p1
-%patch63 -p1
-%patch64 -p1
-%patch65 -p1
-%patch66 -p1
-%endif
-### end of netfilter
+# kernel-pom-ng-rpc.patch
+%patch53 -p1
+
+# kernel-ipt_account.patch
+%patch67 -p1
+
+# kernel-ipt_ACCOUNT.patch
+%patch68 -p1
+
+# kernel-layer7.patch
+%patch69 -p1
+
+##
+# end of netfilter
+
 
 # net software
 %patch70 -p1
