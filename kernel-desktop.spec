@@ -105,9 +105,9 @@ Source4:	kernel-desktop-config.h
 Source5:	kernel-desktop-module-build.pl
 
 Source20:	kernel-desktop-common.config
-Source22:	kernel-desktop-i386-smp.config
-Source24:	kernel-desktop-x86_64-smp.config
-Source26:	kernel-desktop-ppc-smp.config
+Source22:	kernel-desktop-i386.config
+Source24:	kernel-desktop-x86_64.config
+Source26:	kernel-desktop-ppc.config
 
 Source41:	kernel-desktop-preempt-rt.config
 Source42:	kernel-desktop-preempt-nort.config
