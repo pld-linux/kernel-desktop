@@ -5028,6 +5028,15 @@ diff -urN linux-2.6.22.suspend2/mm/vmscan.c linux-2.6.22.ck/mm/vmscan.c
  		return;
  	wake_up_interruptible(&pgdat->kswapd_wait);
  }
+@@ -1522,7 +1522,7 @@
+ 		.gfp_mask = GFP_KERNEL,
+ 		.may_swap = 0,
+ 		.may_writepage = 1,
+-		.swappiness = vm_swappiness,
++		.mapped = vm_mapped,
+ 	};
+ 
+ 	if (!populated_zone(zone) || zone->all_unreclaimable)
 @@ -1543,6 +1612,8 @@
  	struct zone *zone;
  	unsigned long nr_to_scan, ret = 0;
