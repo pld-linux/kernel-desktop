@@ -1754,7 +1754,7 @@ diff -urN linux-2.6.22/arch/i386/kernel/hpet.c linux-2.6.22.preempt-rt/arch/i386
  static struct clocksource clocksource_hpet = {
  	.name		= "hpet",
  	.rating		= 250,
-@@ -217,21 +311,73 @@
+@@ -311,8 +311,62 @@
  	.mask		= HPET_MASK,
  	.shift		= HPET_SHIFT,
  	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
@@ -1817,49 +1817,30 @@ diff -urN linux-2.6.22/arch/i386/kernel/hpet.c linux-2.6.22.preempt-rt/arch/i386
  /*
   * Try to setup the HPET timer
   */
- int __init hpet_enable(void)
- {
- 	unsigned long id;
--	uint64_t hpet_freq;
--	u64 tmp;
- 
+@@ -326,6 +380,8 @@
  	if (!is_hpet_capable())
  		return 0;
  
--	hpet_virt_address = ioremap_nocache(hpet_address, HPET_MMAP_SIZE);
 +	hpet_set_mapping();
++
+ 	hpet_virt_address = ioremap_nocache(hpet_address, HPET_MMAP_SIZE);
  
  	/*
- 	 * Read the period and check for a sane value:
-@@ -241,21 +387,6 @@
- 		goto out_nohpet;
- 
- 	/*
--	 * The period is a femto seconds value. We need to calculate the
--	 * scaled math multiplication factor for nanosecond to hpet tick
--	 * conversion.
--	 */
--	hpet_freq = 1000000000000000ULL;
--	do_div(hpet_freq, hpet_period);
--	hpet_clockevent.mult = div_sc((unsigned long) hpet_freq,
--				      NSEC_PER_SEC, 32);
--	/* Calculate the min / max delta */
--	hpet_clockevent.max_delta_ns = clockevent_delta2ns(0x7FFFFFFF,
--							   &hpet_clockevent);
--	hpet_clockevent.min_delta_ns = clockevent_delta2ns(0x30,
--							   &hpet_clockevent);
--
--	/*
- 	 * Read the HPET ID register to retrieve the IRQ routing
- 	 * information and the number of channels
- 	 */
-@@ -270,49 +401,47 @@
+@@ -350,8 +406,8 @@
  		goto out_nohpet;
  #endif
  
 -	/* Start the counter */
 -	hpet_start_counter();
--
++	if (hpet_clocksource_register())
++		goto out_nohpet;
+ 
+ 	/* Verify whether hpet counter works */
+ 	t1 = read_hpet();
+@@ -374,46 +430,45 @@
+ 		goto out_nohpet;
+ 	}
+ 
 -	/* Initialize and register HPET clocksource
 -	 *
 -	 * hpet period is in femto seconds per cycle
@@ -1878,8 +1859,6 @@ diff -urN linux-2.6.22/arch/i386/kernel/hpet.c linux-2.6.22.preempt-rt/arch/i386
 -
 -	clocksource_register(&clocksource_hpet);
 -
-+	if (hpet_clocksource_register())
-+		goto out_nohpet;
  
  	if (id & HPET_ID_LEGSUP) {
 -		hpet_enable_int();
@@ -55725,15 +55704,6 @@ diff -urN linux-2.6.22/lib/spinlock_debug.c linux-2.6.22.preempt-rt/lib/spinlock
 diff -urN linux-2.6.22/Makefile linux-2.6.22.preempt-rt/Makefile
 --- linux-2.6.22/Makefile	2007-07-09 01:32:17.000000000 +0200
 +++ linux-2.6.22.preempt-rt/Makefile	2007-08-02 12:28:24.102523236 +0200
-@@ -1,7 +1,7 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 22
--EXTRAVERSION =
-+EXTRAVERSION = .1-rt9
- NAME = Holy Dancing Manatees, Batman!
- 
- # *DOCUMENTATION*
 @@ -490,10 +490,14 @@
  
  include $(srctree)/arch/$(ARCH)/Makefile
@@ -60177,18 +60147,6 @@ diff -urN linux-2.6.22/net/netfilter/nf_conntrack_ecache.c linux-2.6.22.preempt-
  		if (ecache->ct)
  			nf_ct_put(ecache->ct);
  	}
-diff -urN linux-2.6.22/net/rfkill/rfkill-input.c linux-2.6.22.preempt-rt/net/rfkill/rfkill-input.c
---- linux-2.6.22/net/rfkill/rfkill-input.c	2007-07-09 01:32:17.000000000 +0200
-+++ linux-2.6.22.preempt-rt/net/rfkill/rfkill-input.c	2007-08-02 12:27:56.990645240 +0200
-@@ -55,7 +55,7 @@
- 
- static void rfkill_schedule_toggle(struct rfkill_task *task)
- {
--	unsigned int flags;
-+	unsigned long flags;
- 
- 	spin_lock_irqsave(&task->lock, flags);
- 
 diff -urN linux-2.6.22/net/sched/sch_generic.c linux-2.6.22.preempt-rt/net/sched/sch_generic.c
 --- linux-2.6.22/net/sched/sch_generic.c	2007-07-09 01:32:17.000000000 +0200
 +++ linux-2.6.22.preempt-rt/net/sched/sch_generic.c	2007-08-02 12:27:56.990645240 +0200
