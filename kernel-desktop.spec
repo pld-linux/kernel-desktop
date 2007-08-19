@@ -5,7 +5,6 @@
 # - investigate hdaps_protect -- doesn't apply
 # - patch85 -- wtf?
 # - check patches > 90
-# - update netfilter
 # - compare to kernel.spec and add any needed/missing patches
 # - put together a default .config that makes sense for desktops
 # - convert patches to common diff -uNp format
@@ -122,11 +121,13 @@ Source46:	kernel-desktop-grsec.config
 
 Patch0:		kernel-desktop-preempt-rt.patch
 
-# Con Kolivas patchset
-# - fcache patch is proabely not a part of -ck anymore
+# Jens Axboe's fcache patch (for ext3 only)
+# http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=118e3e9250ef319b6e77cdbc25dc4d26084c14f
+# http://en.opensuse.org/Fcache-howto
 Patch6:		kernel-desktop-fcache.patch
+
+# Con Kolivas patchset
 Patch7:		kernel-desktop-ck.patch
-Patch8:		kernel-desktop-nock-compat.patch
 
 Patch9:		kernel-desktop-grsec-minimal.patch
 
@@ -511,22 +512,18 @@ Documentation.
 %{__bzip2} -dc %{SOURCE2} | %{__patch} -p1 -s
 
 %if %{with preemptrt}
-%patch0 -p1
+#%patch0 -p1
+: premptrt patch is not ready yet
+exit 1
 %endif
+
+# Jens Axboe's fcache patch
+%patch6 -p1
 
 # Con Kolivas patchset
 %if %{with ck}
-%if %{with preemptrt}
-#%%patch6 -p1	NEEDS UPDATE
-: ck patch for preemptrt-patched kernel is not prepared
-: try --without ck
-exit 1
-%else
 %patch7 -p1
-%endif
 %else
-#%patch8 -p1
-%endif
 
 # grsecurity
 %if %{with grsec_minimal}
