@@ -1762,9 +1762,9 @@ diff -urN linux-2.6.22/include/linux/sysctl.h linux-2.6.22.fbsplash/include/linu
  	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
  	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
 +	KERN_FBSPLASH=77,	/* string: path to fbsplash helper */
- };
- 
- 
+	KERN_INTERACTIVE=83,	/* interactive tasks can have cpu bursts */
+	KERN_COMPUTE=84,	/* adjust timeslices for a compute server */
+	KERN_ISO_CPU=85,	/* percent cpu SCHED_ISO tasks run SCHED_RR */
 diff -urN linux-2.6.22/kernel/sysctl.c linux-2.6.22.fbsplash/kernel/sysctl.c
 --- linux-2.6.22/kernel/sysctl.c	2007-07-09 01:32:17.000000000 +0200
 +++ linux-2.6.22.fbsplash/kernel/sysctl.c	2007-07-30 17:00:57.023612604 +0200
