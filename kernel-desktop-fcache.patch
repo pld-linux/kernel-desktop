@@ -4,19 +4,19 @@ diff -Nur linux-2.6.17/block/ll_rw_blk.c linux-2.6.17.fcache/block/ll_rw_blk.c
 @@ -2817,12 +2817,10 @@
  	 */
  	if (bio_rw_ahead(bio) || bio_failfast(bio))
- 		req->flags |= REQ_FAILFAST;
+ 		req->cmd_flags |= REQ_FAILFAST;
 -
 -	/*
 -	 * REQ_BARRIER implies no merging, but lets make it explicit
 -	 */
  	if (unlikely(bio_barrier(bio)))
--		req->flags |= (REQ_HARDBARRIER | REQ_NOMERGE);
-+		req->flags |= REQ_HARDBARRIER;
+-		req->cmd_flags |= (REQ_HARDBARRIER | REQ_NOMERGE);
++		req->cmd_flags |= REQ_HARDBARRIER;
 +	if (!bio_mergeable(bio))
-+		req->flags |= REQ_NOMERGE;
++		req->cmd_flags |= REQ_NOMERGE;
  
- 	req->errors = 0;
- 	req->hard_sector = req->sector = bio->bi_sector;
+ 	if (bio_sync(bio))
+ 		req->cmd_flags |= REQ_RW_META;
 @@ -2870,7 +2868,7 @@
  
  	spin_lock_irq(q->queue_lock);
@@ -1613,12 +1613,12 @@ diff -Nur linux-2.6.17/fs/ext3/super.c linux-2.6.17.fcache/fs/ext3/super.c
  	{Opt_err, NULL},
  	{Opt_resize, "resize"},
  };
-@@ -710,6 +746,7 @@
+@@ -787,6 +787,7 @@
  
  static int parse_options (char *options, struct super_block *sb,
- 			  unsigned long *inum, unsigned long *journal_devnum,
-+			  unsigned long *fcache_devnum,
- 			  unsigned long *n_blocks_count, int is_remount)
+ 			  unsigned int *inum, unsigned long *journal_devnum,
++			  unsigned long *fcace_devnum,
+ 			  ext3_fsblk_t *n_blocks_count, int is_remount)
  {
  	struct ext3_sb_info *sbi = EXT3_SB(sb);
 @@ -1012,6 +1049,29 @@
@@ -1686,15 +1686,15 @@ diff -Nur linux-2.6.17/fs/ext3/super.c linux-2.6.17.fcache/fs/ext3/super.c
  	/* We have now updated the journal if required, so we can
  	 * validate the data journaling mode. */
  	switch (test_opt(sb, DATA_FLAGS)) {
-@@ -1740,6 +1805,8 @@
+@@ -1868,6 +1869,8 @@
  	goto failed_mount;
  
- failed_mount3:
+ failed_mount4:
 +	if (!fcache)
 +		ext3_close_fcache(sb);
  	journal_destroy(sbi->s_journal);
- failed_mount2:
- 	for (i = 0; i < db_count; i++)
+ failed_mount3:
+ 	percpu_counter_destroy(&sbi->s_freeblocks_counter);
 @@ -2205,6 +2272,7 @@
  	struct ext3_sb_info *sbi = EXT3_SB(sb);
  	unsigned long n_blocks_count = 0;
@@ -1784,9 +1784,9 @@ diff -Nur linux-2.6.17/include/linux/ext3_fs.h linux-2.6.17.fcache/include/linux
 --- linux-2.6.17-ck1.orig/include/linux/sysctl.h	2006-06-18 15:32:49.000000000 +1000
 +++ linux-2.6.17-ck1/include/linux/sysctl.h	2006-06-18 15:34:43.000000000 +1000
 @@ -148,6 +148,9 @@ enum
- 	KERN_ACPI_VIDEO_FLAGS=71, /* int: flags for setting up video after ACPI sleep */
- 	KERN_IA64_UNALIGNED=72, /* int: ia64 unaligned userland trap enable */
 	KERN_MAX_LOCK_DEPTH=80,
+	KERN_NMI_WATCHDOG=75, /* int: enable/disable nmi watchdog */
+	KERN_PANIC_ON_NMI=76, /* int: whether we will panic on an unrecovered */
 +	KERN_INTERACTIVE=83,	/* interactive tasks can have cpu bursts */
 +	KERN_COMPUTE=84,	/* adjust timeslices for a compute server */
 +	KERN_ISO_CPU=85,	/* percent cpu SCHED_ISO tasks run SCHED_RR */
