@@ -1617,7 +1617,7 @@ diff -Nur linux-2.6.17/fs/ext3/super.c linux-2.6.17.fcache/fs/ext3/super.c
  
  static int parse_options (char *options, struct super_block *sb,
  			  unsigned int *inum, unsigned long *journal_devnum,
-+			  unsigned long *fcace_devnum,
++			  unsigned long *fcache_devnum,
  			  ext3_fsblk_t *n_blocks_count, int is_remount)
  {
  	struct ext3_sb_info *sbi = EXT3_SB(sb);
