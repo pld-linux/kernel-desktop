@@ -61,7 +61,8 @@ diff -Nur linux-2.6.17/drivers/block/fcache.c linux-2.6.17.fcache/drivers/block/
 + * Copyright (C) 2006 Jens Axboe <axboe@suse.de>
 + *
 + */
-+#include <linux/config.h>
++#include <linux/autoconf.h>
++#include <linux/version.h>
 +#include <linux/module.h>
 +#include <linux/moduleparam.h>
 +#include <linux/sched.h>
@@ -1333,7 +1334,11 @@ diff -Nur linux-2.6.17/drivers/block/fcache.c linux-2.6.17.fcache/drivers/block/
 +	INIT_PRIO_TREE_ROOT(&fdev->prio_root);
 +	spin_lock_init(&fdev->lock);
 +	INIT_LIST_HEAD(&fdev->list);
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
++	INIT_WORK(&fdev->work, fcache_work);
++#else
 +	INIT_WORK(&fdev->work, fcache_work, fdev);
++#endif
 +	fdev->priming = priming;
 +	fdev->fs_bdev = fs_bdev;
 +	fdev->bdev = bdev;
