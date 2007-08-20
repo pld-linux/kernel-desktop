@@ -523,7 +523,7 @@ exit 1
 # Con Kolivas patchset
 %if %{with ck}
 %patch7 -p1
-%else
+%endif
 
 # grsecurity
 %if %{with grsec_minimal}
