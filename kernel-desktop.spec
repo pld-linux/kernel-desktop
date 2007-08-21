@@ -3,7 +3,6 @@
 # - investigate rejected sk98lin patch
 # - dmi-decode patch already in upstream kernel?
 # - investigate hdaps_protect -- doesn't apply
-# - patch85 -- wtf?
 # - check patches > 90
 # - compare to kernel.spec and add any needed/missing patches
 # - put together a default .config that makes sense for desktops
@@ -183,7 +182,7 @@ Patch71:	kernel-desktop-esfq.patch
 Patch72:	kernel-desktop-atm-vbr.patch
 Patch73:	kernel-desktop-atmdd.patch
 
-# ?
+# http://www.bullopensource.org/cpuset/ - virtual CPUs
 Patch85:	kernel-desktop-cpuset_virtualization.patch
 
 # fixes
