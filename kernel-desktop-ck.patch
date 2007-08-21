@@ -3884,21 +3884,6 @@ diff -urN linux-2.6.22.suspend2/kernel/workqueue.c linux-2.6.22.ck/kernel/workqu
  	for (;;) {
  		prepare_to_wait(&cwq->more_work, &wait, TASK_INTERRUPTIBLE);
  		if (!freezing(current) &&
-diff -urN linux-2.6.22.suspend2/Makefile linux-2.6.22.ck/Makefile
---- linux-2.6.22.suspend2/Makefile	2007-07-09 01:32:17.000000000 +0200
-+++ linux-2.6.22.ck/Makefile	2007-08-02 13:23:45.985825246 +0200
-@@ -1,8 +1,9 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 22
--EXTRAVERSION = .3
--NAME = Holy Dancing Manatees, Batman!
-+EXTRAVERSION = .3-ck1
-+NAME = So long, and thanks for all the fish
-+JANAME = さようなら、いままで魚をありがとう
- 
- # *DOCUMENTATION*
- # To see a list of typical targets execute "make help"
 diff -urN linux-2.6.22.suspend2/mm/filemap.c linux-2.6.22.ck/mm/filemap.c
 --- linux-2.6.22.suspend2/mm/filemap.c	2007-07-09 01:32:17.000000000 +0200
 +++ linux-2.6.22.ck/mm/filemap.c	2007-08-02 13:23:45.797826092 +0200
