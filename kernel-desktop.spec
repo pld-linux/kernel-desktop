@@ -704,6 +704,14 @@ cat %{SOURCE45} >> .config
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" .config}
 %{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" .config}
 
+# disable e1000 on ppc (ICEs)
+%ifarch ppc ppc64
+	sed -e "s:CONFIG_E1000=m:# CONFIG_E1000 is not set:" \
+		-e "s:CONFIG_E1000_NAPI=y:# CONFIG_E1000_NAPI is not set:" \
+		-e "s:CONFIG_E1000_DISABLE_PACKET_SPLIT=y:# CONFIG_E1000_DISABLE_PACKET_SPLIT is not set:" \
+		-i .config
+%endif
+
 rm -f include/linux/autoconf.h
 %{__make} %{MakeOpts} include/linux/autoconf.h
 install .config arch/%{_target_base_arch}/defconfig
