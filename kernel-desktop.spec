@@ -4,11 +4,23 @@
 # - dmi-decode patch already in upstream kernel?
 # - investigate hdaps_protect -- doesn't apply
 # - check patches > 90
-# - compare to kernel.spec and add any needed/missing patches
 # - put together a default .config that makes sense for desktops
 # - convert patches to common diff -uNp format
 # - make sure patch numbering is consistent and preapare it
 #   for the future
+# - PF_RING patch from kernel.spec
+# - hostap patch from kernel.spec
+# - ueagle patch from kernel.spec
+# - NFSv4 patches from kernel.spec
+# - nforce WON patches from kernel.spec
+# - unionfs patch from kernel.spec
+# - investigate ppc-ICE patches from kernel.spec
+# - routes patch from kernel.spec
+# - investigate pwc-uncompress patch from kernel.spec
+# - investigate apparmor-caps patch from kernel.spec
+# - actively search for other superb enhancing patches 
+#   (even the experimental ones, as kernel-desktop is not 
+#   mainline kernel)
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -113,6 +125,7 @@ Source43:	kernel-desktop-suspend2.config
 Source44:	kernel-desktop-patches.config
 Source45:	kernel-desktop-netfilter.config
 Source46:	kernel-desktop-grsec.config
+Source47:	kernel-desktop-wrr.config
 
 ###
 #	Patches
@@ -181,6 +194,8 @@ Patch70:	kernel-desktop-imq.patch
 Patch71:	kernel-desktop-esfq.patch
 Patch72:	kernel-desktop-atm-vbr.patch
 Patch73:	kernel-desktop-atmdd.patch
+# wrr http://www.zz9.dk/patches/wrr-linux-070717-2.6.22.patch.gz
+Patch74:	kernel-desktop-wrr.patch
 
 # http://www.bullopensource.org/cpuset/ - virtual CPUs
 Patch85:	kernel-desktop-cpuset_virtualization.patch
@@ -614,6 +629,7 @@ exit 1
 %patch71 -p1
 %patch72 -p1
 %patch73 -p1
+%patch74 -p1
 
 #%%patch80 -p1	NEEDS a lot of work
 
@@ -686,6 +702,9 @@ cat %{SOURCE45} >> .config
 %if %{with grsec_minimal}
 	cat %{SOURCE46} >> .config
 %endif
+
+# wrr
+cat %{SOURCE47} >> .config
 
 %if %{with laptop}
 	sed -e "s:CONFIG_HZ_1000=y:# CONFIG_HZ_1000 is not set:"	\
