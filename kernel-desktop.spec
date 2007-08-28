@@ -8,19 +8,16 @@
 # - convert patches to common diff -uNp format
 # - make sure patch numbering is consistent and preapare it
 #   for the future
-# - PF_RING patch from kernel.spec
-# - hostap patch from kernel.spec
-# - ueagle patch from kernel.spec
-# - NFSv4 patches from kernel.spec
-# - nforce WON patches from kernel.spec
-# - unionfs patch from kernel.spec
-# - investigate ppc-ICE patches from kernel.spec
-# - routes patch from kernel.spec
+# - investigate ppc-ICE patches from kernel.spec (does it fix the e1000 ICE?)
 # - investigate pwc-uncompress patch from kernel.spec
 # - investigate apparmor-caps patch from kernel.spec
 # - actively search for other superb enhancing patches 
 #   (even the experimental ones, as kernel-desktop is not 
 #   mainline kernel)
+# - check if we don't have newer netfilter (kernel.spec claims 2007)
+# - check for all patches update
+# - links and descriptions above al PatchesXXX and %patchXXX
+# - update common config for unionfs and PF_RING
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -138,17 +135,23 @@ Patch0:		kernel-desktop-preempt-rt.patch
 # http://en.opensuse.org/Fcache-howto
 Patch6:		kernel-desktop-fcache.patch
 
-# Con Kolivas patchset
+### Con Kolivas patchset
 Patch7:		kernel-desktop-ck.patch
 
 Patch9:		kernel-desktop-grsec-minimal.patch
 
-# filesystems
+### filesystems
 Patch10:	kernel-desktop-reiser4.patch
 Patch11:	kernel-desktop-squashfs.patch
 Patch12:	kernel-desktop-supermount-ng.patch
+# http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.2_for_2.6.22.4.diff.gz
+Patch13:	kernel-desktop-unionfs.patch
+# http://client.linux-nfs.org/Linux-2.6.x/2.6.22/linux-2.6.22-NFS_ALL.dif
+Patch14:	kernel-desktop-NFS_ALL.patch
+# http://www.citi.umich.edu/projects/nfsv4/linux/kernel-patches/2.6.22-rc5-1/linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
+Patch15:	kernel-desktop-CITI_NFS4_ALL.patch
 
-# hardware
+### hardware
 Patch20:	kernel-desktop-tahoe9xx.patch
 Patch21:	kernel-desktop-sk98lin.patch
 Patch22:	kernel-desktop-vesafb-tng.patch
@@ -158,8 +161,9 @@ Patch24:	kernel-desktop-hdaps_protect.patch
 # http://pred.dcaf-security.org/sata_nv-ncq-support-mcp51-mcp55-mcp61.patch
 # NCQ Functionality for newer nvidia chipsets (MCP{51,55,61}) by nvidia crew
 Patch25:	kernel-desktop-sata_nv-ncq.patch
+Patch26:	kernel-desktop-toshiba-acpi.patch
 
-# console
+### console
 Patch30:	kernel-desktop-bootsplash.patch
 Patch31:	kernel-desktop-fbsplash.patch
 
@@ -189,22 +193,42 @@ Patch68:	kernel-desktop-ipt_ACCOUNT.patch
 Patch69:	kernel-desktop-layer7.patch
 ########	End netfilter
 
-# net software
+### net software
 Patch70:	kernel-desktop-imq.patch
 Patch71:	kernel-desktop-esfq.patch
 Patch72:	kernel-desktop-atm-vbr.patch
 Patch73:	kernel-desktop-atmdd.patch
 # wrr http://www.zz9.dk/patches/wrr-linux-070717-2.6.22.patch.gz
 Patch74:	kernel-desktop-wrr.patch
+# adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
+# http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
+Patch75:	kernel-desktop-hostap.patch
+# http://www.ntop.org/PF_RING.html 20070610
+Patch76:	kernel-desktop-PF_RING.patch
+# The following patch extend the routing functionality in Linux 
+# to support static routes (defined by user), new way to use the 
+# alternative routes, the reverse path protection (rp_filter), 
+# the NAT processing to use correctly the routing when multiple 
+# gateways are used.
+# http://www.ssi.bg/~ja/routes-2.6.22-15.diff
+# We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
+Patch77:	kernel-desktop-routes.patch
 
+### Additional features
 # http://www.bullopensource.org/cpuset/ - virtual CPUs
 Patch85:	kernel-desktop-cpuset_virtualization.patch
 
-# fixes
+### Fixes
 Patch91:	kernel-desktop-fbcon-margins.patch
 Patch92:	kernel-desktop-static-dev.patch
 Patch100:	kernel-desktop-small_fixes.patch
 Patch101:	kernel-bcm43xx-pcie-2.6_18.1.patch
+# Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
+# Fix verified for that kernel version.
+Patch102:	kernel-desktop-forcedeth-WON.patch
+Patch103:	kernel-desktop-ueagle-atm-freezer.patch
+# investigate
+Patch104:	kernel-desktop-ppc-ICE-hacks.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -548,8 +572,11 @@ exit 1
 %patch10 -p1
 %patch11 -p1
 %patch12 -p1
+%patch13 -p1
+%patch14 -p1
+%patch15 -p1
 
-# hardware
+### hardware
 %patch20 -p1
 # Rejects hard -- neds further investigation
 #%%patch21 -p1
@@ -558,8 +585,10 @@ exit 1
 #%%patch23 -p1
 #%%patch24 -p1
 %patch25 -p1
+# toshiba-acpi
+%patch26 -p1
 
-# console
+### console
 %if %{with bootsplash}
 %patch30 -p1
 %else
@@ -624,20 +653,34 @@ exit 1
 # end of netfilter
 
 
-# net software
+### net software
 %patch70 -p1
 %patch71 -p1
 %patch72 -p1
 %patch73 -p1
 %patch74 -p1
+# hostap enhancements from/for aircrack-ng
+%patch75 -p1
+# PF_RING
+%patch76 -p1
+# static routes
+%patch77 -p1
 
 #%%patch80 -p1	NEEDS a lot of work
 
-# fixes
+### fixes
 %patch91 -p1
 %patch92 -p1
 %patch100 -p1
 #%%patch101 -p1
+# forcedeth
+%patch102 -p1
+# ueagle freezer
+%patch103 -p1
+# ppc ICE fixes
+%ifarch ppc ppc64
+%patch104 -p1
+%endif
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
