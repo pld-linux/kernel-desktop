@@ -1,5 +1,6 @@
 #
 # TODO:
+# - OOPSES AFTER FIREWALL LOAD
 # - investigate rejected sk98lin patch
 # - dmi-decode patch already in upstream kernel?
 # - investigate hdaps_protect -- doesn't apply
@@ -123,6 +124,8 @@ Source44:	kernel-desktop-patches.config
 Source45:	kernel-desktop-netfilter.config
 Source46:	kernel-desktop-grsec.config
 Source47:	kernel-desktop-wrr.config
+Source48:	kernel-desktop-fbsplash.config
+Source49:	kernel-desktop-bootsplash.config
 
 ###
 #	Patches
@@ -141,8 +144,11 @@ Patch7:		kernel-desktop-ck.patch
 Patch9:		kernel-desktop-grsec-minimal.patch
 
 ### filesystems
+# based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
 Patch10:	kernel-desktop-reiser4.patch
+# Squashfs from squashfs: http://dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
 Patch11:	kernel-desktop-squashfs.patch
+# http://dl.sourceforge.net/sourceforge/supermount-ng/supermount-ng-2.2.2-2.6.22.1_madgus_gcc34.patch.gz
 Patch12:	kernel-desktop-supermount-ng.patch
 # http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.2_for_2.6.22.4.diff.gz
 Patch13:	kernel-desktop-unionfs.patch
@@ -152,8 +158,11 @@ Patch14:	kernel-desktop-NFS_ALL.patch
 Patch15:	kernel-desktop-CITI_NFS4_ALL.patch
 
 ### hardware
+# tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch20:	kernel-desktop-tahoe9xx.patch
+# Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
 Patch21:	kernel-desktop-sk98lin.patch
+# http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
 Patch22:	kernel-desktop-vesafb-tng.patch
 Patch23:	kernel-desktop-dmi-decode-and-save-oem-string-information.patch
 # from http://www.zen24593.zen.co.uk/hdaps/hdaps_protect-2.6.18.3-2.patch
@@ -161,10 +170,13 @@ Patch24:	kernel-desktop-hdaps_protect.patch
 # http://pred.dcaf-security.org/sata_nv-ncq-support-mcp51-mcp55-mcp61.patch
 # NCQ Functionality for newer nvidia chipsets (MCP{51,55,61}) by nvidia crew
 Patch25:	kernel-desktop-sata_nv-ncq.patch
+# http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.21.patch
 Patch26:	kernel-desktop-toshiba-acpi.patch
 
 ### console
+# ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch30:	kernel-desktop-bootsplash.patch
+# http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
 Patch31:	kernel-desktop-fbsplash.patch
 
 ########	netfilter snap
@@ -190,12 +202,18 @@ Patch67:	kernel-desktop-ipt_account.patch
 # based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.10.tgz
 Patch68:	kernel-desktop-ipt_ACCOUNT.patch
 
+# netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
 Patch69:	kernel-desktop-layer7.patch
 ########	End netfilter
 
 ### net software
+# based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
+# some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19
+# compatibility. Should work, but not with wrr.
 Patch70:	kernel-desktop-imq.patch
+# esfq from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch71:	kernel-desktop-esfq.patch
+# derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch72:	kernel-desktop-atm-vbr.patch
 Patch73:	kernel-desktop-atmdd.patch
 # wrr http://www.zz9.dk/patches/wrr-linux-070717-2.6.22.patch.gz
@@ -223,6 +241,8 @@ Patch91:	kernel-desktop-fbcon-margins.patch
 Patch92:	kernel-desktop-static-dev.patch
 Patch100:	kernel-desktop-small_fixes.patch
 Patch101:	kernel-bcm43xx-pcie-2.6_18.1.patch
+# Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
+# Fix verified for that kernel version.
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
 Patch102:	kernel-desktop-forcedeth-WON.patch
@@ -756,11 +776,11 @@ cat %{SOURCE47} >> .config
 		-i .config
 %endif
 
-#%if %{with bootsplash}
-#	sed -e 's:CONFIG_FB_SPLASH:CONFIG_BOOTSPLASH:'		\
-#		-e 's:CONFIG_LOGO=y:# CONFIG_LOGO is not set:'	\
-#		-i .config
-#%endif
+%if %{with bootsplash}
+	cat %{SOURCE49} >> .config
+%else
+	cat %{SOURCE48} >> .config
+%endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" .config}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" .config}
