@@ -19,6 +19,7 @@
 # - check for all patches update
 # - links and descriptions above al PatchesXXX and %patchXXX
 # - update common config for unionfs and PF_RING
+# - disable vserver
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
@@ -85,7 +86,7 @@
 
 %define		_basever	2.6.22
 %define		_postver	.5
-%define		_rel		0.1
+%define		_rel		0.6
 %define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -769,6 +770,15 @@ cat %{SOURCE45} >> .config
 # wrr
 cat %{SOURCE47} >> .config
 
+%ifarch %{ix86}
+%ifnarch i386
+	sed -e "s:CONFIG_NO_HZ=y:# CONFIG_NO_HZ is not set:" \
+		-e "s:# CONFIG_HZ_1000 is not set:CONFIG_HZ_1000=y:" \
+		-e "s:# CONFIG_HZ is not set:CONFIG_HZ=1000:"			\
+		-i .config
+%endif
+%endif
+
 %if %{with laptop}
 	sed -e "s:CONFIG_HZ_1000=y:# CONFIG_HZ_1000 is not set:"	\
 		-e "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:"	\
@@ -795,23 +805,12 @@ cat %{SOURCE47} >> .config
 %endif
 
 rm -f include/linux/autoconf.h
-%{__make} %{MakeOpts} include/linux/autoconf.h
+%{__make} %{MakeOpts} silentoldconfig
 install .config arch/%{_target_base_arch}/defconfig
 
-
 # Build kernel
-
-%{__make} %{MakeOpts} mrproper
-install arch/%{_target_base_arch}/defconfig .config
-
-%{__make} %{MakeOpts} clean
-
-%{__make} %{MakeOpts} include/linux/version.h \
-	%{?with_verbose:V=1}
-
 %{__make} %{MakeOpts} \
 	%{?with_verbose:V=1}
-
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -829,7 +828,7 @@ fi
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
 
-KERNEL_BUILD_DIR=`pwd`
+KERNEL_BUILD_DIR=$(pwd)
 
 
 # Install modules
