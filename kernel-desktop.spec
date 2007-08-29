@@ -19,7 +19,6 @@
 # - check for all patches update
 # - links and descriptions above al PatchesXXX and %patchXXX
 # - update common config for unionfs and PF_RING
-# - disable vserver
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
