@@ -248,7 +248,7 @@ Patch101:	kernel-bcm43xx-pcie-2.6_18.1.patch
 Patch102:	kernel-desktop-forcedeth-WON.patch
 Patch103:	kernel-desktop-ueagle-atm-freezer.patch
 # investigate
-Patch104:	kernel-desktop-ppc-ICE-hacks.patch
+Patch104:	kernel-desktop-ppc-ICE.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
