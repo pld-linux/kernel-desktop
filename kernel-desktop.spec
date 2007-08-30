@@ -250,6 +250,9 @@ Patch103:	kernel-desktop-ueagle-atm-freezer.patch
 # investigate
 Patch104:	kernel-desktop-ppc-ICE.patch
 
+# http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
+Patch105:	kernel-desktop-rndis_host.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
 BuildRequires:	gcc >= 5:3.2
@@ -701,6 +704,7 @@ exit 1
 %ifarch ppc ppc64
 %patch104 -p1
 %endif
+%patch105 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
