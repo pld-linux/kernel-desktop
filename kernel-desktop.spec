@@ -9,8 +9,8 @@
 # - convert patches to common diff -uNp format
 # - make sure patch numbering is consistent and preapare it
 #   for the future
-# - investigate ppc-ICE patches from kernel.spec (does it fix the e1000 ICE?)
-# - investigate pwc-uncompress patch from kernel.spec
+# - investigate ppc-ICE patches from kernel.spec (does it fix the e1000 ICE?) 
+# - investigate pwc-uncompress patch from kernel.spec 
 # - investigate apparmor-caps patch from kernel.spec
 # - actively search for other superb enhancing patches 
 #   (even the experimental ones, as kernel-desktop is not 
@@ -32,6 +32,13 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 
 %{?debug:%define with_verbose 1}
+
+%if %{with bootsplash}
+%undefine	with_fbsplash
+%else
+%define		with_fbsplash	1
+%endif
+
 
 %ifnarch %{ix86}
 %undefine	with_pae
@@ -263,8 +270,10 @@ BuildRequires:	perl-base
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
 Requires:	coreutils
-Requires:	geninitrd >= 2.57
+Requires:	geninitrd >= 8702
 Requires:	module-init-tools >= 0.9.9
+%{?with_bootsplash:Suggests:	bootsplash}
+%{?with_fbsplash:Suggests:	splashutils}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
@@ -333,9 +342,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_preemptrt: - realtime-preempt patch by Ingo Molar}\
 %{?with_ck: - desktop patchset by Con Kolivas}\
 %{?with_grsec_minimal: - grsecurity minimal}\
- - %{?with_bootsplash:bootsplash}%{!?with_bootsplash:fbsplash}\
-%{?with_smp: - Multi Processor support}\
-%{!?with_smp:%{?with_pae: - PAE (HIGHMEM64G) support}}\
+ - %{?with_bootsplash:bootsplash}%{?with_fbsplash:fbsplash}\
  - HZ=100%{!?with_laptop:0}
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
@@ -917,7 +924,7 @@ fi
 
 %depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+/sbin/geninitrd -f --initrdfs=initramfs %{?with_bootsplash:--with-bootsplash} %{?with_fbsplash:--with-fbsplash} --with-suspend2 %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2> /dev/null > /dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}
 
