@@ -15,8 +15,7 @@
 # - actively search for other superb enhancing patches 
 #   (even the experimental ones, as kernel-desktop is not 
 #   mainline kernel)
-# - check if we don't have newer netfilter (kernel.spec claims 2007)
-# - check for all patches update
+# - check if we don't have newer netfilter (kernel.spec claims 2007) # - check for all patches update
 # - links and descriptions above al PatchesXXX and %patchXXX
 # - update common config for unionfs and PF_RING
 #
@@ -91,7 +90,7 @@
 %endif
 
 %define		_basever	2.6.22
-%define		_postver	.5
+%define		_postver	.6
 %define		_rel		0.6
 %define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -110,7 +109,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	27544a58763bbd4ce497a77658af744a
+# Source1-md5:	f2948e364ab3e4736b9e34f02173472f
 %endif
 Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	f98f071b0f4e7897296d643854bb809f
