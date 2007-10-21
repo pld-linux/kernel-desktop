@@ -695,8 +695,6 @@ exit 1
 # static routes
 %patch77 -p1
 
-#%%patch80 -p1	NEEDS a lot of work
-
 ### fixes
 %patch91 -p1
 %patch92 -p1
@@ -761,7 +759,6 @@ echo "CONFIG_LOCALVERSION=\"-%{_localversion}\"" >> .config
 %else
 	cat %{SOURCE42} >> .config
 %endif
-
 
 # suspend 2
 cat %{SOURCE43} >> .config
