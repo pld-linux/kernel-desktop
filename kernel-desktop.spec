@@ -9,11 +9,11 @@
 # - convert patches to common diff -uNp format
 # - make sure patch numbering is consistent and preapare it
 #   for the future
-# - investigate ppc-ICE patches from kernel.spec (does it fix the e1000 ICE?) 
-# - investigate pwc-uncompress patch from kernel.spec 
+# - investigate ppc-ICE patches from kernel.spec (does it fix the e1000 ICE?)
+# - investigate pwc-uncompress patch from kernel.spec
 # - investigate apparmor-caps patch from kernel.spec
-# - actively search for other superb enhancing patches 
-#   (even the experimental ones, as kernel-desktop is not 
+# - actively search for other superb enhancing patches
+#   (even the experimental ones, as kernel-desktop is not
 #   mainline kernel)
 # - check if we don't have newer netfilter (kernel.spec claims 2007) # - check for all patches update
 # - links and descriptions above al PatchesXXX and %patchXXX
@@ -229,10 +229,10 @@ Patch74:	kernel-desktop-wrr.patch
 Patch75:	kernel-desktop-hostap.patch
 # http://www.ntop.org/PF_RING.html 20070610
 Patch76:	kernel-desktop-PF_RING.patch
-# The following patch extend the routing functionality in Linux 
-# to support static routes (defined by user), new way to use the 
-# alternative routes, the reverse path protection (rp_filter), 
-# the NAT processing to use correctly the routing when multiple 
+# The following patch extend the routing functionality in Linux
+# to support static routes (defined by user), new way to use the
+# alternative routes, the reverse path protection (rp_filter),
+# the NAT processing to use correctly the routing when multiple
 # gateways are used.
 # http://www.ssi.bg/~ja/routes-2.6.22-15.diff
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
@@ -262,7 +262,7 @@ Patch105:	kernel-desktop-rndis_host.patch
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.14.90.0.7
 BuildRequires:	gcc >= 5:3.2
-BuildRequires:	module-init-tools
+BuildRequires:	/sbin/depmod
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
