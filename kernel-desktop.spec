@@ -269,6 +269,11 @@ BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
+Requires:	coreutils
+Requires:	geninitrd >= 8702
+Requires:	module-init-tools >= 0.9.9
+%{?with_bootsplash:Suggests:	bootsplash}
+%{?with_fbsplash:Suggests:	splashutils}
 Provides:	%{name}-up = %{epoch}:%{version}-%{release}
 Provides:	kernel = %{epoch}:%{version}-%{release}
 Provides:	kernel(netfilter) = %{_netfilter_snap}
@@ -286,11 +291,6 @@ Provides:	kernel-smp-net-ipp2p = 1:0.8.0
 Provides:	kernel-smp-net-ipw2100 = 1.1.3
 Provides:	kernel-smp-net-ipw2200 = 1.0.8
 Provides:	module-info
-Requires:	coreutils
-Requires:	geninitrd >= 8702
-Requires:	module-init-tools >= 0.9.9
-%{?with_bootsplash:Suggests:	bootsplash}
-%{?with_fbsplash:Suggests:	splashutils}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
@@ -397,9 +397,9 @@ Summary:	DRM kernel modules
 Summary(de.UTF-8):	DRM Kernel Treiber
 Summary(pl.UTF-8):	Sterowniki DRM
 Group:		Base/Kernel
-Provides:	kernel-drm = %{drm_xfree_version}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	kernel-drm = %{drm_xfree_version}
 Autoreqprov:	no
 
 %description drm
@@ -416,10 +416,10 @@ Summary:	PCMCIA modules
 Summary(de.UTF-8):	PCMCIA Module
 Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
-Provides:	kernel(pcmcia)
-Provides:	kernel-pcmcia = %{pcmcia_version}
 Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
 Requires:	%{name}-up = %{epoch}:%{version}-%{release}
+Provides:	kernel(pcmcia)
+Provides:	kernel-pcmcia = %{pcmcia_version}
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Conflicts:	pcmciautils < %{_pcmciautils_ver}
 Autoreqprov:	no
@@ -501,8 +501,8 @@ Summary:	Development files for building kernel modules
 Summary(de.UTF-8):	Development Dateien die beim Kernel Modul kompilationen gebraucht werden
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
-Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
+Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description module-build
@@ -522,8 +522,8 @@ Summary:	Kernel source tree
 Summary(de.UTF-8):	Der Kernel Quelltext
 Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
-Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
+Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description source
