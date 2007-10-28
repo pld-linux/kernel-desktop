@@ -91,7 +91,7 @@
 
 %define		_basever	2.6.22
 %define		_postver	.10
-%define		_rel		0.6
+%define		_rel		0.8
 %define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -839,20 +839,18 @@ install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
 
 KERNEL_BUILD_DIR=$(pwd)
 
-
-# Install modules
-
 install System.map $RPM_BUILD_ROOT/boot/System.map-%{kernel_release}
 %ifarch %{ix86} %{x8664}
-	install arch/%{_target_base_arch}/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+install arch/%{_target_base_arch}/boot/bzImage $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
 %endif
 
 %ifarch ppc
-	install vmlinux $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+install vmlinux $RPM_BUILD_ROOT/boot/vmlinuz-%{kernel_release}
+%else
+install vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
 %endif
-	install vmlinux $RPM_BUILD_ROOT/boot/vmlinux-%{kernel_release}
 
-#export DEPMOD=%{DepMod}
+# Install modules
 %{__make} %{MakeOpts} modules_install \
 	%{?with_verbose:V=1} \
 	DEPMOD=%{DepMod} \
@@ -868,22 +866,17 @@ install System.map $RPM_BUILD_ROOT/boot/System.map-%{kernel_release}
 		&& echo "OK" || echo "FAILED"
 %endif
 
-
 rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/build
 ln -sf %{_kernelsrcdir} $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/build
 install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{cluster,misc}
 
 find . -maxdepth 1 -name "." -exec cp -a$l "{}" "$RPM_BUILD_ROOT%{_kernelsrcdir}/" ";"
 
-install Module.symvers \
-	$RPM_BUILD_ROOT%{_kernelsrcdir}/Module.symvers-dist
-install include/linux/autoconf.h \
-	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf-dist.h
-install .config \
-	$RPM_BUILD_ROOT%{_kernelsrcdir}/config-dist
+install Module.symvers $RPM_BUILD_ROOT%{_kernelsrcdir}/Module.symvers-dist
+install include/linux/autoconf.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf-dist.h
+install .config $RPM_BUILD_ROOT%{_kernelsrcdir}/config-dist
 
 cd $RPM_BUILD_ROOT%{_kernelsrcdir}
-
 %{__make} %{MakeOpts} mrproper
 
 find '(' -name '*~' -o -name '*.orig' ')' -print0 | xargs -0 -r -l512 rm -f
@@ -895,7 +888,7 @@ install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 # collect module-build files and directories
 %{__perl} %{SOURCE5} %{_kernelsrcdir} $KERNEL_BUILD_DIR
 
-# ghosted initrd
+# ghost initrd not to leave images around when pkg is uninstalled
 touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}.gz
 
 %clean
@@ -908,23 +901,23 @@ if [ -x /sbin/new-kernel-pkg ]; then
 fi
 
 %post
-mv -f /boot/vmlinuz-%{alt_kernel} /boot/vmlinuz-%{alt_kernel}.old 2> /dev/null > /dev/null
-mv -f /boot/System.map-%{alt_kernel} /boot/System.map-%{alt_kernel}.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinuz-%{alt_kernel} /boot/vmlinuz-%{alt_kernel}.old 2>/dev/null > /dev/null
+mv -f /boot/System.map-%{alt_kernel} /boot/System.map-%{alt_kernel}.old 2>/dev/null > /dev/null
 ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz-%{alt_kernel}
 ln -sf System.map-%{kernel_release} /boot/System.map-%{alt_kernel}
 if [ ! -e /boot/vmlinuz ]; then
-	mv -f /boot/vmlinuz /boot/vmlinuz.old 2> /dev/null > /dev/null
-	mv -f /boot/System.map /boot/System.map.old 2> /dev/null > /dev/null
+	mv -f /boot/vmlinuz /boot/vmlinuz.old 2>/dev/null
+	mv -f /boot/System.map /boot/System.map.old 2>/dev/null
 	ln -sf vmlinuz-%{alt_kernel} /boot/vmlinuz
 	ln -sf System.map-%{alt_kernel} /boot/System.map
-	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2> /dev/null > /dev/null
+	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2>/dev/null
 	ln -sf initrd-%{alt_kernel} %{initrd_dir}/initrd
 fi
 
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=initramfs %{?with_bootsplash:--with-bootsplash} %{?with_fbsplash:--with-fbsplash} --with-suspend2 %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2> /dev/null > /dev/null
+mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2>/dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}
 
 if [ -x /sbin/new-kernel-pkg ]; then
@@ -942,7 +935,7 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux-%{alt_kernel}.old 2> /dev/null > /dev/null
+mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux-%{alt_kernel}.old 2>/dev/null
 ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}
 
 %post drm
