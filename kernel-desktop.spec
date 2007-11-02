@@ -90,8 +90,8 @@
 %endif
 
 %define		_basever	2.6.22
-%define		_postver	.10
-%define		_rel		0.8
+%define		_postver	.11
+%define		_rel		0.1
 %define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -109,7 +109,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	8dc6d14fb270d13e8ef670d23387b418
+# Source1-md5:	de5de5b1f7b25477b43fdee15822b91b
 %endif
 Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	f98f071b0f4e7897296d643854bb809f
@@ -228,7 +228,7 @@ Patch74:	kernel-desktop-wrr.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch75:	kernel-desktop-hostap.patch
 # http://www.ntop.org/PF_RING.html 20070610
-Patch76:	kernel-desktop-PF_RING.patch
+#Patch76:	kernel-desktop-PF_RING.patch
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
 # alternative routes, the reverse path protection (rp_filter),
@@ -692,7 +692,7 @@ exit 1
 # hostap enhancements from/for aircrack-ng
 %patch75 -p1
 # PF_RING
-%patch76 -p1
+#%patch76 -p1 # XXX checkme, seems like wrong contents
 # static routes
 %patch77 -p1
 
