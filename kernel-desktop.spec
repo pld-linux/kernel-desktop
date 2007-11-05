@@ -259,6 +259,9 @@ Patch104:	kernel-desktop-ppc-ICE.patch
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
 Patch105:	kernel-desktop-rndis_host.patch
 
+# add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
+Patch106:	kernel-TIOCGDEV.patch
+
 URL:		http://www.kernel.org/
 BuildRequires:	/sbin/depmod
 BuildRequires:	binutils >= 3:2.14.90.0.7
@@ -710,6 +713,7 @@ exit 1
 %patch104 -p1
 %endif
 %patch105 -p1
+%patch106 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
