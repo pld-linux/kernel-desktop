@@ -249,8 +249,6 @@ Patch100:	kernel-desktop-small_fixes.patch
 Patch101:	kernel-bcm43xx-pcie-2.6_18.1.patch
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
-# Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
-# Fix verified for that kernel version.
 Patch102:	kernel-desktop-forcedeth-WON.patch
 Patch103:	kernel-desktop-ueagle-atm-freezer.patch
 # investigate
