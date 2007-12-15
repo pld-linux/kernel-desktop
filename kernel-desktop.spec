@@ -90,7 +90,7 @@
 %endif
 
 %define		_basever	2.6.22
-%define		_postver	.14
+%define		_postver	.15
 %define		_rel		1
 %define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -109,7 +109,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	bb2f544c816d50c1e872db7dab771526
+# Source1-md5:	2fc1e9da64cfd045c1d28aed3e786da8
 %endif
 Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	f98f071b0f4e7897296d643854bb809f
