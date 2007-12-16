@@ -306,7 +306,10 @@ Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
 Conflicts:	udev < %{_udev_ver}
 Conflicts:	util-linux < %{_util_linux_ver}
 Conflicts:	xfsprogs < %{_xfsprogs_ver}
-ExclusiveArch:	%{ix86} %{x8664} ppc
+# ppc fails:
+# cc1: error: bad value (440) for -mcpu= switch
+#make[1]: *** [arch/powerpc/boot/44x.o] Error 1
+ExclusiveArch:	%{ix86} %{x8664}
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
