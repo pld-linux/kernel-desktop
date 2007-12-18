@@ -50,7 +50,6 @@
 %endif
 
 ## Program required by kernel to work.
-%define		_binutils_ver		2.12.1
 %define		_util_linux_ver		2.10o
 %define		_module_init_tool_ver	0.9.10
 %define		_e2fsprogs_ver		1.29
@@ -68,18 +67,10 @@
 %define		_oprofile_ver		0.9
 %define		_udev_ver		071
 
-
-%define		_netfilter_snap		20061213
-%define		_nf_hipac_ver		0.9.1
-
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
 %define		no_install_post_chrpath			1
 
-%define		pcmcia_version		3.1.22
-%define		drm_xfree_version	4.3.0
-
-%define		squashfs_version	3.2-r2
 %define		suspend_version		2.2.10.2
 %define		suspend_kernel		%{_basever}-rc6
 
@@ -91,7 +82,7 @@
 
 %define		_basever	2.6.22
 %define		_postver	.15
-%define		_rel		1
+%define		_rel		2
 %define		_rc	%{nil}
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
@@ -103,7 +94,6 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-#define		_rc	-rc6
 #Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{_basever}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
@@ -275,23 +265,6 @@ Requires:	geninitrd >= 8702
 Requires:	module-init-tools >= 0.9.9
 %{?with_bootsplash:Suggests:	bootsplash}
 %{?with_fbsplash:Suggests:	splashutils}
-Provides:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel = %{epoch}:%{version}-%{release}
-Provides:	kernel(netfilter) = %{_netfilter_snap}
-Provides:	kernel(realtime-lsm) = 0.1.1
-Provides:	kernel-misc-fuse
-Provides:	kernel-net-hostap = 0.4.4
-Provides:	kernel-net-ieee80211
-Provides:	kernel-net-ipp2p = 1:0.8.0
-Provides:	kernel-net-ipw2100 = 1.1.3
-Provides:	kernel-net-ipw2200 = 1.0.8
-Provides:	kernel-smp-misc-fuse
-Provides:	kernel-smp-net-hostap = 0.4.4
-Provides:	kernel-smp-net-ieee80211
-Provides:	kernel-smp-net-ipp2p = 1:0.8.0
-Provides:	kernel-smp-net-ipw2100 = 1.1.3
-Provides:	kernel-smp-net-ipw2200 = 1.0.8
-Provides:	module-info
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
@@ -401,49 +374,43 @@ Summary:	DRM kernel modules
 Summary(de.UTF-8):	DRM Kernel Treiber
 Summary(pl.UTF-8):	Sterowniki DRM
 Group:		Base/Kernel
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Requires:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel-drm = %{drm_xfree_version}
+Requires:	%{name} = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description drm
-DRM kernel modules (%{drm_xfree_version}).
+DRM kernel modules.
 
 %description drm -l de.UTF-8
-DRM Kernel Treiber (%{drm_xfree_version}).
+DRM Kernel Treiber.
 
 %description drm -l pl.UTF-8
-Sterowniki DRM (%{drm_xfree_version}).
+Sterowniki DRM.
 
 %package pcmcia
 Summary:	PCMCIA modules
 Summary(de.UTF-8):	PCMCIA Module
 Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Requires:	%{name}-up = %{epoch}:%{version}-%{release}
-Provides:	kernel(pcmcia)
-Provides:	kernel-pcmcia = %{pcmcia_version}
+Requires:	%{name} = %{epoch}:%{version}-%{release}
 Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
 Conflicts:	pcmciautils < %{_pcmciautils_ver}
 Autoreqprov:	no
 
 %description pcmcia
-PCMCIA modules (%{pcmcia_version}).
+PCMCIA modules.
 
 %description pcmcia -l de.UTF-8
-PCMCIA Module (%{pcmcia_version})
+PCMCIA Module.
 
 %description pcmcia -l pl.UTF-8
-Moduły PCMCIA (%{pcmcia_version}).
+Moduły PCMCIA.
 
 %package sound-alsa
 Summary:	ALSA kernel modules
 Summary(de.UTF-8):	ALSA Kernel Module
 Summary(pl.UTF-8):	Sterowniki dźwięku ALSA
 Group:		Base/Kernel
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Requires:	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	%{name} = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description sound-alsa
@@ -460,8 +427,7 @@ Summary:	OSS kernel modules
 Summary(de.UTF-8):	OSS Kernel Module
 Summary(pl.UTF-8):	Sterowniki dźwięku OSS
 Group:		Base/Kernel
-Requires(postun):	%{name}-up = %{epoch}:%{version}-%{release}
-Requires:	%{name}-up = %{epoch}:%{version}-%{release}
+Requires:	%{name} = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description sound-oss
@@ -478,12 +444,6 @@ Summary:	Header files for the Linux kernel
 Summary(de.UTF-8):	Header Dateien für den Linux-Kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
-Provides:	kernel-headers = %{epoch}:%{version}-%{release}
-Provides:	kernel-headers(agpgart) = %{version}
-Provides:	kernel-headers(alsa-drivers)
-Provides:	kernel-headers(bridging) = %{version}
-Provides:	kernel-headers(netfilter) = %{_netfilter_snap}
-Provides:	kernel-headers(reiserfs) = %{version}
 Autoreqprov:	no
 
 %description headers
@@ -506,7 +466,6 @@ Summary(de.UTF-8):	Development Dateien die beim Kernel Modul kompilationen gebra
 Summary(pl.UTF-8):	Pliki służące do budowania modułów jądra
 Group:		Development/Building
 Requires:	%{name}-headers = %{epoch}:%{version}-%{release}
-Provides:	kernel-module-build = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description module-build
@@ -527,7 +486,6 @@ Summary(de.UTF-8):	Der Kernel Quelltext
 Summary(pl.UTF-8):	Kod źródłowy jądra Linuksa
 Group:		Development/Building
 Requires:	%{name}-module-build = %{epoch}:%{version}-%{release}
-Provides:	kernel-source = %{epoch}:%{version}-%{release}
 Autoreqprov:	no
 
 %description source
@@ -558,7 +516,6 @@ Summary:	Kernel documentation
 Summary(de.UTF-8):	Kernel Dokumentation
 Summary(pl.UTF-8):	Dokumentacja do jądra Linuksa
 Group:		Documentation
-Provides:	kernel-doc = %{version}
 Autoreqprov:	no
 
 %description doc
