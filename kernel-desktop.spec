@@ -47,14 +47,11 @@
 %define		have_isa	0
 %endif
 
-%define		netfilter_snap		20061213
-
 %define		_enable_debug_packages			0
-%define		no_install_post_strip			1
-%define		no_install_post_chrpath			1
 
 %define		suspend_version		2.2.10.2
 %define		suspend_kernel		%{_basever}-rc6
+%define		netfilter_snap		20061213
 
 %if %{with laptop}
 %define		alt_kernel	laptop%{?with_preemptrt:_rt}
@@ -258,7 +255,9 @@ Conflicts:	oprofile < 0.9
 Conflicts:	ppp < 1:2.4.0
 Conflicts:	procps < 3.2.0
 Conflicts:	quota-tools < 3.09
+%if %{with reiserfs4}
 Conflicts:	reiser4progs < 1.0.0
+%endif
 Conflicts:	reiserfsprogs < 3.6.3
 Conflicts:	udev < 071
 Conflicts:	util-linux < 2.10o
@@ -269,6 +268,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 # No ELF objects there to strip (skips processing 27k files)
 %define		_noautostrip	.*%{_kernelsrcdir}/.*
+%define		_noautochrpath	.*%{_kernelsrcdir}/.*
 
 %define		initrd_dir	/boot
 
@@ -954,9 +954,11 @@ fi
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
+%ifarch alpha %{ix86} %{x8664} sparc sparc64
 %files vmlinux
 %defattr(644,root,root,755)
 /boot/vmlinux-%{kernel_release}
+%endif
 
 %files drm
 %defattr(644,root,root,755)
