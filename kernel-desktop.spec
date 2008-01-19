@@ -66,7 +66,7 @@
 %define		_procps_ver		3.2.0
 %define		_oprofile_ver		0.9
 %define		_udev_ver		071
-%define		_netfilter_snap		20061213
+%define		netfilter_snap		20061213
 
 %define		_enable_debug_packages			0
 %define		no_install_post_strip			1
@@ -266,7 +266,8 @@ Requires:	geninitrd >= 8702
 Requires:	module-init-tools >= 0.9.9
 %{?with_bootsplash:Suggests:	bootsplash}
 %{?with_fbsplash:Suggests:	splashutils}
-Provides:	kernel(netfilter) = %{_netfilter_snap}
+Provides:	kernel(netfilter) = %{netfilter_snap}
+Provides:	kernel-desktop(netfilter) = %{netfilter_snap}
 Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
 Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
 Conflicts:	jfsutils < %{_jfsutils_ver}
@@ -443,6 +444,7 @@ Summary:	Header files for the Linux kernel
 Summary(de.UTF-8):	Header Dateien für den Linux-Kernel
 Summary(pl.UTF-8):	Pliki nagłówkowe jądra Linuksa
 Group:		Development/Building
+Provides:	kernel-desktop-headers(netfilter) = %{netfilter_snap}
 Autoreqprov:	no
 
 %description headers
