@@ -7,7 +7,7 @@
 # - check patches > 90
 # - put together a default .config that makes sense for desktops
 # - convert patches to common diff -uNp format
-# - make sure patch numbering is consistent and preapare it
+# - make sure patch numbering is consistent and prepare it
 #   for the future
 # - investigate ppc-ICE patches from kernel.spec (does it fix the e1000 ICE?)
 # - investigate pwc-uncompress patch from kernel.spec
@@ -21,7 +21,6 @@
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
-
 %bcond_with	preemptrt	# use realtime-preempt patch
 %bcond_without	ck		# don't use Con Kolivas patchset
 %bcond_with	grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
@@ -38,7 +37,6 @@
 %define		with_fbsplash	1
 %endif
 
-
 %ifnarch %{ix86}
 %undefine	with_pae
 %endif
@@ -49,23 +47,6 @@
 %define		have_isa	0
 %endif
 
-## Program required by kernel to work.
-%define		_util_linux_ver		2.10o
-%define		_module_init_tool_ver	0.9.10
-%define		_e2fsprogs_ver		1.29
-%define		_jfsutils_ver		1.1.3
-%define		_reiserfsprogs_ver	3.6.3
-%define		_reiser4progs_ver	1.0.0
-%define		_xfsprogs_ver		2.6.0
-%define		_pcmcia_cs_ver		3.1.21
-%define		_pcmciautils_ver	004
-%define		_quota_tools_ver	3.09
-%define		_ppp_ver		1:2.4.0
-%define		_isdn4k_utils_ver	3.1pre1
-%define		_nfs_utils_ver		1.0.5
-%define		_procps_ver		3.2.0
-%define		_oprofile_ver		0.9
-%define		_udev_ver		071
 %define		netfilter_snap		20061213
 
 %define		_enable_debug_packages			0
@@ -268,20 +249,20 @@ Requires:	module-init-tools >= 0.9.9
 %{?with_fbsplash:Suggests:	splashutils}
 Provides:	kernel(netfilter) = %{netfilter_snap}
 Provides:	%{name}(netfilter) = %{netfilter_snap}
-Conflicts:	e2fsprogs < %{_e2fsprogs_ver}
-Conflicts:	isdn4k-utils < %{_isdn4k_utils_ver}
-Conflicts:	jfsutils < %{_jfsutils_ver}
-Conflicts:	module-init-tool < %{_module_init_tool_ver}
-Conflicts:	nfs-utils < %{_nfs_utils_ver}
-Conflicts:	oprofile < %{_oprofile_ver}
-Conflicts:	ppp < %{_ppp_ver}
-Conflicts:	procps < %{_procps_ver}
-Conflicts:	quota-tools < %{_quota_tools_ver}
-Conflicts:	reiser4progs < %{_reiser4progs_ver}
-Conflicts:	reiserfsprogs < %{_reiserfsprogs_ver}
-Conflicts:	udev < %{_udev_ver}
-Conflicts:	util-linux < %{_util_linux_ver}
-Conflicts:	xfsprogs < %{_xfsprogs_ver}
+Conflicts:	e2fsprogs < 1.29
+Conflicts:	isdn4k-utils < 3.1pre1
+Conflicts:	jfsutils < 1.1.3
+Conflicts:	module-init-tool < 0.9.10
+Conflicts:	nfs-utils < 1.0.5
+Conflicts:	oprofile < 0.9
+Conflicts:	ppp < 1:2.4.0
+Conflicts:	procps < 3.2.0
+Conflicts:	quota-tools < 3.09
+Conflicts:	reiser4progs < 1.0.0
+Conflicts:	reiserfsprogs < 3.6.3
+Conflicts:	udev < 071
+Conflicts:	util-linux < 2.10o
+Conflicts:	xfsprogs < 2.6.0
 ExclusiveArch:	%{ix86} %{x8664} ppc
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
@@ -392,8 +373,8 @@ Summary(de.UTF-8):	PCMCIA Module
 Summary(pl.UTF-8):	Moduły PCMCIA
 Group:		Base/Kernel
 Requires:	%{name} = %{epoch}:%{version}-%{release}
-Conflicts:	pcmcia-cs < %{_pcmcia_cs_ver}
-Conflicts:	pcmciautils < %{_pcmciautils_ver}
+Conflicts:	pcmcia-cs < 3.1.21
+Conflicts:	pcmciautils < 004
 Autoreqprov:	no
 
 %description pcmcia
