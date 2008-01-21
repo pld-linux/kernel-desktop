@@ -62,8 +62,9 @@
 
 %define		_basever	2.6.22
 %define		_postver	.16
-%define		_rel		1
+%define		_rel		2
 %define		_rc	%{nil}
+%define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
@@ -84,119 +85,119 @@ Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	f98f071b0f4e7897296d643854bb809f
 
-Source3:	%{name}-autoconf.h
-Source4:	%{name}-config.h
-Source5:	%{name}-module-build.pl
+Source3:	%{pname}-autoconf.h
+Source4:	%{pname}-config.h
+Source5:	%{pname}-module-build.pl
 
-Source20:	%{name}-common.config
-Source22:	%{name}-i386.config
-Source24:	%{name}-x86_64.config
-Source26:	%{name}-ppc.config
+Source20:	%{pname}-common.config
+Source22:	%{pname}-i386.config
+Source24:	%{pname}-x86_64.config
+Source26:	%{pname}-ppc.config
 
-Source41:	%{name}-preempt-rt.config
-Source42:	%{name}-preempt-nort.config
-Source43:	%{name}-suspend2.config
-Source44:	%{name}-patches.config
-Source45:	%{name}-netfilter.config
-Source46:	%{name}-grsec.config
-Source47:	%{name}-wrr.config
-Source48:	%{name}-fbsplash.config
-Source49:	%{name}-bootsplash.config
+Source41:	%{pname}-preempt-rt.config
+Source42:	%{pname}-preempt-nort.config
+Source43:	%{pname}-suspend2.config
+Source44:	%{pname}-patches.config
+Source45:	%{pname}-netfilter.config
+Source46:	%{pname}-grsec.config
+Source47:	%{pname}-wrr.config
+Source48:	%{pname}-fbsplash.config
+Source49:	%{pname}-bootsplash.config
 
 ###
 #	Patches
 ###
 
-Patch0:		%{name}-preempt-rt.patch
+Patch0:		%{pname}-preempt-rt.patch
 
 # Jens Axboe's fcache patch (for ext3 only)
 # http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=118e3e9250ef319b6e77cdbc25dc4d26084c14f
 # http://en.opensuse.org/Fcache-howto
-Patch6:		%{name}-fcache.patch
+Patch6:		%{pname}-fcache.patch
 
 ### Con Kolivas patchset
-Patch7:		%{name}-ck.patch
+Patch7:		%{pname}-ck.patch
 
-Patch9:		%{name}-grsec-minimal.patch
+Patch9:		%{pname}-grsec-minimal.patch
 
 ### filesystems
 # based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
-Patch10:	%{name}-reiser4.patch
+Patch10:	%{pname}-reiser4.patch
 # Squashfs from squashfs: http://dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
-Patch11:	%{name}-squashfs.patch
+Patch11:	%{pname}-squashfs.patch
 # http://dl.sourceforge.net/sourceforge/supermount-ng/supermount-ng-2.2.2-2.6.22.1_madgus_gcc34.patch.gz
-Patch12:	%{name}-supermount-ng.patch
+Patch12:	%{pname}-supermount-ng.patch
 # http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.2_for_2.6.22.4.diff.gz
-Patch13:	%{name}-unionfs.patch
+Patch13:	%{pname}-unionfs.patch
 # http://client.linux-nfs.org/Linux-2.6.x/2.6.22/linux-2.6.22-NFS_ALL.dif
-Patch14:	%{name}-NFS_ALL.patch
+Patch14:	%{pname}-NFS_ALL.patch
 # http://www.citi.umich.edu/projects/nfsv4/linux/kernel-patches/2.6.22-rc5-1/linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
-Patch15:	%{name}-CITI_NFS4_ALL.patch
+Patch15:	%{pname}-CITI_NFS4_ALL.patch
 
 ### hardware
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
-Patch20:	%{name}-tahoe9xx.patch
+Patch20:	%{pname}-tahoe9xx.patch
 # Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
-Patch21:	%{name}-sk98lin.patch
+Patch21:	%{pname}-sk98lin.patch
 # http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
-Patch22:	%{name}-vesafb-tng.patch
-Patch23:	%{name}-dmi-decode-and-save-oem-string-information.patch
+Patch22:	%{pname}-vesafb-tng.patch
+Patch23:	%{pname}-dmi-decode-and-save-oem-string-information.patch
 # from http://www.zen24593.zen.co.uk/hdaps/hdaps_protect-2.6.18.3-2.patch
-Patch24:	%{name}-hdaps_protect.patch
+Patch24:	%{pname}-hdaps_protect.patch
 # http://pred.dcaf-security.org/sata_nv-ncq-support-mcp51-mcp55-mcp61.patch
 # NCQ Functionality for newer nvidia chipsets (MCP{51,55,61}) by nvidia crew
-Patch25:	%{name}-sata_nv-ncq.patch
+Patch25:	%{pname}-sata_nv-ncq.patch
 # http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.21.patch
-Patch26:	%{name}-toshiba-acpi.patch
+Patch26:	%{pname}-toshiba-acpi.patch
 
 ### console
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
-Patch30:	%{name}-bootsplash.patch
+Patch30:	%{pname}-bootsplash.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
-Patch31:	%{name}-fbsplash.patch
+Patch31:	%{pname}-fbsplash.patch
 
 ########	netfilter snap
 ## base
-Patch40:	%{name}-pom-ng-IPV4OPTSSTRIP.patch
-Patch41:	%{name}-pom-ng-ipv4options.patch
-Patch42:	%{name}-pom-ng-set.patch
-Patch43:	%{name}-pom-ng-u32.patch
-Patch44:	%{name}-pom-ng-ROUTE.patch
-Patch45:	%{name}-pom-ng-TARPIT.patch
-Patch46:	%{name}-pom-ng-mms-conntrack-nat.patch
-Patch47:	%{name}-pom-ng-IPMARK.patch
-Patch48:	%{name}-pom-ng-connlimit.patch
-Patch49:	%{name}-pom-ng-geoip.patch
-Patch50:	%{name}-pom-ng-ipp2p.patch
-Patch51:	%{name}-pom-ng-time.patch
-Patch52:	%{name}-pom-ng-rsh.patch
-Patch53:	%{name}-pom-ng-rpc.patch
+Patch40:	%{pname}-pom-ng-IPV4OPTSSTRIP.patch
+Patch41:	%{pname}-pom-ng-ipv4options.patch
+Patch42:	%{pname}-pom-ng-set.patch
+Patch43:	%{pname}-pom-ng-u32.patch
+Patch44:	%{pname}-pom-ng-ROUTE.patch
+Patch45:	%{pname}-pom-ng-TARPIT.patch
+Patch46:	%{pname}-pom-ng-mms-conntrack-nat.patch
+Patch47:	%{pname}-pom-ng-IPMARK.patch
+Patch48:	%{pname}-pom-ng-connlimit.patch
+Patch49:	%{pname}-pom-ng-geoip.patch
+Patch50:	%{pname}-pom-ng-ipp2p.patch
+Patch51:	%{pname}-pom-ng-time.patch
+Patch52:	%{pname}-pom-ng-rsh.patch
+Patch53:	%{pname}-pom-ng-rpc.patch
 
 # based on http://www.svn.barbara.eu.org/ipt_account/attachment/wiki/Software/ipt_account-0.1.21-20070804164729.tar.gz?format=raw
-Patch67:	%{name}-ipt_account.patch
+Patch67:	%{pname}-ipt_account.patch
 
 # based on http://www.intra2net.com/de/produkte/opensource/ipt_account/pom-ng-ipt_ACCOUNT-1.10.tgz
-Patch68:	%{name}-ipt_ACCOUNT.patch
+Patch68:	%{pname}-ipt_ACCOUNT.patch
 
 # netfilter-layer7-v2.13.tar.gz from http://l7-filter.sf.net/
-Patch69:	%{name}-layer7.patch
+Patch69:	%{pname}-layer7.patch
 ########	End netfilter
 
 ### net software
 # based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
 # some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19
 # compatibility. Should work, but not with wrr.
-Patch70:	%{name}-imq.patch
+Patch70:	%{pname}-imq.patch
 # esfq from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
-Patch71:	%{name}-esfq.patch
+Patch71:	%{pname}-esfq.patch
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
-Patch72:	%{name}-atm-vbr.patch
-Patch73:	%{name}-atmdd.patch
+Patch72:	%{pname}-atm-vbr.patch
+Patch73:	%{pname}-atmdd.patch
 # wrr http://www.zz9.dk/patches/wrr-linux-070717-2.6.22.patch.gz
-Patch74:	%{name}-wrr.patch
+Patch74:	%{pname}-wrr.patch
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
-Patch75:	%{name}-hostap.patch
+Patch75:	%{pname}-hostap.patch
 # http://www.ntop.org/PF_RING.html 20070610
 #Patch76:	%{name}-PF_RING.patch
 # The following patch extend the routing functionality in Linux
@@ -206,26 +207,26 @@ Patch75:	%{name}-hostap.patch
 # gateways are used.
 # http://www.ssi.bg/~ja/routes-2.6.22-15.diff
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
-Patch77:	%{name}-routes.patch
+Patch77:	%{pname}-routes.patch
 
 ### Additional features
 # http://www.bullopensource.org/cpuset/ - virtual CPUs
-Patch85:	%{name}-cpuset_virtualization.patch
+Patch85:	%{pname}-cpuset_virtualization.patch
 
 ### Fixes
-Patch91:	%{name}-fbcon-margins.patch
-Patch92:	%{name}-static-dev.patch
-Patch100:	%{name}-small_fixes.patch
+Patch91:	%{pname}-fbcon-margins.patch
+Patch92:	%{pname}-static-dev.patch
+Patch100:	%{pname}-small_fixes.patch
 Patch101:	kernel-bcm43xx-pcie-2.6_18.1.patch
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
-Patch102:	%{name}-forcedeth-WON.patch
-Patch103:	%{name}-ueagle-atm-freezer.patch
+Patch102:	%{pname}-forcedeth-WON.patch
+Patch103:	%{pname}-ueagle-atm-freezer.patch
 # investigate
-Patch104:	%{name}-ppc-ICE.patch
+Patch104:	%{pname}-ppc-ICE.patch
 
 # http://synce.svn.sourceforge.net/svnroot/synce/trunk/patches/linux-2.6.22-rndis_host-wm5.patch
-Patch105:	%{name}-rndis_host.patch
+Patch105:	%{pname}-rndis_host.patch
 
 # add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
 Patch106:	kernel-TIOCGDEV.patch
