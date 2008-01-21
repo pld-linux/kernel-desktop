@@ -233,7 +233,8 @@ Patch106:	kernel-TIOCGDEV.patch
 URL:		http://www.kernel.org/
 BuildRequires:	/sbin/depmod
 BuildRequires:	binutils >= 3:2.14.90.0.7
-BuildRequires:	gcc >= 5:3.2
+%{!?with_gcc4:BuildRequires:	gcc >= 5:3.2}
+%{?with_gcc4:BuildRequires:	gcc >= 5:4.1.1}
 BuildRequires:	module-init-tools
 # for hostname command
 BuildRequires:	net-tools
@@ -245,8 +246,8 @@ Requires:	geninitrd >= 8702
 Requires:	module-init-tools >= 0.9.9
 %{?with_bootsplash:Suggests:	bootsplash}
 %{?with_fbsplash:Suggests:	splashutils}
-Provides:	kernel(netfilter) = %{netfilter_snap}
 Provides:	%{name}(netfilter) = %{netfilter_snap}
+Provides:	kernel(netfilter) = %{netfilter_snap}
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
