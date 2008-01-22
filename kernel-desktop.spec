@@ -199,7 +199,7 @@ Patch74:	%{pname}-wrr.patch
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch75:	%{pname}-hostap.patch
 # http://www.ntop.org/PF_RING.html 20070610
-#Patch76:	%{name}-PF_RING.patch
+Patch76:	%{pname}-PF_RING.patch
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
 # alternative routes, the reverse path protection (rp_filter),
@@ -645,7 +645,7 @@ exit 1
 # hostap enhancements from/for aircrack-ng
 %patch75 -p1
 # PF_RING
-#%patch76 -p1 # XXX checkme, seems like wrong contents
+%patch76 -p1
 # static routes
 %patch77 -p1
 
