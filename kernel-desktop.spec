@@ -62,7 +62,7 @@
 
 %define		_basever	2.6.22
 %define		_postver	.16
-%define		_rel		2
+%define		_rel		3
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -671,12 +671,12 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 
 %build
-KERNEL_BUILD_DIR=`pwd`
+KERNEL_BUILD_DIR=$(pwd)
 
 Config="%{_target_base_arch}"
 
-cat %{SOURCE20} > .config
-cat $RPM_SOURCE_DIR/%{name}-$Config.config >> .config
+cat %{_sourcedir}/%{pname}-common.config > .config
+cat %{_sourcedir}/%{pname}-$Config.config >> .config
 echo "CONFIG_LOCALVERSION=\"-%{_localversion}\"" >> .config
 
 %ifarch %{ix86}
@@ -712,47 +712,47 @@ echo "CONFIG_LOCALVERSION=\"-%{_localversion}\"" >> .config
 
 # preempt
 %if %{with preemptrt}
-	cat %{SOURCE41} >> .config
+cat %{_sourcedir}/%{pname}-preempt-rt.config >> .config
 %else
-	cat %{SOURCE42} >> .config
+cat %{_sourcedir}/%{pname}-preempt-nort.config >> .config
 %endif
 
 # suspend 2
-cat %{SOURCE43} >> .config
+cat %{_sourcedir}/%{pname}-suspend2.config >> .config
 
 # fbsplash, vesafb-tng, squashfs, imq, tahoe, atm, reiser4
-cat %{SOURCE44} >> .config
+cat %{_sourcedir}/%{pname}-patches.config >> .config
 
 # netfilter
-cat %{SOURCE45} >> .config
+cat %{_sourcedir}/%{pname}-netfilter.config >> .config
 
 %if %{with grsec_minimal}
-	cat %{SOURCE46} >> .config
+cat %{_sourcedir}/%{pname}-grsec.config >> .config
 %endif
 
 # wrr
-cat %{SOURCE47} >> .config
+cat %{_sourcedir}/%{pname}-wrr.config >> .config
 
 %ifarch %{ix86}
 %ifnarch i386
-	sed -e "s:CONFIG_NO_HZ=y:# CONFIG_NO_HZ is not set:" \
-		-e "s:# CONFIG_HZ_1000 is not set:CONFIG_HZ_1000=y:" \
-		-e "s:# CONFIG_HZ is not set:CONFIG_HZ=1000:"			\
-		-i .config
+sed -e "s:CONFIG_NO_HZ=y:# CONFIG_NO_HZ is not set:" \
+	-e "s:# CONFIG_HZ_1000 is not set:CONFIG_HZ_1000=y:" \
+	-e "s:# CONFIG_HZ is not set:CONFIG_HZ=1000:"			\
+	-i .config
 %endif
 %endif
 
 %if %{with laptop}
-	sed -e "s:CONFIG_HZ_1000=y:# CONFIG_HZ_1000 is not set:"	\
-		-e "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:"	\
-		-e "s:CONFIG_HZ=1000:CONFIG_HZ=100:"			\
-		-i .config
+sed -e "s:CONFIG_HZ_1000=y:# CONFIG_HZ_1000 is not set:"	\
+	-e "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:"	\
+	-e "s:CONFIG_HZ=1000:CONFIG_HZ=100:"			\
+	-i .config
 %endif
 
 %if %{with bootsplash}
-	cat %{SOURCE49} >> .config
+	cat %{_sourcedir}/%{pname}-bootsplash.config >> .config
 %else
-	cat %{SOURCE48} >> .config
+	cat %{_sourcedir}/%{pname}-fbsplash.config >> .config
 %endif
 
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" .config}
@@ -761,10 +761,10 @@ cat %{SOURCE47} >> .config
 
 # disable e1000 on ppc (ICEs)
 %ifarch ppc ppc64
-	sed -e "s:CONFIG_E1000=m:# CONFIG_E1000 is not set:" \
-		-e "s:CONFIG_E1000_NAPI=y:# CONFIG_E1000_NAPI is not set:" \
-		-e "s:CONFIG_E1000_DISABLE_PACKET_SPLIT=y:# CONFIG_E1000_DISABLE_PACKET_SPLIT is not set:" \
-		-i .config
+sed -e "s:CONFIG_E1000=m:# CONFIG_E1000 is not set:" \
+	-e "s:CONFIG_E1000_NAPI=y:# CONFIG_E1000_NAPI is not set:" \
+	-e "s:CONFIG_E1000_DISABLE_PACKET_SPLIT=y:# CONFIG_E1000_DISABLE_PACKET_SPLIT is not set:" \
+	-i .config
 %endif
 
 rm -f include/linux/autoconf.h
@@ -786,7 +786,6 @@ if cp -al COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
 	l=l
 	rm -f $RPM_BUILD_ROOT/COPYING
 fi
-
 
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
 install -d $RPM_BUILD_ROOT%{_sysconfdir}/modprobe.d/%{kernel_release}
