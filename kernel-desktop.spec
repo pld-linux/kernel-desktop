@@ -960,6 +960,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 /lib/modules/%{kernel_release}/build
+%ghost %{_kernelsrcdir}
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
