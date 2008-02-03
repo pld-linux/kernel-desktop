@@ -62,7 +62,7 @@
 
 %define		_basever	2.6.22
 %define		_postver	.16
-%define		_rel		4
+%define		_rel		5
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -960,7 +960,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
 /lib/modules/%{kernel_release}/build
-%ghost %{_kernelsrcdir}
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
