@@ -61,12 +61,13 @@
 %endif
 
 %define		_basever	2.6.22
-%define		_postver	.16
-%define		_rel		5
+%define		_postver	.17
+%define		_rel		1
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
+Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
 Name:		kernel-%{alt_kernel}
@@ -75,34 +76,30 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-#Source0:	ftp://ftp.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{_basever}%{_rc}.tar.bz2
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
-%if "%{_postver}" != "%{nil}"
+#%%if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	677f4eec305e7893e74b24e7349d4b80
-%endif
+# Source1-md5:	ce718cef495696c2d446bd8ff170c519
+#%%endif
 Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	f98f071b0f4e7897296d643854bb809f
-
 Source3:	%{pname}-autoconf.h
 Source4:	%{pname}-config.h
 Source5:	%{pname}-module-build.pl
-
-Source20:	%{pname}-common.config
-Source22:	%{pname}-i386.config
-Source24:	%{pname}-x86_64.config
-Source26:	%{pname}-ppc.config
-
-Source41:	%{pname}-preempt-rt.config
-Source42:	%{pname}-preempt-nort.config
-Source43:	%{pname}-suspend2.config
-Source44:	%{pname}-patches.config
-Source45:	%{pname}-netfilter.config
-Source46:	%{pname}-grsec.config
-Source47:	%{pname}-wrr.config
-Source48:	%{pname}-fbsplash.config
-Source49:	%{pname}-bootsplash.config
+Source6:	%{pname}-common.config
+Source7:	%{pname}-i386.config
+Source8:	%{pname}-x86_64.config
+Source9:	%{pname}-ppc.config
+Source10:	%{pname}-preempt-rt.config
+Source11:	%{pname}-preempt-nort.config
+Source12:	%{pname}-suspend2.config
+Source13:	%{pname}-patches.config
+Source14:	%{pname}-netfilter.config
+Source15:	%{pname}-grsec.config
+Source16:	%{pname}-wrr.config
+Source17:	%{pname}-fbsplash.config
+Source18:	%{pname}-bootsplash.config
 
 ###
 #	Patches
