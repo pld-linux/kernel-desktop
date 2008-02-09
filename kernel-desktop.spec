@@ -62,7 +62,7 @@
 
 %define		_basever	2.6.22
 %define		_postver	.17
-%define		_rel		1
+%define		_rel		2
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -78,10 +78,8 @@ License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
-#%%if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	ce718cef495696c2d446bd8ff170c519
-#%%endif
 Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	f98f071b0f4e7897296d643854bb809f
 Source3:	%{pname}-autoconf.h
@@ -956,7 +954,6 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
-/lib/modules/%{kernel_release}/build
 %ghost /lib/modules/%{kernel_release}/modules.*
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
@@ -1021,6 +1018,8 @@ fi
 %{_kernelsrcdir}/scripts/*.c
 %{_kernelsrcdir}/scripts/*.sh
 %{_kernelsrcdir}/scripts/kconfig/*
+/lib/modules/%{kernel_release}/build
+/lib/modules/%{kernel_release}/source
 
 %files doc
 %defattr(644,root,root,755)
