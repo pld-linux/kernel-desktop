@@ -62,7 +62,7 @@
 
 %define		_basever	2.6.22
 %define		_postver	.17
-%define		_rel		2
+%define		_rel		3
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -150,6 +150,9 @@ Patch26:	%{pname}-toshiba-acpi.patch
 Patch30:	%{pname}-bootsplash.patch
 # http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
 Patch31:	%{pname}-fbsplash.patch
+
+# security bugfix
+Patch32:	kernel-vmsplice.patch
 
 ########	netfilter snap
 ## base
@@ -572,6 +575,8 @@ exit 1
 %else
 %patch31 -p1
 %endif
+
+%patch32 -p1
 
 ## netfilter
 #
