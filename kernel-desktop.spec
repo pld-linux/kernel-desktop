@@ -237,6 +237,7 @@ BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
+Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 8702
 Requires:	module-init-tools >= 0.9.9
