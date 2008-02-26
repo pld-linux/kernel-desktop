@@ -61,8 +61,8 @@
 %endif
 
 %define		_basever	2.6.22
-%define		_postver	.18
-%define		_rel		2
+%define		_postver	.19
+%define		_rel		1
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -79,7 +79,7 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	639fe3f8e676a349ba74c5405f09dd99
+# Source1-md5:	066cc3bdd2783dcd01f6ff466e449ec0
 Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	f98f071b0f4e7897296d643854bb809f
 Source3:	%{pname}-autoconf.h
