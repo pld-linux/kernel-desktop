@@ -62,7 +62,7 @@
 
 %define		_basever	2.6.22
 %define		_postver	.19
-%define		_rel		1
+%define		_rel		2
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
