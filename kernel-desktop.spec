@@ -839,6 +839,8 @@ install %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
 # ghost initrd not to leave images around when pkg is uninstalled
 touch $RPM_BUILD_ROOT/boot/initrd-%{kernel_release}.gz
+rm -f $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
+touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -924,6 +926,15 @@ if [ "$1" = "0" ]; then
 	fi
 fi
 
+%triggerin module-build -- %{name} = %{epoch}:%{version}-%{release}
+ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}/build
+ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}/source
+
+%triggerun module-build -- %{name} = %{epoch}:%{version}-%{release}
+if [ "$1" = 0 ]; then
+	rm -f /lib/modules/%{kernel_release}/{build,source}
+fi
+
 %files
 %defattr(644,root,root,755)
 /boot/vmlinuz-%{kernel_release}
@@ -955,8 +966,10 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/serial/serial_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/host/sl811_cs.ko*
-/lib/modules/%{kernel_release}/build
 %ghost /lib/modules/%{kernel_release}/modules.*
+%ghost /lib/modules/%{kernel_release}/build
+%ghost /lib/modules/%{kernel_release}/source
+
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
 %ifarch alpha %{ix86} %{x8664} sparc sparc64
