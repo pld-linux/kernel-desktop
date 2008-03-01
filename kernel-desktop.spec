@@ -1,5 +1,6 @@
 #
 # TODO:
+# - http://waninkoko.info/ckpatches/2.6.24/
 # - OOPSES AFTER FIREWALL LOAD
 # - investigate rejected sk98lin patch
 # - dmi-decode patch already in upstream kernel?
@@ -52,6 +53,7 @@
 
 %define		suspend_version		2.2.10.2
 %define		suspend_kernel		%{_basever}-rc6
+%define		suspend_kernel		2.6.22-rc6
 %define		netfilter_snap		20061213
 
 %if %{with laptop}
@@ -60,9 +62,9 @@
 %define		alt_kernel	desktop%{?with_preemptrt:_rt}
 %endif
 
-%define		_basever	2.6.22
-%define		_postver	.19
-%define		_rel		1
+%define		_basever	2.6.24
+%define		_postver	.3
+%define		_rel		0.1
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -77,9 +79,9 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	2e230d005c002fb3d38a3ca07c0200d0
+# Source0-md5:	3f23ad4b69d0a552042d1ed0f4399857
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	066cc3bdd2783dcd01f6ff466e449ec0
+# Source1-md5:	4c42be33a7d98f280588c9d28478cdfd
 Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
 # Source2-md5:	f98f071b0f4e7897296d643854bb809f
 Source3:	%{pname}-autoconf.h
