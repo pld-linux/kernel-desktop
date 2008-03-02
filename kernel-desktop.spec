@@ -685,7 +685,9 @@ exit 1
 %ifarch ppc ppc64
 %patch104 -p1
 %endif
+%endif
 %patch105 -p1
+%if 0
 %patch106 -p1
 %endif
 
