@@ -63,7 +63,7 @@
 %endif
 
 %define		_basever	2.6.24
-%define		_postver	.3
+%define		_postver	.4
 %define		_rel		0.1
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
@@ -81,7 +81,7 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	3f23ad4b69d0a552042d1ed0f4399857
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	4c42be33a7d98f280588c9d28478cdfd
+# Source1-md5:	508f5aaa99dead9836ff490496a61581
 Source19:	kernel-vanilla-module-build.pl
 Source20:	kernel-config.py
 Source21:	kernel-config-update.py
