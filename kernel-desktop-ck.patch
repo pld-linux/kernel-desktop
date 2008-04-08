@@ -500,13 +500,15 @@ index 4f3838a..253a982 100644
  extern void FASTCALL(activate_page(struct page *));
  extern void FASTCALL(mark_page_accessed(struct page *));
  extern void lru_add_drain(void);
-@@ -184,9 +185,10 @@ extern void swap_setup(void);
+@@ -186,11 +186,12 @@
  
  /* linux/mm/vmscan.c */
  extern unsigned long try_to_free_pages(struct zone **zones, int order,
 -					gfp_t gfp_mask);
 +					gfp_t gfp_mask, struct task_struct *p);
  extern unsigned long shrink_all_memory(unsigned long nr_pages);
+ extern void shrink_one_zone(struct zone *zone, unsigned long desired_size,
+ 		int ps_wanted);
 -extern int vm_swappiness;
 +extern int vm_mapped;
 +extern int vm_hardmaplimit;
