@@ -1,13 +1,6 @@
 #
 # TODO:
-# - http://waninkoko.info/ckpatches/2.6.24/
-# - OOPSES AFTER FIREWALL LOAD
-# - investigate rejected sk98lin patch
-# - dmi-decode patch already in upstream kernel?
-# - investigate hdaps_protect -- doesn't apply
-# - check patches > 90
 # - put together a default .config that makes sense for desktops
-# - convert patches to common diff -uNp format
 # - make sure patch numbering is consistent and prepare it
 #   for the future
 # - investigate ppc-ICE patches from kernel.spec (does it fix the e1000 ICE?)
@@ -18,18 +11,25 @@
 #   mainline kernel)
 # - check if we don't have newer netfilter (kernel.spec claims 2007) # - check for all patches update
 # - links and descriptions above al PatchesXXX and %patchXXX
-# - update common config for unionfs and PF_RING
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
-%bcond_with	preemptrt	# use realtime-preempt patch
-%bcond_without	ck		# don't use Con Kolivas patchset
-%bcond_with	grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
-%bcond_with	bootsplash	# build with bootsplash instead of fbsplash
-%bcond_with	laptop		# build with HZ=100
-%bcond_with	verbose		# verbose build (V=1)
-%bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
-%bcond_with	gcc4		# build with gcc4
+%bcond_with		preemptrt	# use realtime-preempt patch
+%bcond_without	tuxonice	# support for tuxonice (ex-suspend2)
+%bcond_with		fcache		# Jens Axboe's fcache patch (ext3 only)
+%bcond_without	ck			# Con Kolivas desktop improvements patchset
+%bcond_without	reiser4		# support for reiser4 fs (experimental)
+%bcond_without	squashfs	# support for squashfs
+%bcond_with		supermount	# support for supermount-ng
+%bcond_without	unionfs		# support for unionfs
+%bcond_with		grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
+%bcond_with		bootsplash	# build with bootsplash instead of fbsplash
+%bcond_without	imq			# imq
+%bcond_without	wrr			# wrr support
+%bcond_with		laptop		# build with HZ=100
+%bcond_with		verbose		# verbose build (V=1)
+%bcond_with		pae			# build PAE (HIGHMEM64G) support on uniprocessor
+%bcond_with		gcc4		# build with gcc4
 
 %{?debug:%define with_verbose 1}
 
@@ -51,9 +51,6 @@
 
 %define		_enable_debug_packages			0
 
-%define		suspend_version		2.2.10.2
-%define		suspend_kernel		%{_basever}-rc6
-%define		suspend_kernel		2.6.22-rc6
 %define		netfilter_snap		20061213
 
 %if %{with laptop}
@@ -87,8 +84,6 @@ Source20:	kernel-config.py
 Source21:	kernel-config-update.py
 Source22:	kernel-multiarch.make
 
-Source2:	http://www.tuxonice.net/downloads/all/suspend2-%{suspend_version}-for-%{suspend_kernel}.patch.bz2
-# Source2-md5:	f98f071b0f4e7897296d643854bb809f
 Source3:	%{pname}-autoconf.h
 Source4:	%{pname}-config.h
 Source5:	%{pname}-module-build.pl
@@ -110,7 +105,11 @@ Source18:	%{pname}-bootsplash.config
 #	Patches
 ###
 
-Patch0:		%{pname}-preempt-rt.patch
+#Patch0:		%{pname}-preempt-rt.patch
+
+# Project suspend2 renamed to tuxonice
+# http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc5-for-2.6.24.patch.bz2
+Patch1:		%{pname}-tuxonice.patch
 
 # Jens Axboe's fcache patch (for ext3 only)
 # http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=118e3e9250ef319b6e77cdbc25dc4d26084c14f
@@ -118,44 +117,43 @@ Patch0:		%{pname}-preempt-rt.patch
 Patch6:		%{pname}-fcache.patch
 
 ### Con Kolivas patchset
+# http://waninkoko.info/ckpatches/2.6.24/
 Patch7:		%{pname}-ck.patch
 
 Patch9:		%{pname}-grsec-minimal.patch
 
 ### filesystems
-# based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
+# previously based on ftp://ftp.namesys.com/pub/reiser4-for-2.6/2.6.22/reiser4-for-2.6.22-2.patch.gz
+# now based on ftp.kernel.org:/pub/linux/kernel/people/akpm/patches/2.6/2.6.24-rc8/2.6.24-rc8-mm1/broken-out/reiser4*
 Patch10:	%{pname}-reiser4.patch
-# Squashfs from squashfs: http://dl.sourceforge.net/sourceforge/squashfs/squashfs3.2-r2.tar.gz for linux-2.6.20
+
+# http://mesh.dl.sourceforge.net/sourceforge/squashfs/squashfs3.3.tgz
+# squashfs3.3/kernel-patches/linux-2.6.24/squashfs3.3-patch
 Patch11:	%{pname}-squashfs.patch
+
 # http://dl.sourceforge.net/sourceforge/supermount-ng/supermount-ng-2.2.2-2.6.22.1_madgus_gcc34.patch.gz
 Patch12:	%{pname}-supermount-ng.patch
-# http://download.filesystems.org/unionfs/unionfs-2.1/unionfs-2.1.2_for_2.6.22.4.diff.gz
+
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.2.2_for_2.6.24-rc7.diff.gz
 Patch13:	%{pname}-unionfs.patch
-# http://client.linux-nfs.org/Linux-2.6.x/2.6.22/linux-2.6.22-NFS_ALL.dif
-Patch14:	%{pname}-NFS_ALL.patch
-# http://www.citi.umich.edu/projects/nfsv4/linux/kernel-patches/2.6.22-rc5-1/linux-2.6.22-rc5-CITI_NFS4_ALL-1.diff
-Patch15:	%{pname}-CITI_NFS4_ALL.patch
 
 ### hardware
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch20:	%{pname}-tahoe9xx.patch
-# Derived from http://www.skd.de/e_en/products/adapters/pci_64/sk-98xx_v20/software/linux/driver/install-8_41.tar.bz2
-Patch21:	%{pname}-sk98lin.patch
+
 # http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
-Patch22:	%{pname}-vesafb-tng.patch
-Patch23:	%{pname}-dmi-decode-and-save-oem-string-information.patch
-# from http://www.zen24593.zen.co.uk/hdaps/hdaps_protect-2.6.18.3-2.patch
-Patch24:	%{pname}-hdaps_protect.patch
+#Patch22:	%{pname}-vesafb-tng.patch
+
 # http://pred.dcaf-security.org/sata_nv-ncq-support-mcp51-mcp55-mcp61.patch
 # NCQ Functionality for newer nvidia chipsets (MCP{51,55,61}) by nvidia crew
-Patch25:	%{pname}-sata_nv-ncq.patch
+#Patch25:	%{pname}-sata_nv-ncq.patch
 # http://memebeam.org/free-software/toshiba_acpi/toshiba_acpi-dev_toshiba_test5-linux_2.6.21.patch
 Patch26:	%{pname}-toshiba-acpi.patch
 
 ### console
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch30:	%{pname}-bootsplash.patch
-# http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
+# based on http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
 Patch31:	%{pname}-fbsplash.patch
 
 ########	netfilter snap
@@ -186,28 +184,34 @@ Patch69:	%{pname}-layer7.patch
 ########	End netfilter
 
 ### net software
-# based on 2.6.17 patch from http://www.linuximq.net/patchs/linux-2.6.17-imq1.diff,
-# some stuff moved from net/sched/sch_generic.c to net/core/dev.c for 2.6.19
-# compatibility. Should work, but not with wrr.
+# based on http://www.linuximq.net/patchs/linux-2.6.24-imq.diff
+# some people report problems when using imq with wrr.
 Patch70:	%{pname}-imq.patch
+
 # esfq from http://fatooh.org/esfq-2.6/current/esfq-kernel.patch
 Patch71:	%{pname}-esfq.patch
+
+# by Baggins request:
 # derived from ftp://ftp.cmf.nrl.navy.mil/pub/chas/linux-atm/vbr/vbr-kernel-diffs
 Patch72:	%{pname}-atm-vbr.patch
 Patch73:	%{pname}-atmdd.patch
+
 # wrr http://www.zz9.dk/patches/wrr-linux-070717-2.6.22.patch.gz
 Patch74:	%{pname}-wrr.patch
+
 # adds some ids for hostap suported cards and monitor_enable from/for aircrack-ng
 # http://patches.aircrack-ng.org/hostap-kernel-2.6.18.patch
 Patch75:	%{pname}-hostap.patch
+
 # http://www.ntop.org/PF_RING.html 20070610
 Patch76:	%{pname}-PF_RING.patch
+
 # The following patch extend the routing functionality in Linux
 # to support static routes (defined by user), new way to use the
 # alternative routes, the reverse path protection (rp_filter),
 # the NAT processing to use correctly the routing when multiple
 # gateways are used.
-# http://www.ssi.bg/~ja/routes-2.6.22-15.diff
+# http://www.ssi.bg/~ja/routes-2.6.24-15.diff
 # We need to disable CONFIG_IP_ROUTE_MULTIPATH_CACHED
 Patch77:	%{pname}-routes.patch
 
@@ -219,7 +223,6 @@ Patch85:	%{pname}-cpuset_virtualization.patch
 Patch91:	%{pname}-fbcon-margins.patch
 Patch92:	%{pname}-static-dev.patch
 Patch100:	%{pname}-small_fixes.patch
-Patch101:	kernel-bcm43xx-pcie-2.6_18.1.patch
 # Wake-On-Lan fix for nForce drivers; using http://atlas.et.tudelft.nl/verwei90/nforce2/wol.html
 # Fix verified for that kernel version.
 Patch102:	%{pname}-forcedeth-WON.patch
@@ -231,7 +234,7 @@ Patch104:	%{pname}-ppc-ICE.patch
 Patch105:	%{pname}-rndis_host.patch
 
 # add tty ioctl to figure physical device of the console. used by showconsole.spec (blogd)
-Patch106:	kernel-TIOCGDEV.patch
+#Patch106:	kernel-TIOCGDEV.patch
 
 URL:		http://www.kernel.org/
 BuildRequires:	/sbin/depmod
@@ -319,7 +322,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %define __features Enabled features:\
 %{?debug: - DEBUG}\
- - suspend2 %{suspend_version}\
+%{?with_tuxonice: - TuxOnIce (formerly known as suspend2)}\
 %{?with_preemptrt: - realtime-preempt patch by Ingo Molar}\
 %{?with_ck: - desktop patchset by Con Kolivas}\
 %{?with_grsec_minimal: - grsecurity minimal}\
@@ -551,46 +554,48 @@ cd linux-%{_basever}
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 
-%if 0
-# suspend 2
-%{__bzip2} -dc %{SOURCE2} | %{__patch} -p1 -s
+%if %{with tuxonice}
+%patch1 -p1
+%endif
 
 %if %{with preemptrt}
 #%patch0 -p1
-: premptrt patch is not ready yet
-exit 1
 %endif
 
-# Jens Axboe's fcache patch
+%if %{with fcache}
 %patch6 -p1
+%endif
 
-# Con Kolivas patchset
 %if %{with ck}
 %patch7 -p1
 %endif
 
-# grsecurity
 %if %{with grsec_minimal}
 %patch9 -p1
 %endif
 
-# filesystems
+%if %{with reiser4}
 %patch10 -p1
+%endif
+
+%if %{with squashfs}
 %patch11 -p1
+%endif
+
+%if %{with supermoint}
 %patch12 -p1
+%endif
+
+%if %{with unionfs}
 %patch13 -p1
-%patch14 -p1
-%patch15 -p1
+%endif
 
 ### hardware
 %patch20 -p1
-# Rejects hard -- neds further investigation
-#%%patch21 -p1
-%patch22 -p1
-# Already applied?
-#%%patch23 -p1
-#%%patch24 -p1
-%patch25 -p1
+%if 0
+#%patch22 -p1 # UVESAFB
+#%patch25 -p1 # FIND UPDATE
+%endif
 # toshiba-acpi
 %patch26 -p1
 
@@ -660,13 +665,23 @@ exit 1
 
 
 ### net software
+%if %{with imq}
 %patch70 -p1
+%endif
+
 %patch71 -p1
+# atm-vbr
 %patch72 -p1
+# atmdd
 %patch73 -p1
+
+%if %{with wrr}
 %patch74 -p1
+%endif
+
 # hostap enhancements from/for aircrack-ng
 %patch75 -p1
+
 # PF_RING
 %patch76 -p1
 # static routes
@@ -676,7 +691,6 @@ exit 1
 %patch91 -p1
 %patch92 -p1
 %patch100 -p1
-#%%patch101 -p1
 # forcedeth
 %patch102 -p1
 # ueagle freezer
@@ -685,11 +699,8 @@ exit 1
 %ifarch ppc ppc64
 %patch104 -p1
 %endif
-%endif
 %patch105 -p1
-%if 0
-%patch106 -p1
-%endif
+#%patch106 -p1 # FIND UPDATE
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
