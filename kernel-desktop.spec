@@ -49,8 +49,6 @@
 %define		have_isa	0
 %endif
 
-%define		_enable_debug_packages			0
-
 %define		netfilter_snap		20061213
 
 %if %{with laptop}
@@ -64,6 +62,10 @@
 %define		_rel		0.1
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
+
+%define		_enable_debug_packages			0
+
+%define		netfilter_snap		20061213
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
@@ -140,9 +142,6 @@ Patch13:	%{pname}-unionfs.patch
 ### hardware
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
 Patch20:	%{pname}-tahoe9xx.patch
-
-# http://dev.gentoo.org/~spock/projects/vesafb-tng/archive/vesafb-tng-1.0-rc2-2.6.20-rc2.patch
-#Patch22:	%{pname}-vesafb-tng.patch
 
 # http://pred.dcaf-security.org/sata_nv-ncq-support-mcp51-mcp55-mcp61.patch
 # NCQ Functionality for newer nvidia chipsets (MCP{51,55,61}) by nvidia crew
@@ -258,7 +257,7 @@ Provides:	kernel(netfilter) = %{netfilter_snap}
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
 Conflicts:	jfsutils < 1.1.3
-Conflicts:	module-init-tool < 0.9.10
+Conflicts:	module-init-tools < 0.9.10
 Conflicts:	nfs-utils < 1.0.5
 Conflicts:	oprofile < 0.9
 Conflicts:	ppp < 1:2.4.0
@@ -528,7 +527,7 @@ Autoreqprov:	no
 
 %description doc
 This is the documentation for the Linux kernel, as found in
-Documentation directory.
+/usr/src/linux/Documentation directory.
 
 %description doc -l de.UTF-8
 Dies ist die Kernel Dokumentation wie sie im 'Documentation'
@@ -536,7 +535,7 @@ Verzeichniss vorgefunden werden kann.
 
 %description doc -l pl.UTF-8
 Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
-Documentation.
+/usr/src/linux/Documentation.
 
 %prep
 %setup -qc
@@ -593,7 +592,6 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 ### hardware
 %patch20 -p1
 %if 0
-#%patch22 -p1 # UVESAFB
 #%patch25 -p1 # FIND UPDATE
 %endif
 # toshiba-acpi
@@ -662,7 +660,6 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 
 ##
 # end of netfilter
-
 
 ### net software
 %if %{with imq}
