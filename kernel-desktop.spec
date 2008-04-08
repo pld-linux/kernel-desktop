@@ -49,8 +49,6 @@
 %define		have_isa	0
 %endif
 
-%define		netfilter_snap		20061213
-
 %if %{with laptop}
 %define		alt_kernel	laptop%{?with_preemptrt:_rt}
 %else
@@ -61,11 +59,11 @@
 %define		_postver	.4
 %define		_rel		0.1
 %define		_rc	%{nil}
-%define		pname	kernel-desktop
 
 %define		_enable_debug_packages			0
-
 %define		netfilter_snap		20061213
+
+%define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
 Summary(de.UTF-8):	Der Linux-Kernel (Kern des Linux-Betriebssystems)
 Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
