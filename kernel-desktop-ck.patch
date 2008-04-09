@@ -2017,7 +2017,7 @@ index e5a9597..291d45f 100644
  
  			if (zone_is_all_unreclaimable(zone) &&
 -			    priority != DEF_PRIORITY)
-+			    priority != scan_priority
++			    priority != scan_priority)
  				continue;
  
 -			if (!zone_watermark_ok(zone, order, zone->pages_high,
@@ -2207,3 +2207,13 @@ index e5a9597..291d45f 100644
  	};
  	unsigned long slab_reclaimable;
  
+--- linux-2.6.24/kernel/sysctl_check.c~	2008-01-24 22:58:37.000000000 +0000
++++ linux-2.6.24/kernel/sysctl_check.c	2008-04-09 01:22:28.428886949 +0000
+@@ -123,7 +123,6 @@ static struct trans_ctl_table trans_vm_t
+ 	{ VM_OVERCOMMIT_RATIO,		"overcommit_ratio" },
+ 	/* VM_PAGEBUF unused */
+ 	{ VM_HUGETLB_PAGES,		"nr_hugepages" },
+-	{ VM_SWAPPINESS,		"swappiness" },
+ 	{ VM_LOWMEM_RESERVE_RATIO,	"lowmem_reserve_ratio" },
+ 	{ VM_MIN_FREE_KBYTES,		"min_free_kbytes" },
+ 	{ VM_MAX_MAP_COUNT,		"max_map_count" },
