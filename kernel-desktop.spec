@@ -141,7 +141,7 @@ Patch13:	%{pname}-unionfs.patch
 
 ### hardware
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
-Patch20:	%{pname}-tahoe9xx.patch
+#Patch20:	%{pname}-tahoe9xx.patch
 
 # http://pred.dcaf-security.org/sata_nv-ncq-support-mcp51-mcp55-mcp61.patch
 # NCQ Functionality for newer nvidia chipsets (MCP{51,55,61}) by nvidia crew
