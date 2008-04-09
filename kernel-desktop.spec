@@ -268,7 +268,7 @@ Conflicts:	quota-tools < 3.09
 Conflicts:	reiser4progs < 1.0.0
 %endif
 Conflicts:	reiserfsprogs < 3.6.3
-Conflicts:	udev < 071
+Conflicts:	udev < 1:071
 Conflicts:	util-linux < 2.10o
 Conflicts:	xfsprogs < 2.6.0
 ExclusiveArch:	%{ix86} %{x8664} ppc
