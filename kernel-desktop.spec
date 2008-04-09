@@ -120,6 +120,7 @@ Patch6:		%{pname}-fcache.patch
 ### Con Kolivas patchset
 # http://waninkoko.info/ckpatches/2.6.24/
 Patch7:		%{pname}-ck.patch
+Patch8:		%{pname}-tuxonice-ck.patch
 
 Patch9:		%{pname}-grsec-minimal.patch
 
@@ -566,6 +567,9 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 
 %if %{with ck}
 %patch7 -p1
+%if %{with tuxonice}
+%patch8 -p1
+%endif
 %endif
 
 %if %{with grsec_minimal}
@@ -589,7 +593,7 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 %endif
 
 ### hardware
-%patch20 -p1
+#patch20 -p1
 %if 0
 #%patch25 -p1 # FIND UPDATE
 %endif
