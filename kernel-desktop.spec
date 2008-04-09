@@ -79,18 +79,15 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	3f23ad4b69d0a552042d1ed0f4399857
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	508f5aaa99dead9836ff490496a61581
-Source19:	kernel-vanilla-module-build.pl
-Source20:	kernel-config.py
-Source21:	kernel-config-update.py
-Source22:	kernel-multiarch.make
+Source2:	kernel-vanilla-module-build.pl
+Source3:	kernel-config.py
+Source4:	kernel-config-update.py
+Source5:	kernel-multiarch.make
+Source6:	%{pname}-autoconf.h
+Source7:	%{pname}-config.h
+Source8:	%{pname}-module-build.pl
 
-Source3:	%{pname}-autoconf.h
-Source4:	%{pname}-config.h
-Source5:	%{pname}-module-build.pl
-Source6:	%{pname}-common.config
-Source7:	%{pname}-i386.config
-Source8:	%{pname}-x86_64.config
-Source9:	%{pname}-ppc.config
+Source9:	%{pname}-common.config
 Source10:	%{pname}-preempt-rt.config
 Source11:	%{pname}-preempt-nort.config
 Source12:	%{pname}-tuxonice.config
@@ -541,10 +538,10 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %prep
 %setup -qc
 install -d o/scripts
-ln -s %{SOURCE19} o/scripts/kernel-module-build.pl
-ln -s %{SOURCE20} o/scripts/kernel-config.py
-ln -s %{SOURCE21} o/scripts/kernel-config-update.py
-ln -s %{SOURCE22} Makefile
+ln -s %{SOURCE2} o/scripts/kernel-module-build.pl
+ln -s %{SOURCE3} o/scripts/kernel-config.py
+ln -s %{SOURCE4} o/scripts/kernel-config-update.py
+ln -s %{SOURCE5} Makefile
 
 cd linux-%{_basever}
 %if "%{_postver}" != "%{nil}"
@@ -715,7 +712,6 @@ Q			:= %{!?with_verbose:@}
 MAKE_OPTS	:= %{MakeOpts}
 
 CONFIGS += %{_sourcedir}/%{pname}-common.config
-CONFIGS += %{_sourcedir}/%{pname}-%{_target_base_arch}.config
 
 # preempt
 %if %{with preemptrt}
@@ -914,8 +910,8 @@ fi
 cp -a$l %{srcdir}/* $RPM_BUILD_ROOT%{_kernelsrcdir}
 
 install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}
-cp -a %{SOURCE4} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
-cp -a %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
+cp -a %{SOURCE7} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
+cp -a %{SOURCE6} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
 
 # collect module-build files and directories
 # Usage: kernel-module-build.pl $rpmdir $fileoutdir
