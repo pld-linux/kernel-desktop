@@ -93,13 +93,16 @@ Source8:	%{pname}-x86_64.config
 Source9:	%{pname}-ppc.config
 Source10:	%{pname}-preempt-rt.config
 Source11:	%{pname}-preempt-nort.config
-Source12:	%{pname}-suspend2.config
+Source12:	%{pname}-tuxonice.config
 Source13:	%{pname}-patches.config
 Source14:	%{pname}-netfilter.config
 Source15:	%{pname}-grsec.config
 Source16:	%{pname}-wrr.config
 Source17:	%{pname}-fbsplash.config
 Source18:	%{pname}-bootsplash.config
+Source19:	%{pname}-imq.config
+Source20:	%{pname}-reiser4.config
+Source21:	%{pname}-squashfs.config
 
 ###
 #	Patches
@@ -721,10 +724,12 @@ CONFIGS += %{_sourcedir}/%{pname}-preempt-rt.config
 CONFIGS += %{_sourcedir}/%{pname}-preempt-nort.config
 %endif
 
-# suspend 2
-CONFIGS += %{_sourcedir}/%{pname}-suspend2.config
+# tuxonice
+%if %{with tuxonice}
+CONFIGS += %{_sourcedir}/%{pname}-tuxonice.config
+%endif
 
-# fbsplash, vesafb-tng, squashfs, imq, tahoe, atm, reiser4
+# fbsplash, vesafb-tng, squashfs, tahoe, atm
 CONFIGS += %{_sourcedir}/%{pname}-patches.config
 
 # netfilter
@@ -733,9 +738,22 @@ CONFIGS += %{_sourcedir}/%{pname}-netfilter.config
 %if %{with grsec_minimal}
 CONFIGS += %{_sourcedir}/%{pname}-grsec.config
 %endif
-
 # wrr
+%if %{with wrr}
 CONFIGS += %{_sourcedir}/%{pname}-wrr.config
+%endif
+
+%if %{with imq}
+CONFIGS += %{_sourcedir}/%{pname}-imq.config
+%endif
+
+%if %{with reiser4}
+CONFIGS += %{_sourcedir}/%{pname}-reiser4.config
+%endif
+
+%if %{with squashfs}
+CONFIGS += %{_sourcedir}/%{pname}-squashfs.config
+%endif
 
 %if %{with bootsplash}
 	CONFIGS += %{_sourcedir}/%{pname}-bootsplash.config
