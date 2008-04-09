@@ -100,6 +100,7 @@ Source18:	%{pname}-bootsplash.config
 Source19:	%{pname}-imq.config
 Source20:	%{pname}-reiser4.config
 Source21:	%{pname}-squashfs.config
+Source22:	%{pname}-unionfs.config
 
 ###
 #	Patches
@@ -751,6 +752,10 @@ CONFIGS += %{_sourcedir}/%{pname}-reiser4.config
 CONFIGS += %{_sourcedir}/%{pname}-squashfs.config
 %endif
 
+%if %{with unionfs}
+CONFIGS += %{_sourcedir}/%{pname}-unionfs.config
+%endif
+
 %if %{with bootsplash}
 	CONFIGS += %{_sourcedir}/%{pname}-bootsplash.config
 %else
@@ -802,18 +807,11 @@ pykconfig() {
 	echo 'X86_USE_3DNOW=y'
 	%endif
 	%ifarch i686 athlon pentium3 pentium4
-	%if %{with pae}
-		echo 'HIGHMEM4G=n'
-		echo 'HIGHMEM64G=y'
-		echo 'X86_PAE=y'
-	%endif
-	%endif
-	%ifarch i686 athlon pentium3 pentium4
-	# This issues 'CPU too old' error on Centrino processors
-	# http://lkml.org/lkml/2007/9/18/301
-#	echo 'HIGHMEM4G=n'
-#	echo 'HIGHMEM64G=y'
-#	echo 'X86_PAE=y:'
+		%if %{with pae}
+			echo 'HIGHMEM4G=n'
+			echo 'HIGHMEM64G=y'
+			echo 'X86_PAE=y'
+		%endif
 	echo 'MATH_EMULATION=n'
 	%endif
 %endif
