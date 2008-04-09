@@ -141,7 +141,7 @@ Patch13:	%{pname}-unionfs.patch
 
 ### hardware
 # tahoe9XX http://tahoe.pl/drivers/tahoe9xx-2.6.11.5.patch
-#Patch20:	%{pname}-tahoe9xx.patch
+Patch20:	%{pname}-tahoe9xx.patch
 
 # http://pred.dcaf-security.org/sata_nv-ncq-support-mcp51-mcp55-mcp61.patch
 # NCQ Functionality for newer nvidia chipsets (MCP{51,55,61}) by nvidia crew
@@ -584,7 +584,7 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 %patch11 -p1
 %endif
 
-%if %{with supermoint}
+%if %{with supermount}
 %patch12 -p1
 %endif
 
@@ -593,7 +593,7 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 %endif
 
 ### hardware
-#patch20 -p1
+%patch20 -p1
 %if 0
 #%patch25 -p1 # FIND UPDATE
 %endif
