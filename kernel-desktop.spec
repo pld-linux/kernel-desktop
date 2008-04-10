@@ -29,7 +29,6 @@
 %bcond_with		laptop		# build with HZ=100
 %bcond_with		verbose		# verbose build (V=1)
 %bcond_with		pae			# build PAE (HIGHMEM64G) support on uniprocessor
-%bcond_with		gcc4		# build with gcc4
 
 %{?debug:%define with_verbose 1}
 
@@ -238,8 +237,7 @@ Patch105:	%{pname}-rndis_host.patch
 URL:		http://www.kernel.org/
 BuildRequires:	/sbin/depmod
 BuildRequires:	binutils >= 3:2.14.90.0.7
-%{!?with_gcc4:BuildRequires:	gcc >= 5:3.2}
-%{?with_gcc4:BuildRequires:	gcc >= 5:4.1.1}
+BuildRequires:	%{kgcc_package} >= 5:3.2
 BuildRequires:	module-init-tools
 # for hostname command
 BuildRequires:	net-tools
@@ -274,13 +272,6 @@ ExclusiveArch:	%{ix86} %{x8664} ppc
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
-%if %{with gcc4}
-# add suffix, but allow ccache, etc in ~/.rpmmacros
-%{expand:%%define	__cc	%(echo '%__cc' | sed -e 's,-gcc,-gcc4,')}
-%{expand:%%define	__cxx	%(echo '%__cxx' | sed -e 's,-g++,-g++4,')}
-%{expand:%%define	__cpp	%(echo '%__cpp' | sed -e 's,-gcc,-gcc4,')}
-%endif
-
 %ifarch %{ix86} %{x8664}
 %define		target_arch_dir	x86
 %else
@@ -304,18 +295,18 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		kernel_release %{version}_%{alt_kernel}-%{_localversion}
 %define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
 
-%define	CommonOpts	HOSTCC="%{__cc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
+%define	CommonOpts	HOSTCC="%{kgcc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
 %if "%{_target_base_arch}" != "%{_arch}"
 	%define	MakeOpts %{CommonOpts} ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
 	%define	DepMod /bin/true
 
 	%if "%{_arch}" == "x86_64" && "%{_target_base_arch}" == "i386"
-	%define	MakeOpts %{CommonOpts} CC="%{__cc}" ARCH=%{_target_base_arch}
+	%define	MakeOpts %{CommonOpts} CC="%{kgcc}" ARCH=%{_target_base_arch}
 	%define	DepMod /sbin/depmod
 	%endif
 
 %else
-	%define MakeOpts %{CommonOpts} CC="%{__cc}"
+	%define MakeOpts %{CommonOpts} CC="%{kgcc}"
 	%define	DepMod /sbin/depmod
 %endif
 
