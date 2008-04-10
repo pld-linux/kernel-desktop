@@ -218,6 +218,7 @@ Patch77:	%{pname}-routes.patch
 Patch85:	%{pname}-cpuset_virtualization.patch
 
 ### Fixes
+Patch90:	kernel-mcpu=440.patch
 Patch91:	%{pname}-fbcon-margins.patch
 Patch92:	%{pname}-static-dev.patch
 Patch100:	%{pname}-small_fixes.patch
@@ -261,7 +262,7 @@ Conflicts:	oprofile < 0.9
 Conflicts:	ppp < 1:2.4.0
 Conflicts:	procps < 3.2.0
 Conflicts:	quota-tools < 3.09
-%if %{with reiserfs4}
+%if %{with reiser4}
 Conflicts:	reiser4progs < 1.0.0
 %endif
 Conflicts:	reiserfsprogs < 3.6.3
@@ -295,7 +296,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		kernel_release %{version}_%{alt_kernel}-%{_localversion}
 %define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
 
-%define	CommonOpts	HOSTCC="%{kgcc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
+%define		CommonOpts	HOSTCC="%{kgcc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
 %if "%{_target_base_arch}" != "%{_arch}"
 	%define	MakeOpts %{CommonOpts} ARCH=%{_target_base_arch} CROSS_COMPILE=%{_target_cpu}-pld-linux-
 	%define	DepMod /bin/true
@@ -679,6 +680,7 @@ sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 %patch77 -p1
 
 ### fixes
+%patch90 -p1
 %patch91 -p1
 %patch92 -p1
 %patch100 -p1
