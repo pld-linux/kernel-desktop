@@ -446,12 +446,16 @@ Sterowniki dźwięku OSS (Open Sound System).
 
 %package config
 Summary:	Kernel config and module symvers
+Summary(pl.UTF-8):	Konfiguracja jądra i wersje symboli
 Group:		Development/Building
 Autoreqprov:	no
 Conflicts:	rpmbuild(macros) < 1.433
 
 %description config
 Kernel config and module symvers.
+
+%description config -l pl.UTF-8
+Konfiguracja jądra i wersje symboli.
 
 %package headers
 Summary:	Header files for the Linux kernel
