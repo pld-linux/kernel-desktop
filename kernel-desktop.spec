@@ -71,7 +71,7 @@
 
 %define		_basever	2.6.24
 %define		_postver	.4
-%define		_rel		0.2
+%define		_rel		0.3
 %define		_rc	%{nil}
 
 %define		_enable_debug_packages			0
@@ -612,7 +612,8 @@ cd linux-%{_basever}
 ### console
 %if %{with bootsplash}
 %patch30 -p1
-%else
+%endif
+%if %{with fbsplash}
 %patch31 -p1
 %endif
 
@@ -744,7 +745,7 @@ CONFIGS += %{_sourcedir}/%{pname}-preempt-nort.config
 CONFIGS += %{_sourcedir}/%{pname}-tuxonice.config
 %endif
 
-# fbsplash, vesafb-tng, squashfs, tahoe, atm
+# tahoe, atm
 CONFIGS += %{_sourcedir}/%{pname}-patches.config
 
 # netfilter
@@ -775,9 +776,11 @@ CONFIGS += %{_sourcedir}/%{pname}-unionfs.config
 %endif
 
 %if %{with bootsplash}
-	CONFIGS += %{_sourcedir}/%{pname}-bootsplash.config
-%else
-	CONFIGS += %{_sourcedir}/%{pname}-fbsplash.config
+CONFIGS += %{_sourcedir}/%{pname}-bootsplash.config
+%endif
+
+%if %{with fbsplash}
+CONFIGS += %{_sourcedir}/%{pname}-fbsplash.config
 %endif
 
 # config where we ignore timestamps
