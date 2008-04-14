@@ -1132,6 +1132,7 @@ fi
 %{_kernelsrcdir}/Kbuild
 %{_kernelsrcdir}/arch/*/kernel/asm-offsets*.c
 %{_kernelsrcdir}/arch/*/kernel/sigframe.h
+%{_kernelsrcdir}/arch/*/kernel/sigframe_32.h
 %dir %{_kernelsrcdir}/scripts
 %dir %{_kernelsrcdir}/scripts/kconfig
 %{_kernelsrcdir}/scripts/Kbuild.include
