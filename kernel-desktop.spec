@@ -28,7 +28,7 @@
 %bcond_with		supermount	# support for supermount-ng
 %bcond_without	unionfs		# support for unionfs
 %bcond_with		grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
-%bcond_with		bootsplash	# build with bootsplash instead of fbsplash
+%bcond_with		bootsplash	# build with bootsplash instead of fbcondecor
 %bcond_without	imq			# imq
 %bcond_without	wrr			# wrr support
 %bcond_with		laptop		# build with HZ=100
@@ -37,9 +37,9 @@
 %{?debug:%define with_verbose 1}
 
 %if %{with bootsplash}
-%undefine	with_fbsplash
+%undefine	with_fbcondecor
 %else
-%define		with_fbsplash	1
+%define		with_fbcondecor	1
 %endif
 
 %ifnarch %{ix86}
@@ -74,7 +74,7 @@
 
 %define		_basever	2.6.24
 %define		_postver	.4
-%define		_rel		0.4
+%define		_rel		0.5
 %define		_rc	%{nil}
 
 %define		_enable_debug_packages			0
@@ -111,7 +111,7 @@ Source13:	%{pname}-patches.config
 Source14:	%{pname}-netfilter.config
 Source15:	%{pname}-grsec.config
 Source16:	%{pname}-wrr.config
-Source17:	%{pname}-fbsplash.config
+Source17:	%{pname}-fbcondecor.config
 Source18:	%{pname}-bootsplash.config
 Source19:	%{pname}-imq.config
 Source20:	%{pname}-reiser4.config
@@ -168,8 +168,8 @@ Patch26:	%{pname}-toshiba-acpi.patch
 ### console
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch30:	%{pname}-bootsplash.patch
-# based on http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
-Patch31:	%{pname}-fbsplash.patch
+# http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.24-rc7.patch
+Patch31:	%{pname}-fbcondecor.patch
 
 ########	netfilter snap
 ## base
@@ -267,7 +267,7 @@ Requires:	coreutils
 Requires:	geninitrd >= 8702
 Requires:	module-init-tools >= 0.9.9
 %{?with_bootsplash:Suggests:	bootsplash}
-%{?with_fbsplash:Suggests:	splashutils}
+%{?with_fbcondecor:Suggests:	splashutils}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
@@ -327,7 +327,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_preemptrt: - realtime-preempt patch by Ingo Molar}\
 %{?with_ck: - desktop patchset by Con Kolivas}\
 %{?with_grsec_minimal: - grsecurity minimal}\
- - %{?with_bootsplash:bootsplash}%{?with_fbsplash:fbsplash}\
+ - %{?with_bootsplash:bootsplash}%{?with_fbcondecor:fbcondecor (formerly known as fbsplash)}\
  - HZ=100%{!?with_laptop:0}
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
@@ -616,7 +616,7 @@ cd linux-%{_basever}
 %if %{with bootsplash}
 %patch30 -p1
 %endif
-%if %{with fbsplash}
+%if %{with fbcondecor}
 %patch31 -p1
 %endif
 
@@ -782,8 +782,8 @@ CONFIGS += %{_sourcedir}/%{pname}-unionfs.config
 CONFIGS += %{_sourcedir}/%{pname}-bootsplash.config
 %endif
 
-%if %{with fbsplash}
-CONFIGS += %{_sourcedir}/%{pname}-fbsplash.config
+%if %{with fbcondecor}
+CONFIGS += %{_sourcedir}/%{pname}-fbcondecor.config
 %endif
 
 # config where we ignore timestamps
@@ -964,7 +964,7 @@ fi
 
 %depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=initramfs %{?with_bootsplash:--with-bootsplash} %{?with_fbsplash:--with-fbsplash} %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+/sbin/geninitrd -f --initrdfs=initramfs %{?with_bootsplash:--with-bootsplash} %{?with_fbcondecor:--with-fbsplash} %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2>/dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}
 
