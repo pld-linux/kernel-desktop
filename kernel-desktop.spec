@@ -74,7 +74,7 @@
 
 %define		_basever	2.6.24
 %define		_postver	.4
-%define		_rel		0.3
+%define		_rel		0.4
 %define		_rc	%{nil}
 
 %define		_enable_debug_packages			0
@@ -840,15 +840,9 @@ pykconfig() {
 	%endif
 %endif
 
-	%ifnarch i386
-		echo 'NO_HZ=n'
-		echo 'HZ_1000=y'
-		echo 'HZ=1000'
-	%endif
-
 	%if %{with laptop}
+		echo 'NO_HZ=y'
 		echo 'HZ_1000=n'
-		echo 'HZ_100=y'
 		echo 'HZ=100'
 	%endif
 
