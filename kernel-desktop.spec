@@ -21,7 +21,6 @@
 %bcond_with		verbose		# verbose build (V=1)
 %bcond_with		preemptrt	# use realtime-preempt patch
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2)
-%bcond_with		fcache		# Jens Axboe's fcache patch (ext3 only)
 %bcond_without	ck			# Con Kolivas desktop improvements patchset
 %bcond_without	reiser4		# support for reiser4 fs (experimental)
 %bcond_without	squashfs	# support for squashfs
@@ -127,11 +126,6 @@ Source22:	%{pname}-unionfs.config
 # Project suspend2 renamed to tuxonice
 # http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc5-for-2.6.24.patch.bz2
 Patch1:		%{pname}-tuxonice.patch
-
-# Jens Axboe's fcache patch (for ext3 only)
-# http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=118e3e9250ef319b6e77cdbc25dc4d26084c14f
-# http://en.opensuse.org/Fcache-howto
-Patch6:		%{pname}-fcache.patch
 
 ### Con Kolivas patchset
 # http://waninkoko.info/ckpatches/2.6.24/
@@ -571,10 +565,6 @@ cd linux-%{_basever}
 
 %if %{with preemptrt}
 #%patch0 -p1
-%endif
-
-%if %{with fcache}
-%patch6 -p1
 %endif
 
 %if %{with ck}
