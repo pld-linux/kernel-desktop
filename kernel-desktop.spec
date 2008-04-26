@@ -60,9 +60,18 @@
 %define		alt_kernel	desktop%{?with_preemptrt:_rt}
 %endif
 
+# Our Kernel ABI, increase this when you want out of source modules being rebuilt
+%define		KABI		3
+# kernel release (used in filesystem and eventually in uname -r)
+# modules will be looked from /lib/modules/%{kernel_release}
+# _localversion is just that without version for "> localversion"
+%define		_localversion %{KABI}
+%define		kernel_release %{version}_%{alt_kernel}-%{_localversion}
+%define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
+
 %define		_basever	2.6.22
 %define		_postver	.19
-%define		_rel		3
+%define		_rel		4
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -244,6 +253,7 @@ Requires:	module-init-tools >= 0.9.9
 %{?with_bootsplash:Suggests:	bootsplash}
 %{?with_fbsplash:Suggests:	splashutils}
 Provides:	%{name}(netfilter) = %{netfilter_snap}
+Provides:	%{name}(vermagic) = %{kernel_release}
 Provides:	kernel(netfilter) = %{netfilter_snap}
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
@@ -277,13 +287,6 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		_noautochrpath	.*%{_kernelsrcdir}/.*
 
 %define		initrd_dir	/boot
-
-# kernel release (used in filesystem and eventually in uname -r)
-# modules will be looked from /lib/modules/%{kernel_release}
-# _localversion is just that without version for "> localversion"
-%define		_localversion %{release}
-%define		kernel_release %{version}_%{alt_kernel}-%{_localversion}
-%define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
 
 %define	CommonOpts	HOSTCC="%{__cc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
 %if "%{_target_base_arch}" != "%{_arch}"
@@ -846,29 +849,22 @@ touch $RPM_BUILD_ROOT/lib/modules/%{kernel_release}/{build,source}
 rm -rf $RPM_BUILD_ROOT
 
 %preun
-rm -f /lib/modules/%{kernel_release}/modules.*
 if [ -x /sbin/new-kernel-pkg ]; then
 	/sbin/new-kernel-pkg --remove %{kernel_release}
 fi
 
 %post
-mv -f /boot/vmlinuz-%{alt_kernel} /boot/vmlinuz-%{alt_kernel}.old 2>/dev/null > /dev/null
-mv -f /boot/System.map-%{alt_kernel} /boot/System.map-%{alt_kernel}.old 2>/dev/null > /dev/null
 ln -sf vmlinuz-%{kernel_release} /boot/vmlinuz-%{alt_kernel}
 ln -sf System.map-%{kernel_release} /boot/System.map-%{alt_kernel}
 if [ ! -e /boot/vmlinuz ]; then
-	mv -f /boot/vmlinuz /boot/vmlinuz.old 2>/dev/null
-	mv -f /boot/System.map /boot/System.map.old 2>/dev/null
 	ln -sf vmlinuz-%{alt_kernel} /boot/vmlinuz
 	ln -sf System.map-%{alt_kernel} /boot/System.map
-	mv -f %{initrd_dir}/initrd %{initrd_dir}/initrd.old 2>/dev/null
 	ln -sf initrd-%{alt_kernel} %{initrd_dir}/initrd
 fi
 
 %depmod %{kernel_release}
 
 /sbin/geninitrd -f --initrdfs=initramfs %{?with_bootsplash:--with-bootsplash} %{?with_fbsplash:--with-fbsplash} %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
-mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2>/dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}
 
 if [ -x /sbin/new-kernel-pkg ]; then
@@ -886,7 +882,6 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 %post vmlinux
-mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux-%{alt_kernel}.old 2>/dev/null
 ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}
 
 %post drm
