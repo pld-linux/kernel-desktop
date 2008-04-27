@@ -71,7 +71,7 @@
 
 %define		_basever	2.6.22
 %define		_postver	.19
-%define		_rel		4
+%define		_rel		5
 %define		_rc	%{nil}
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -113,6 +113,7 @@ Source18:	%{pname}-bootsplash.config
 ###
 
 Patch0:		%{pname}-preempt-rt.patch
+Patch1:		kernel-mcpu=440.patch
 
 # Jens Axboe's fcache patch (for ext3 only)
 # http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=118e3e9250ef319b6e77cdbc25dc4d26084c14f
@@ -536,6 +537,8 @@ Documentation.
 : premptrt patch is not ready yet
 exit 1
 %endif
+
+%patch1 -p1
 
 # Jens Axboe's fcache patch
 %patch6 -p1
