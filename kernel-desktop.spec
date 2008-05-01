@@ -21,14 +21,13 @@
 %bcond_with		verbose		# verbose build (V=1)
 %bcond_with		preemptrt	# use realtime-preempt patch
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2)
-%bcond_with		fcache		# Jens Axboe's fcache patch (ext3 only)
 %bcond_without	ck			# Con Kolivas desktop improvements patchset
 %bcond_without	reiser4		# support for reiser4 fs (experimental)
 %bcond_without	squashfs	# support for squashfs
 %bcond_with		supermount	# support for supermount-ng
 %bcond_without	unionfs		# support for unionfs
 %bcond_with		grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
-%bcond_with		bootsplash	# build with bootsplash instead of fbsplash
+%bcond_with		bootsplash	# build with bootsplash instead of fbcondecor
 %bcond_without	imq			# imq
 %bcond_without	wrr			# wrr support
 %bcond_with		laptop		# build with HZ=100
@@ -37,9 +36,9 @@
 %{?debug:%define with_verbose 1}
 
 %if %{with bootsplash}
-%undefine	with_fbsplash
+%undefine	with_fbcondecor
 %else
-%define		with_fbsplash	1
+%define		with_fbcondecor	1
 %endif
 
 %ifnarch %{ix86}
@@ -73,8 +72,8 @@
 %define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
 
 %define		_basever	2.6.24
-%define		_postver	.4
-%define		_rel		0.4
+%define		_postver	.5
+%define		_rel		1
 %define		_rc	%{nil}
 
 %define		_enable_debug_packages			0
@@ -95,7 +94,7 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	3f23ad4b69d0a552042d1ed0f4399857
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	508f5aaa99dead9836ff490496a61581
+# Source1-md5:	e937c732891561f0a34a2e0853df825e
 Source2:	kernel-vanilla-module-build.pl
 Source3:	kernel-config.py
 Source4:	kernel-config-update.py
@@ -111,7 +110,7 @@ Source13:	%{pname}-patches.config
 Source14:	%{pname}-netfilter.config
 Source15:	%{pname}-grsec.config
 Source16:	%{pname}-wrr.config
-Source17:	%{pname}-fbsplash.config
+Source17:	%{pname}-fbcondecor.config
 Source18:	%{pname}-bootsplash.config
 Source19:	%{pname}-imq.config
 Source20:	%{pname}-reiser4.config
@@ -127,11 +126,6 @@ Source22:	%{pname}-unionfs.config
 # Project suspend2 renamed to tuxonice
 # http://www.tuxonice.net/downloads/all/tuxonice-3.0-rc5-for-2.6.24.patch.bz2
 Patch1:		%{pname}-tuxonice.patch
-
-# Jens Axboe's fcache patch (for ext3 only)
-# http://git.kernel.dk/?p=linux-2.6-block.git;a=commitdiff;h=118e3e9250ef319b6e77cdbc25dc4d26084c14f
-# http://en.opensuse.org/Fcache-howto
-Patch6:		%{pname}-fcache.patch
 
 ### Con Kolivas patchset
 # http://waninkoko.info/ckpatches/2.6.24/
@@ -168,8 +162,8 @@ Patch26:	%{pname}-toshiba-acpi.patch
 ### console
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch30:	%{pname}-bootsplash.patch
-# based on http://dev.gentoo.org/~spock/projects/gensplash/archive/fbsplash-0.9.2-r5-2.6.20-rc6.patch
-Patch31:	%{pname}-fbsplash.patch
+# http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.24-rc7.patch
+Patch31:	%{pname}-fbcondecor.patch
 
 ########	netfilter snap
 ## base
@@ -267,7 +261,7 @@ Requires:	coreutils
 Requires:	geninitrd >= 8702
 Requires:	module-init-tools >= 0.9.9
 %{?with_bootsplash:Suggests:	bootsplash}
-%{?with_fbsplash:Suggests:	splashutils}
+%{?with_fbcondecor:Suggests:	splashutils}
 Provides:	%{name}(vermagic) = %{kernel_release}
 Conflicts:	e2fsprogs < 1.29
 Conflicts:	isdn4k-utils < 3.1pre1
@@ -327,7 +321,7 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %{?with_preemptrt: - realtime-preempt patch by Ingo Molar}\
 %{?with_ck: - desktop patchset by Con Kolivas}\
 %{?with_grsec_minimal: - grsecurity minimal}\
- - %{?with_bootsplash:bootsplash}%{?with_fbsplash:fbsplash}\
+ - %{?with_bootsplash:bootsplash}%{?with_fbcondecor:fbcondecor (formerly known as fbsplash)}\
  - HZ=100%{!?with_laptop:0}
 
 %define Features %(echo "%{__features}" | sed '/^$/d')
@@ -573,10 +567,6 @@ cd linux-%{_basever}
 #%patch0 -p1
 %endif
 
-%if %{with fcache}
-%patch6 -p1
-%endif
-
 %if %{with ck}
 %patch7 -p1
 %if %{with tuxonice}
@@ -616,7 +606,7 @@ cd linux-%{_basever}
 %if %{with bootsplash}
 %patch30 -p1
 %endif
-%if %{with fbsplash}
+%if %{with fbcondecor}
 %patch31 -p1
 %endif
 
@@ -782,8 +772,8 @@ CONFIGS += %{_sourcedir}/%{pname}-unionfs.config
 CONFIGS += %{_sourcedir}/%{pname}-bootsplash.config
 %endif
 
-%if %{with fbsplash}
-CONFIGS += %{_sourcedir}/%{pname}-fbsplash.config
+%if %{with fbcondecor}
+CONFIGS += %{_sourcedir}/%{pname}-fbcondecor.config
 %endif
 
 # config where we ignore timestamps
@@ -964,7 +954,7 @@ fi
 
 %depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=initramfs %{?with_bootsplash:--with-bootsplash} %{?with_fbsplash:--with-fbsplash} %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+/sbin/geninitrd -f --initrdfs=initramfs %{?with_bootsplash:--with-bootsplash} %{?with_fbcondecor:--with-fbcondecor} %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2>/dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}
 
@@ -1147,6 +1137,7 @@ fi
 
 %files doc
 %defattr(644,root,root,755)
+%dir %{_kernelsrcdir}
 %{_kernelsrcdir}/Documentation
 
 %if %{with source}
