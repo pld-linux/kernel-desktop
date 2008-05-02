@@ -1,5 +1,7 @@
 #
 # TODO:
+# - http://dev.gentoo.org/~spock/projects/fbcondecor/ -
+#   fbsplash patch was renamed to fbcondecor and the gensplash project took the name of fbsplash.
 # - pcmcia moved to main pkg (pcmcia.ko only or subpkg killed?):
 #    ssb: Unknown symbol pcmcia_access_configuration_register
 #    ohci_hcd: Unknown symbol ssb_device_disable
@@ -162,6 +164,7 @@ Patch26:	%{pname}-toshiba-acpi.patch
 ### console
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch30:	%{pname}-bootsplash.patch
+# http://dev.gentoo.org/~spock/projects/fbcondecor/
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.24-rc7.patch
 Patch31:	%{pname}-fbcondecor.patch
 
