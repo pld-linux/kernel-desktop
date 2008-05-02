@@ -950,7 +950,7 @@ fi
 
 %depmod %{kernel_release}
 
-/sbin/geninitrd -f --initrdfs=initramfs %{?with_bootsplash:--with-bootsplash} %{?with_fbcondecor:--with-fbsplash} %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
+/sbin/geninitrd -f --initrdfs=initramfs %{?with_bootsplash:--with-bootsplash} %{?with_fbcondecor:--with-fbcondecor} %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2>/dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}
 
