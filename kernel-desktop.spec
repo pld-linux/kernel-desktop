@@ -835,13 +835,6 @@ pykconfig() {
 		echo 'HZ_1000=n'
 		echo 'HZ=100'
 	%endif
-
-	# disable e1000 on ppc (ICEs)
-	%ifarch ppc ppc64
-		echo 'E1000=n'
-		echo 'E1000_NAPI=n'
-		echo 'E1000_DISABLE_PACKET_SPLIT=n'
-	%endif
 }
 
 # generate .config and kernel.conf
