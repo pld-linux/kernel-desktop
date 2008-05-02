@@ -62,7 +62,7 @@
 %endif
 
 # Our Kernel ABI, increase this when you want out of source modules being rebuilt
-%define		KABI		1
+%define		KABI		2
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
@@ -73,7 +73,7 @@
 
 %define		_basever	2.6.24
 %define		_postver	.5
-%define		_rel		1
+%define		_rel		2
 %define		_rc	%{nil}
 
 %define		_enable_debug_packages			0
