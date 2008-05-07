@@ -72,7 +72,7 @@
 %define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
 
 %define		_basever	2.6.24
-%define		_postver	.6
+%define		_postver	.7
 %define		_rel		1
 %define		_rc	%{nil}
 
@@ -94,7 +94,7 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	3f23ad4b69d0a552042d1ed0f4399857
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	6c93ad526ccb10632ced0d37fa8e0ee5
+# Source1-md5:	0c1c5d6d8cd82e18d62406d2f34d1d38
 Source2:	kernel-vanilla-module-build.pl
 Source3:	kernel-config.py
 Source4:	kernel-config-update.py
