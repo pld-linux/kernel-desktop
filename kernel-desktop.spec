@@ -1,5 +1,6 @@
 #
 # TODO:
+# - http://www.zen-sources.org/ ?
 # - waiting for ck patch for 2.6.25
 # - http://dev.gentoo.org/~spock/projects/fbcondecor/ -
 #   fbsplash patch was renamed to fbcondecor and the gensplash project took the name of fbsplash.
