@@ -827,6 +827,7 @@ pykconfig() {
 			echo 'HIGHMEM4G=n'
 			echo 'HIGHMEM64G=y'
 			echo 'X86_PAE=y'
+			echo 'I2O_EXT_ADAPTEC_DMA64=y'
 		%endif
 	echo 'MATH_EMULATION=n'
 	%endif
