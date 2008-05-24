@@ -1,9 +1,5 @@
 #
 # TODO:
-# - http://www.zen-sources.org/ ?
-# - waiting for ck patch for 2.6.25
-# - http://dev.gentoo.org/~spock/projects/fbcondecor/ -
-#   fbsplash patch was renamed to fbcondecor and the gensplash project took the name of fbsplash.
 # - pcmcia moved to main pkg (pcmcia.ko only or subpkg killed?):
 #    ssb: Unknown symbol pcmcia_access_configuration_register
 #    ohci_hcd: Unknown symbol ssb_device_disable
@@ -21,7 +17,6 @@
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-source package
-%bcond_with		noarch		# build noarch packages
 %bcond_with		verbose		# verbose build (V=1)
 %bcond_with		preemptrt	# use realtime-preempt patch
 %bcond_without	tuxonice	# support for tuxonice (ex-suspend2)
@@ -49,10 +44,6 @@
 %undefine	with_pae
 %endif
 
-%if "%{_arch}" == "noarch"
-%define		with_noarch	1
-%endif
-
 %ifarch %{ix86} ppc
 %define		have_isa	1
 %else
@@ -60,13 +51,13 @@
 %endif
 
 %if %{with laptop}
-%define		alt_kernel	laptop%{?with_preemptrt:_rt}
+%define		alt_kernel	laptop%{?with_pae:-pae}%{?with_preemptrt:_rt}
 %else
-%define		alt_kernel	desktop%{?with_preemptrt:_rt}
+%define		alt_kernel	desktop%{?with_pae:-pae}%{?with_preemptrt:_rt}
 %endif
 
 # Our Kernel ABI, increase this when you want out of source modules being rebuilt
-%define		KABI		1
+%define		KABI		2
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
@@ -75,9 +66,13 @@
 %define		kernel_release %{version}_%{alt_kernel}-%{_localversion}
 %define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
 
-%define		basever	2.6.25
-%define		postver	.3
-%define		rel		0.1
+%define		_basever	2.6.24
+%define		_postver	.7
+%define		_rel		2
+%define		_rc	%{nil}
+
+%define		_enable_debug_packages			0
+%define		netfilter_snap		20061213
 
 %define		pname	kernel-desktop
 Summary:	The Linux kernel (the core of the Linux operating system)
@@ -86,15 +81,15 @@ Summary(et.UTF-8):	Linuxi kernel (ehk operatsioonisüsteemi tuum)
 Summary(fr.UTF-8):	Le Kernel-Linux (La partie centrale du systeme)
 Summary(pl.UTF-8):	Jądro Linuksa
 Name:		kernel-%{alt_kernel}
-Version:	%{basever}%{postver}
-Release:	%{rel}
+Version:	%{_basever}%{_postver}
+Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{basever}.tar.bz2
-# Source0-md5:	db95a49a656a3247d4995a797d333153
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
+# Source0-md5:	3f23ad4b69d0a552042d1ed0f4399857
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	49c56cf1394b2286033bb10c7cef7260
+# Source1-md5:	0c1c5d6d8cd82e18d62406d2f34d1d38
 Source2:	kernel-vanilla-module-build.pl
 Source3:	kernel-config.py
 Source4:	kernel-config-update.py
@@ -162,7 +157,6 @@ Patch26:	%{pname}-toshiba-acpi.patch
 ### console
 # ftp://ftp.openbios.org/pub/bootsplash/kernel/bootsplash-3.1.6-2.6.21.diff.gz
 Patch30:	%{pname}-bootsplash.patch
-# http://dev.gentoo.org/~spock/projects/fbcondecor/
 # http://dev.gentoo.org/~spock/projects/fbcondecor/archive/fbcondecor-0.9.4-2.6.24-rc7.patch
 Patch31:	%{pname}-fbcondecor.patch
 
@@ -259,7 +253,7 @@ BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
 Requires:	/sbin/depmod
 Requires:	coreutils
-Requires:	geninitrd >= 8702
+Requires:	geninitrd >= 9000.9
 Requires:	module-init-tools >= 0.9.9
 %{?with_bootsplash:Suggests:	bootsplash}
 %{?with_fbcondecor:Suggests:	splashutils}
@@ -280,8 +274,7 @@ Conflicts:	reiserfsprogs < 3.6.3
 Conflicts:	udev < 1:071
 Conflicts:	util-linux < 2.10o
 Conflicts:	xfsprogs < 2.6.0
-%{?with_noarch:BuildArch:	noarch}
-ExclusiveArch:	%{ix86} %{x8664} ppc noarch
+ExclusiveArch:	%{ix86} %{x8664} ppc
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -298,9 +291,8 @@ BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 %define		initrd_dir	/boot
 
 %define		topdir	%{_builddir}/%{name}-%{version}
-%define		srcdir	%{topdir}/linux-%{basever}
-%define		objdir		%{topdir}/%{targetobj}
-%define		targetobj	%{_target_base_arch}-gcc-%(%{kgcc} -dumpversion)
+%define		srcdir	%{topdir}/linux-%{_basever}
+%define		objdir	%{topdir}/o
 
 %define		CommonOpts	HOSTCC="%{kgcc}" HOSTCFLAGS="-Wall -Wstrict-prototypes %{rpmcflags} -fomit-frame-pointer"
 %if "%{_target_base_arch}" != "%{_arch}"
@@ -550,13 +542,14 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 
 %prep
 %setup -qc
-ln -s %{SOURCE2} kernel-module-build.pl
-ln -s %{SOURCE3} kernel-config.py
-ln -s %{SOURCE4} kernel-config-update.py
+install -d o/scripts
+ln -s %{SOURCE2} o/scripts/kernel-module-build.pl
+ln -s %{SOURCE3} o/scripts/kernel-config.py
+ln -s %{SOURCE4} o/scripts/kernel-config-update.py
 ln -s %{SOURCE5} Makefile
 
-cd linux-%{basever}
-%if "%{postver}" != "%{nil}"
+cd linux-%{_basever}
+%if "%{_postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | %{__patch} -p1 -s
 %endif
 
@@ -708,17 +701,15 @@ cd linux-%{basever}
 #%patch106 -p1 # FIND UPDATE
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{postver}_%{alt_kernel}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}_%{alt_kernel}#g' Makefile
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
-%if %{without noarch}
 %build
-install -d %{objdir}
-cat > %{targetobj}.mk <<'EOF'
+cat > multiarch.make <<'EOF'
 # generated by %{name}.spec
-KERNELSRC		:= %{_builddir}/%{name}-%{version}/linux-%{basever}
+KERNELSRC		:= %{_builddir}/%{name}-%{version}/linux-%{_basever}
 KERNELOUTPUT	:= %{objdir}
 
 SRCARCH		:= %{target_arch_dir}
@@ -842,11 +833,10 @@ pykconfig() {
 
 # generate .config and kernel.conf
 pykconfig > %{objdir}/.kernel-autogen.conf
-%{__make} TARGETOBJ=%{targetobj} pykconfig
+%{__make} pykconfig
 
 # build kernel
-%{__make} TARGETOBJ=%{targetobj} all
-%endif # arch build
+%{__make} all
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -854,7 +844,6 @@ rm -rf $RPM_BUILD_ROOT
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 touch $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/{utsrelease,version,autoconf-dist}.h
 
-%if %{without noarch}
 %{__make} %{MakeOpts} %{!?with_verbose:-s} modules_install \
 	-C %{objdir} \
 	%{?with_verbose:V=1} \
@@ -905,9 +894,7 @@ cp -a %{objdir}/Module.symvers $RPM_BUILD_ROOT%{_kernelsrcdir}/Module.symvers-di
 cp -aL %{objdir}/.config $RPM_BUILD_ROOT%{_kernelsrcdir}/config-dist
 cp -a %{objdir}/include/linux/autoconf.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf-dist.h
 cp -a %{objdir}/include/linux/{utsrelease,version}.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
-%endif # arch dependant
 
-%if %{with noarch}
 # test if we can hardlink -- %{_builddir} and $RPM_BUILD_ROOT on same partition
 if cp -al %{srcdir}/COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
 	l=l
@@ -917,13 +904,12 @@ cp -a$l %{srcdir}/* $RPM_BUILD_ROOT%{_kernelsrcdir}
 
 install -d $RPM_BUILD_ROOT/lib/modules/%{kernel_release}
 cp -a %{SOURCE6} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
-%endif # arch independant
 
 # collect module-build files and directories
 # Usage: kernel-module-build.pl $rpmdir $fileoutdir
 fileoutdir=$(pwd)
 cd $RPM_BUILD_ROOT%{_kernelsrcdir}
-%{topdir}/kernel-module-build.pl %{_kernelsrcdir} $fileoutdir
+%{objdir}/scripts/kernel-module-build.pl %{_kernelsrcdir} $fileoutdir
 cd -
 
 %clean
@@ -1014,11 +1000,10 @@ ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}/build
 ln -sfn %{_kernelsrcdir} /lib/modules/%{kernel_release}/source
 
 %triggerun module-build -- %{name} = %{epoch}:%{version}-%{release}
-if [ "$1" = "0" ]; then
+if [ "$1" = 0 ]; then
 	rm -f /lib/modules/%{kernel_release}/{build,source}
 fi
 
-%if %{without noarch}
 %files
 %defattr(644,root,root,755)
 /boot/vmlinuz-%{kernel_release}
@@ -1102,9 +1087,7 @@ fi
 %{_kernelsrcdir}/include/linux/autoconf-dist.h
 %{_kernelsrcdir}/include/linux/utsrelease.h
 %{_kernelsrcdir}/include/linux/version.h
-%endif # noarch package
 
-%if %{with noarch}
 %files headers
 %defattr(644,root,root,755)
 %{_kernelsrcdir}/include/*
@@ -1174,5 +1157,4 @@ fi
 %{_kernelsrcdir}/MAINTAINERS
 %{_kernelsrcdir}/README
 %{_kernelsrcdir}/REPORTING-BUGS
-%endif
 %endif
