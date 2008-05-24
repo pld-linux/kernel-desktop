@@ -259,7 +259,7 @@ BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
 Requires:	/sbin/depmod
 Requires:	coreutils
-Requires:	geninitrd >= 8702
+Requires:	geninitrd >= 9000.9
 Requires:	module-init-tools >= 0.9.9
 %{?with_bootsplash:Suggests:	bootsplash}
 %{?with_fbcondecor:Suggests:	splashutils}
