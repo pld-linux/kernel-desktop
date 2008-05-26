@@ -55,6 +55,11 @@
 %define		have_isa	0
 %endif
 
+# alias --alt_kernel laptop to turn on laptop bcond
+%if "%{alt_kernel}" == "laptop"
+%define		with_laptop	1
+%endif
+
 %if %{with laptop}
 %define		alt_kernel	laptop%{?with_pae:-pae}%{?with_preemptrt:_rt}
 %else
