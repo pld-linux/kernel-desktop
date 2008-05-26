@@ -59,10 +59,15 @@
 %define		have_isa	0
 %endif
 
+# alias --alt_kernel laptop to turn on laptop bcond
+%if "%{alt_kernel}" == "laptop"
+%define		with_laptop	1
+%endif
+
 %if %{with laptop}
-%define		alt_kernel	laptop%{?with_preemptrt:_rt}
+%define		alt_kernel	laptop%{?with_pae:-pae}%{?with_preemptrt:_rt}
 %else
-%define		alt_kernel	desktop%{?with_preemptrt:_rt}
+%define		alt_kernel	desktop%{?with_pae:-pae}%{?with_preemptrt:_rt}
 %endif
 
 # Our Kernel ABI, increase this when you want out of source modules being rebuilt
