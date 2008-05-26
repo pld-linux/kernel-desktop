@@ -259,6 +259,8 @@ BuildRequires:	module-init-tools
 # for hostname command
 BuildRequires:	net-tools
 BuildRequires:	perl-base
+BuildRequires:	python
+BuildRequires:	python-modules
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
 Requires:	/sbin/depmod
