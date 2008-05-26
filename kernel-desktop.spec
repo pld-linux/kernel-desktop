@@ -24,7 +24,7 @@
 %bcond_without	ck			# Con Kolivas desktop improvements patchset
 %bcond_without	reiser4		# support for reiser4 fs (experimental)
 %bcond_without	squashfs	# support for squashfs
-%bcond_with		supermount	# support for supermount-ng
+%bcond_with		supermount	# support for supermount-ng (broken for now)
 %bcond_without	unionfs		# support for unionfs
 %bcond_with		grsec_minimal	# don't build grsecurity (minimal subset: proc,link,fifo,shm)
 %bcond_with		bootsplash	# build with bootsplash instead of fbcondecor
