@@ -1,8 +1,5 @@
 #
 # TODO:
-# - pcmcia moved to main pkg (pcmcia.ko only or subpkg killed?):
-#    ssb: Unknown symbol pcmcia_access_configuration_register
-#    ohci_hcd: Unknown symbol ssb_device_disable
 # - put together a default .config that makes sense for desktops
 # - make sure patch numbering is consistent and prepare it
 #   for the future
