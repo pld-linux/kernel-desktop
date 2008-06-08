@@ -46,6 +46,10 @@
 %define		with_noarch	1
 %endif
 
+%if "%{pld_release}" == "ti"
+%undefine	with_noarch
+%endif
+
 %ifarch %{ix86} ppc
 %define		have_isa	1
 %else
@@ -75,7 +79,7 @@
 
 %define		_basever	2.6.24
 %define		_postver	.7
-%define		_rel		2
+%define		_rel		3
 %define		_rc	%{nil}
 
 %define		_enable_debug_packages			0
@@ -258,6 +262,7 @@ BuildRequires:	net-tools
 BuildRequires:	perl-base
 BuildRequires:	python
 BuildRequires:	python-modules
+BuildRequires:	rpm >= 4.4.9-56
 BuildRequires:	rpmbuild(macros) >= 1.217
 Autoreqprov:	no
 Requires:	/sbin/depmod
@@ -284,7 +289,11 @@ Conflicts:	udev < 1:071
 Conflicts:	util-linux < 2.10o
 Conflicts:	xfsprogs < 2.6.0
 %{?with_noarch:BuildArch:	noarch}
+%if "%{pld_release}" == "ti"
+ExclusiveArch:	%{ix86} %{x8664} ppc
+%else
 ExclusiveArch:	%{ix86} %{x8664} ppc noarch
+%endif
 ExclusiveOS:	Linux
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
@@ -909,7 +918,7 @@ cp -a %{objdir}/include/linux/autoconf.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include
 cp -a %{objdir}/include/linux/{utsrelease,version}.h $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 %endif # arch dependant
 
-%if %{with noarch}
+%if %{with noarch} || "%{pld_release}" == "ti"
 # test if we can hardlink -- %{_builddir} and $RPM_BUILD_ROOT on same partition
 if cp -al %{srcdir}/COPYING $RPM_BUILD_ROOT/COPYING 2>/dev/null; then
 	l=l
@@ -1106,7 +1115,7 @@ fi
 %{_kernelsrcdir}/include/linux/version.h
 %endif # noarch package
 
-%if %{with noarch}
+%if %{with noarch}  || "%{pld_release}" == "ti"
 %files headers
 %defattr(644,root,root,755)
 %{_kernelsrcdir}/include/*
