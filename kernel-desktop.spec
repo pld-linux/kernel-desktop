@@ -1049,7 +1049,10 @@ fi
 /lib/modules/%{kernel_release}/kernel/sound/soundcore.*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/media/video/*/*-alsa.ko*
 %dir /lib/modules/%{kernel_release}/misc
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
+%dir /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
+/lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/[!p]*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pd6729.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
@@ -1077,8 +1080,9 @@ fi
 
 %files pcmcia
 %defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/pcmcia
+/lib/modules/%{kernel_release}/kernel/drivers/pcmcia/*ko*
 /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
