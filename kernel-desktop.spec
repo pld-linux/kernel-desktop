@@ -67,19 +67,16 @@
 %define		alt_kernel	desktop%{?with_pae:-pae}%{?with_preemptrt:_rt}
 %endif
 
-# Our Kernel ABI, increase this when you want out of source modules being rebuilt
-%define		KABI		2
-
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
 # _localversion is just that without version for "> localversion"
-%define		_localversion %{KABI}
+%define		_localversion %{_rel}
 %define		kernel_release %{version}_%{alt_kernel}-%{_localversion}
 %define		_kernelsrcdir	/usr/src/linux-%{version}_%{alt_kernel}
 
 %define		_basever	2.6.24
 %define		_postver	.7
-%define		_rel		3
+%define		_rel		4
 %define		_rc	%{nil}
 
 %define		_enable_debug_packages			0
