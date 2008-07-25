@@ -76,7 +76,7 @@
 
 %define		_basever	2.6.24
 %define		_postver	.7
-%define		_rel		4
+%define		_rel		5
 %define		_rc	%{nil}
 
 %define		_enable_debug_packages			0
@@ -931,7 +931,7 @@ cp -a %{SOURCE6} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 # Usage: kernel-module-build.pl $rpmdir $fileoutdir
 fileoutdir=$(pwd)
 cd $RPM_BUILD_ROOT%{_kernelsrcdir}
-%{objdir}/scripts/kernel-module-build.pl %{_kernelsrcdir} $fileoutdir
+%{__perl} %{objdir}/scripts/kernel-module-build.pl %{_kernelsrcdir} $fileoutdir
 cd -
 
 %clean
