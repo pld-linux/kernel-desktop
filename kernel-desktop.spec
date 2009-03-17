@@ -56,10 +56,14 @@ Source4:	kernel-desktop-module-build.pl
 Source10:	kernel-desktop-x86.config
 Source11:	kernel-desktop-x86_64.config
 
+#### Patches ######
+Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.27.patch-20090313-v1.bz2
+# Source100-md5:	870b32719bc6a81a39f4501ef7becd90
 Patch0:		kernel-desktop-bootsplash.patch
 Patch1:		kernel-desktop-squashfs.patch
 Patch2:		kernel-desktop-security_inode_permission.patch
 
+#### End patches ##
 URL:		http://www.kernel.org/
 BuildRequires:	binutils >= 3:2.18
 BuildRequires:	/sbin/depmod
@@ -382,9 +386,14 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
+# kernel-desktop-bootsplash.patch
 %patch0 -p1
+# kernel-desktop-squashfs.patch
 %patch1 -p1
+# kernel-desktop-security_inode_permission.patch
 %patch2 -p1
+# TuxOnIce
+%{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
