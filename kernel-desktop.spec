@@ -4,6 +4,7 @@
 %bcond_without	pcmcia		# don't build pcmcia
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
+%bcond_with	laptop		# build for laptops - 100Hz
 
 %{?debug:%define with_verbose 1}
 
@@ -18,7 +19,11 @@
 
 %define		_enable_debug_packages			0
 
+%if %{with laptop}
+%define		alt_kernel	laptop%{?with_pae:-pae}
+%else
 %define		alt_kernel	desktop%{?with_pae:-pae}
+%endif
 
 # kernel release (used in filesystem and eventually in uname -r)
 # modules will be looked from /lib/modules/%{kernel_release}
@@ -443,6 +448,12 @@ BuildConfig() {
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" %{defconfig}}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" %{defconfig}}
 %{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" %{defconfig}}
+
+%if %{with laptop}
+%__sed -i "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:" %{defconfig}
+%__sed -i "s:CONFIG_HZ_1000=y:# CONFIG_HZ_1000 is not set:" %{defconfig}
+%__sed -i "s:CONFIG_HZ=1000:CONFIG_HZ=100:" %{defconfig}
+%endif
 
 }
 
