@@ -773,7 +773,7 @@ fi
 %files kde4-notifier
 %defattr(644,root,root,755)
 %attr(755,root,root) %{_bindir}/kernelupdatenotifier
-%{_datadir}/kernelupdatenotifier
+%{_datadir}/apps/kernelupdatenotifier
 %endif
 
 %files vmlinux
