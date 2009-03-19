@@ -638,7 +638,7 @@ fi
 if [ -x /usr/bin/kernelupdatenotifier ]; then
 	# TODO: Send to all kde4 sessions
 	for user in $(ps -o user= -C kded4 | sort -u); do
-		su -s /bin/sh -l $user -c "/usr/bin/kernelupdatenotifier %{name}-%{version}"
+		su -s /bin/sh -l $user -c "/usr/bin/kernelupdatenotifier %{name}-%{version}-%{release}"
 	done
 fi
 
