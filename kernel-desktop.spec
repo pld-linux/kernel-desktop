@@ -636,9 +636,7 @@ fi
 
 # kde4-kernelupdatenotifier
 if [ -x /usr/bin/kernelupdatenotifier ]; then
-	# Send to all kde4 sessions
-	# XXX what about kde3 sessions?
-	# XXX: use dcop --all-sessions? --all-users?
+	# TODO: Send to all kde4 sessions
 	for user in $(ps -o user= -C kded4 | sort -u); do
 		su -s /bin/sh -l $user -c "/usr/bin/kernelupdatenotifier %{version}"
 	done
