@@ -398,7 +398,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n -a200 linux-%{_basever}
+%setup -q -a200 -n linux-%{_basever}
 
 %if "%{_postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
@@ -424,7 +424,7 @@ find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs 
 
 %build
 %if %{with notifier}
-%{__make} -f kernelupdatenotifier
+%{__make} -C kernelupdatenotifier INCPATH+="-I/usr/include -I/usr/include/KDE" LIBS+="-lknotifyconfig -lkworkspace -lkdeui"
 %endif
 TuneUpConfigForIX86 () {
 	set -x
