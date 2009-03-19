@@ -5,7 +5,6 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	laptop		# build for laptops - 100Hz
-%bcond_without	notifier	# don't build kernelupdatenotifier
 
 %{?debug:%define with_verbose 1}
 
@@ -49,8 +48,6 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	3edf81af0b4a48fc3a7c27101d11d67f
 %endif
-Source200:	kernelupdatenotifier-1.0.tar.gz
-# Source200-md5:	dc77fa4e127948a8c305edc5189f9bf0
 
 Source2:	kernel-desktop-autoconf.h
 Source3:	kernel-desktop-config.h
@@ -68,10 +65,6 @@ Patch2:		kernel-desktop-security_inode_permission.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
-%if %{with notifier}
-BuildRequires:	kde4-kdelibs-devel
-BuildRequires:	kde4-kdebase-workspace-devel
-%endif
 BuildRequires:	binutils >= 3:2.18
 BuildRequires:	/sbin/depmod
 BuildRequires:	gcc >= 5:3.2
@@ -188,17 +181,6 @@ Twojego komputera. Zawiera w sobie sterowniki do sprzętu znajdującego
 się w komputerze, takiego jak sterowniki dysków itp.
 
 %{Features}
-
-%package kde4-notifier
-Summary:	Kernel Update Notifier for KDE4
-Summary(pl.UTF-8):	Powiadomienie o zaktualizowanym kernelu dla KDE4
-Group:	X11/Application
-
-%description kde4-notifier
-Kernel Update Notifier for KDE4
-
-%description kde4-notifier -l pl.UTF-8
-Powiadomienie o zaktualizowanym kernelu dla KDE4
 
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
@@ -398,7 +380,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -a200 -n linux-%{_basever}
+%setup -q -n linux-%{_basever}
 
 %if "%{_postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
@@ -423,9 +405,6 @@ sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
 %build
-%if %{with notifier}
-%{__make} -C kernelupdatenotifier INCPATH+="-I/usr/include -I/usr/include/KDE" LIBS+="-lknotifyconfig -lkworkspace -lkdeui"
-%endif
 TuneUpConfigForIX86 () {
 	set -x
 %ifarch %{ix86}
@@ -561,12 +540,6 @@ cp scripts/mkcompile_h{,.save}
 rm -rf $RPM_BUILD_ROOT
 umask 022
 
-%if %{with notifier}
-install -d $RPM_BUILD_ROOT{%{_bindir},%{_datadir}/apps/kernelupdatenotifier}
-install kernelupdatenotifier/*.notifyrc $RPM_BUILD_ROOT%{_datadir}/apps/kernelupdatenotifier/
-install kernelupdatenotifier/kernelupdatenotifier $RPM_BUILD_ROOT%{_bindir}
-%endif
-
 export DEPMOD=%DepMod
 
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}
@@ -660,9 +633,15 @@ if [ -x /sbin/new-kernel-pkg ]; then
 elif [ -x /sbin/rc-boot ]; then
 	/sbin/rc-boot 1>&2 || :
 fi
+
+# kde4-kernelupdatenotifier
 if [ -x /usr/bin/kernelupdatenotifier ]; then
-	KDE4_USER=$(ps aux |grep kded4 |grep -v grep |cut -d" " -f1)
-	su - $KDE4_USER -c "/usr/bin/kernelupdatenotifier %{version}"
+	# Send to all kde4 sessions
+	# XXX what about kde3 sessions?
+	# XXX: use dcop --all-sessions? --all-users?
+	for user in $(ps -o user= -C kded4 | sort -u); do
+		su -s /bin/sh -l $user -c "/usr/bin/kernelupdatenotifier %{version}"
+	done
 fi
 
 %post vmlinux
@@ -768,13 +747,6 @@ fi
 %ghost /lib/modules/%{kernel_release}/build
 %ghost /lib/modules/%{kernel_release}/source
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
-
-%if %{with notifier}
-%files kde4-notifier
-%defattr(644,root,root,755)
-%attr(755,root,root) %{_bindir}/kernelupdatenotifier
-%{_datadir}/apps/kernelupdatenotifier
-%endif
 
 %files vmlinux
 %defattr(644,root,root,755)
