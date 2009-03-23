@@ -59,6 +59,9 @@ Source11:	kernel-desktop-x86_64.config
 #### Patches ######
 Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.27.patch-20090313-v1.bz2
 # Source100-md5:	870b32719bc6a81a39f4501ef7becd90
+# http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
+Source101:	http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
+# Source101-md5:	12612d5c968e39f7ef84697b9a33fc72
 Patch0:		kernel-desktop-bootsplash.patch
 Patch1:		kernel-desktop-squashfs.patch
 Patch2:		kernel-desktop-security_inode_permission.patch
@@ -394,6 +397,8 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %patch2 -p1
 # TuxOnIce
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
+# unionfs
+%{__gzip} -dc %{SOURCE101} | patch -p1 -s
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
