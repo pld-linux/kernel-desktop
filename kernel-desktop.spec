@@ -1,4 +1,31 @@
 #
+# RULES TO FOLLOW BEFORE DOING ANYTHING:
+# As this kernel here at Titanium branch is considered as mine and as I'm going to
+# keep it updated as often as I wish to, I would like you to follow a few simple rules
+# before spoiling anything here and wasting my time to fix it.
+#
+# 1) Don't break the existing state of this kernel
+# 2) Read 1) as often as it takes it for you to understand
+# 3) Read 1) again and again
+# 4) Do not add deprecated patches of stuff nooone will use until you take the full responsibility of
+#    keeping them updated to a state of the kernel I wish to get send to builders - be sure you have
+#    the time to upgrade patches when I ask you to. Otherwise the patch is going to be removed immediately.
+# 5) If you swallowed your pride and decided to agree with point 4) please let me know personally of any
+#    action you plan to do. Sending emails is hell easy nowadays.
+# 6) Comment patches you add. Where did you get the patch, and a short thing what it does if it is not obvious.
+# 7) Try not to overpatch this kernel - the goal is to keep it fast and yet powerful for desktop purposes and _only_
+#    for desktop purposes (this includes laptop purposes). This means things important to servers shall not
+#    be part of this kernel (apparmor, grsec(well maybe the minimal patch will be considered as part of this kernel)
+#    netfilter, etc.).
+# 8) Patches for laptops shall only be applied if laptop mode is enable. So should desktop patches too.
+# 9) Please don't change the configs to this multiarch version - I don't want to waste my time upgrading the kernel 
+#    and managing yet another symbols style.
+# 10) If you'd like something in this kernel that isn't already included but don't have the time/know how to add it
+#     yourself, let me know of it and why it is important to you. If the patches are actively updated and maintained
+#     the chances are realy high that I will add it.
+# 11) Now that you've come this far, read 1) again.
+#
+#
 # Conditional build:
 %bcond_without	source		# don't build kernel-desktop-source package
 %bcond_without	pcmcia		# don't build pcmcia
@@ -15,7 +42,7 @@
 
 %define		_basever		2.6.27
 %define		_postver		.20
-%define		_rel			3
+%define		_rel			4
 
 %define		_enable_debug_packages			0
 
