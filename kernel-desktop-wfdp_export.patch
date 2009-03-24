@@ -1,0 +1,10 @@
+--- drivers/base/dd.c~	2009-03-24 00:12:14.000000000 +0100
++++ drivers/base/dd.c	2009-03-24 21:00:52.676432772 +0100
+@@ -183,6 +183,7 @@
+ 	async_synchronize_full();
+ 	return 0;
+ }
++EXPORT_SYMBOL(wait_for_device_probe);
+ 
+ /**
+  * driver_probe_device - attempt to bind device & driver together
