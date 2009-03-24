@@ -877,6 +877,29 @@ fi
 /lib/firmware/yamaha/ds1_ctrl.fw
 /lib/firmware/yamaha/ds1_dsp.fw
 /lib/firmware/yamaha/ds1e_ctrl.fw
+%dir /lib/firmware/acenic
+/lib/firmware/acenic/tg1.bin
+/lib/firmware/acenic/tg2.bin
+%dir /lib/firmware/adaptec
+/lib/firmware/adaptec/starfire_rx.bin
+/lib/firmware/adaptec/starfire_tx.bin
+%dir /lib/firmware/cxgb3
+/lib/firmware/cxgb3/t3b_psram-1.1.0.bin
+/lib/firmware/cxgb3/t3c_psram-1.1.0.bin
+/lib/firmware/cxgb3/t3fw-7.0.0.bin
+%dir /lib/firmware/e100
+/lib/firmware/e100/d101m_ucode.bin
+/lib/firmware/e100/d101s_ucode.bin
+/lib/firmware/e100/d102e_ucode.bin
+/lib/firmware/mts_cdma.fw
+/lib/firmware/mts_edge.fw
+/lib/firmware/mts_gsm.fw
+%dir /lib/firmware/sun
+/lib/firmware/sun/cassini.bin
+%dir /lib/firmware/tigon
+/lib/firmware/tigon/tg3.bin
+/lib/firmware/tigon/tg3_tso.bin
+/lib/firmware/tigon/tg3_tso5.bin
 
 %files headers
 %defattr(644,root,root,755)
