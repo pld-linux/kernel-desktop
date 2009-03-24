@@ -40,9 +40,9 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.27
-%define		_postver		.20
-%define		_rel			4
+%define		_basever		2.6.29
+%define		_postver		%{nil}
+%define		_rel			0.1
 
 %define		_enable_debug_packages			0
 
@@ -70,7 +70,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	b3e78977aa79d3754cb7f8143d7ddabd
+# Source0-md5:	64921b5ff5cdadbccfcd3820f03be7d8
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	3edf81af0b4a48fc3a7c27101d11d67f
@@ -84,14 +84,12 @@ Source10:	kernel-desktop-x86.config
 Source11:	kernel-desktop-x86_64.config
 
 #### Patches ######
-Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.27.patch-20090313-v1.bz2
-# Source100-md5:	870b32719bc6a81a39f4501ef7becd90
-# http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
-Source101:	http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
-# Source101-md5:	12612d5c968e39f7ef84697b9a33fc72
+Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch-20090313-v1.bz2
+# Source100-md5:	e633676d954148e9da7ab4b96263c69c
 Patch0:		kernel-desktop-bootsplash.patch
-Patch1:		kernel-desktop-squashfs.patch
-Patch2:		kernel-desktop-security_inode_permission.patch
+Patch1:		kernel-desktop-security_inode_permission.patch
+# http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
+Patch2:		kernel-desktop-unionfs.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -418,14 +416,12 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 
 # kernel-desktop-bootsplash.patch
 %patch0 -p1
-# kernel-desktop-squashfs.patch
-%patch1 -p1
 # kernel-desktop-security_inode_permission.patch
+%patch1 -p1
+# unionfs
 %patch2 -p1
 # TuxOnIce
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
-# unionfs
-%{__gzip} -dc %{SOURCE101} | patch -p1 -s
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
