@@ -87,9 +87,8 @@ Source11:	kernel-desktop-x86_64.config
 Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch-20090313-v1.bz2
 # Source100-md5:	e633676d954148e9da7ab4b96263c69c
 Patch0:		kernel-desktop-bootsplash.patch
-Patch1:		kernel-desktop-security_inode_permission.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
-Patch2:		kernel-desktop-unionfs.patch
+Patch1:		kernel-desktop-unionfs.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -416,10 +415,8 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 
 # kernel-desktop-bootsplash.patch
 %patch0 -p1
-# kernel-desktop-security_inode_permission.patch
-%patch1 -p1
 # unionfs
-%patch2 -p1
+%patch1 -p1
 # TuxOnIce
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 
