@@ -42,7 +42,7 @@
 
 %define		_basever		2.6.29
 %define		_postver		%{nil}
-%define		_rel			0.1
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -89,6 +89,7 @@ Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
+Patch2:		kernel-desktop-wfdp_export.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -417,6 +418,8 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %patch0 -p1
 # unionfs
 %patch1 -p1
+# wfdp_export.patch
+%patch2 -p0
 # TuxOnIce
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 
