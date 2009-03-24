@@ -759,7 +759,7 @@ fi
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/usb/gadget/g_midi.ko*
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/legacy/ide-cs.ko*
+%exclude /lib/modules/%{kernel_release}/kernel/drivers/ide/ide-cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/*_cs.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/b43
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/net/wireless/hostap/hostap_cs.ko*
