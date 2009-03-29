@@ -32,6 +32,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	laptop		# build for laptops - 100Hz
+%bcond_without	grsec_minimal	# build wihout grsec_minimal
 
 %{?debug:%define with_verbose 1}
 
@@ -47,9 +48,9 @@
 %define		_enable_debug_packages			0
 
 %if %{with laptop}
-%define		alt_kernel	laptop%{?with_pae:-pae}
+%define		alt_kernel	laptop%{?with_pae:-pae}%{?without_grsec_minimal:-nogrsec}
 %else
-%define		alt_kernel	desktop%{?with_pae:-pae}
+%define		alt_kernel	desktop%{?with_pae:-pae}%{?without_grsec_minimal:-nogrsec}
 %endif
 
 # kernel release (used in filesystem and eventually in uname -r)
@@ -82,6 +83,7 @@ Source4:	kernel-desktop-module-build.pl
 
 Source10:	kernel-desktop-x86.config
 Source11:	kernel-desktop-x86_64.config
+Source12:	kernel-desktop-grsec_minimal.config
 
 #### Patches ######
 Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch-20090313-v1.bz2
@@ -90,6 +92,7 @@ Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
 Patch2:		kernel-desktop-wfdp_export.patch
+Patch3:		kernel-desktop-grsec-minimal.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -422,6 +425,10 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %patch2 -p0
 # TuxOnIce
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
+# grsec-minimal
+%if %{with grsec_minimal}
+%patch3 -p1
+%endif
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
@@ -492,6 +499,9 @@ BuildConfig() {
 %__sed -i "s:CONFIG_HZ=1000:CONFIG_HZ=100:" %{defconfig}
 %endif
 
+%if %{with grsec_minimal}
+cat %{SOURCE12} >> %{defconfig}
+%endif
 }
 
 BuildKernel() {
