@@ -48,9 +48,9 @@
 %define		_enable_debug_packages			0
 
 %if %{with laptop}
-%define		alt_kernel	laptop%{?with_pae:-pae}%{!?with_grsec_minimal:-nogrsec}
+%define		alt_kernel	laptop%{?with_pae:-pae}%{?with_grsec_minimal:-grsec}
 %else
-%define		alt_kernel	desktop%{?with_pae:-pae}%{!?with_grsec_minimal:-nogrsec}
+%define		alt_kernel	desktop%{?with_pae:-pae}%{?with_grsec_minimal:-grsec}
 %endif
 
 # kernel release (used in filesystem and eventually in uname -r)
