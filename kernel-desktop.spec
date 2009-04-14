@@ -32,7 +32,7 @@
 %bcond_with	verbose		# verbose build (V=1)
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	laptop		# build for laptops - 100Hz
-%bcond_without	grsec_minimal	# build wihout grsec_minimal
+%bcond_with	grsec_minimal	# build wihout grsec_minimal
 
 %{?debug:%define with_verbose 1}
 
@@ -42,8 +42,8 @@
 %define		have_isa	1
 
 %define		_basever		2.6.29
-%define		_postver		%{nil}
-%define		_rel			1.2
+%define		_postver		.1
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -74,7 +74,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	64921b5ff5cdadbccfcd3820f03be7d8
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	3edf81af0b4a48fc3a7c27101d11d67f
+# Source1-md5:	87c6fbf4096b644d66d4da8bb00641a5
 %endif
 
 Source2:	kernel-desktop-autoconf.h
@@ -86,12 +86,12 @@ Source11:	kernel-desktop-x86_64.config
 Source12:	kernel-desktop-grsec_minimal.config
 
 #### Patches ######
-Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch-20090313-v1.bz2
-# Source100-md5:	e633676d954148e9da7ab4b96263c69c
+Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.0.1-for-2.6.29.patch.bz2
+# Source100-md5:	3964043faf7ddd325ee535dc1af23d22
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
-Patch2:		kernel-desktop-wfdp_export.patch
+Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
 
 #### End patches ##
@@ -421,10 +421,10 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %patch0 -p1
 # unionfs
 %patch1 -p1
-# wfdp_export.patch
-%patch2 -p0
 # TuxOnIce
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
+# small_fixes.patch
+%patch2 -p0
 # grsec-minimal
 %if %{with grsec_minimal}
 %patch3 -p1
