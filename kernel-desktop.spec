@@ -41,9 +41,9 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.29
-%define		_postver		.4
-%define		_rel			1
+%define		_basever		2.6.30
+%define		_postver		%{nil}
+%define		_rel			0.1
 
 %define		_enable_debug_packages			0
 
@@ -71,7 +71,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	64921b5ff5cdadbccfcd3820f03be7d8
+# Source0-md5:	7a80058a6382e5108cdb5554d1609615
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	03f1a0236cc37d8594d2f3c837d81c9d
@@ -86,8 +86,9 @@ Source11:	kernel-desktop-x86_64.config
 Source12:	kernel-desktop-grsec_minimal.config
 
 #### Patches ######
-Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.0.1-for-2.6.29.patch.bz2
-# Source100-md5:	3964043faf7ddd325ee535dc1af23d22
+#Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.0.1-for-2.6.29.patch.bz2
+Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.30.patch-20090620-v1.bz2
+# Source100-md5:	cb24f77d96cd2aa851169ef5489b559b
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
@@ -420,11 +421,11 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # kernel-desktop-bootsplash.patch
 %patch0 -p1
 # unionfs
-%patch1 -p1
+#%patch1 -p1
 # TuxOnIce
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 # small_fixes.patch
-%patch2 -p0
+#%patch2 -p0
 # grsec-minimal
 %if %{with grsec_minimal}
 %patch3 -p1
@@ -893,7 +894,6 @@ fi
 %dir /lib/firmware/cxgb3
 /lib/firmware/cxgb3/t3b_psram-1.1.0.bin
 /lib/firmware/cxgb3/t3c_psram-1.1.0.bin
-/lib/firmware/cxgb3/t3fw-7.0.0.bin
 %dir /lib/firmware/e100
 /lib/firmware/e100/d101m_ucode.bin
 /lib/firmware/e100/d101s_ucode.bin
@@ -907,6 +907,37 @@ fi
 /lib/firmware/tigon/tg3.bin
 /lib/firmware/tigon/tg3_tso.bin
 /lib/firmware/tigon/tg3_tso5.bin
+%dir /lib/firmware/3com
+/lib/firmware/3com/3C359.bin
+/lib/firmware/3com/typhoon.bin
+%dir /lib/firmware/advansys
+/lib/firmware/advansys/3550.bin
+/lib/firmware/advansys/38C0800.bin
+/lib/firmware/advansys/38C1600.bin
+/lib/firmware/advansys/mcode.bin
+%dir /lib/firmware/av7110
+/lib/firmware/av7110/bootcode.bin
+%dir /lib/firmware/bnx2
+/lib/firmware/bnx2/bnx2-mips-06-4.6.16.fw
+/lib/firmware/bnx2/bnx2-mips-09-4.6.17.fw
+/lib/firmware/bnx2/bnx2-rv2p-06-4.6.16.fw
+/lib/firmware/bnx2/bnx2-rv2p-09-4.6.15.fw
+%dir /lib/firmware/cis
+/lib/firmware/cis/LA-PCM.cis
+%dir /lib/firmware/cxgb3
+/lib/firmware/cxgb3/t3fw-7.1.0.bin
+%dir /lib/firmware/ositech
+/lib/firmware/ositech/Xilinx7OD.bin
+%dir /lib/firmware/qlogic
+/lib/firmware/qlogic/1040.bin
+/lib/firmware/qlogic/12160.bin
+/lib/firmware/qlogic/1280.bin
+%dir /lib/firmware/tehuti
+/lib/firmware/tehuti/bdx.bin
+%dir /lib/firmware/yam
+/lib/firmware/yam/1200.bin
+/lib/firmware/yam/9600.bin
+
 
 %files headers
 %defattr(644,root,root,755)
