@@ -997,7 +997,7 @@ diff -Nru linux-2.6.29-orig/security/Kconfig linux-2.6.29/security/Kconfig
  #include <linux/elf.h>
  #include <linux/pid_namespace.h>
  #include <linux/fs_struct.h>
-+#include <lonux/grsecurity.h>
++#include <linux/grsecurity.h>
  #include "internal.h"
  
  /* NOTE:
