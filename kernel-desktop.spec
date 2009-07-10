@@ -510,6 +510,10 @@ BuildConfig() {
 %if %{with grsec_minimal}
 cat %{SOURCE12} >> %{defconfig}
 %endif
+
+%if %{with sreadahead}
+%__sed -i "s:# CONFIG_OPEN_TRACER is not set:CONFIG_OPEN_TRACER=y:" %{defconfig}
+%endif
 }
 
 BuildKernel() {
