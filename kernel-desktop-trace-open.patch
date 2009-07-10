@@ -1,22 +1,26 @@
-commit e9c4f51ad2b76ddbf90863c44085574197247ba3
-Author: Auke Kok <auke-jan.h.kok@intel.com>
-Date:   Tue Jan 27 11:26:00 2009 -0800
+From 64e8e8f224846fa6113d16314d9922fdbf185e7d Mon Sep 17 00:00:00 2001
+From: Corrado Zoccolo <corrado@et2.(none)>
+Date: Mon, 15 Jun 2009 22:57:31 +0200
+Subject: [PATCH] dapted Auke Kok's patch to kernel 2.6.30
 
-    trace: tracer for sys_open() - sreadahead
-    
-    This tracer monitors regular file open() syscalls. This is a fast
-    and low-overhead alternative to strace, and does not allow or
-    require to be attached to every process.
-    
-    Signed-off-by: Auke Kok <auke-jan.h.kok@intel.com>
+---
+ fs/open.c                 |    5 ++
+ include/trace/fs.h        |   11 +++
+ kernel/trace/Kconfig      |    9 +++
+ kernel/trace/Makefile     |    1 +
+ kernel/trace/trace.h      |    1 +
+ kernel/trace/trace_open.c |  149 +++++++++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 176 insertions(+), 0 deletions(-)
+ create mode 100644 include/trace/fs.h
+ create mode 100644 kernel/trace/trace_open.c
 
 diff --git a/fs/open.c b/fs/open.c
-index a3a78ce..bd9eb9d 100644
+index bdfbf03..e5aff13 100644
 --- a/fs/open.c
 +++ b/fs/open.c
-@@ -30,6 +30,10 @@
- #include <linux/audit.h>
+@@ -31,6 +31,10 @@
  #include <linux/falloc.h>
+ #include <linux/fs_struct.h>
  
 +#include <trace/fs.h>
 +
@@ -25,7 +29,7 @@ index a3a78ce..bd9eb9d 100644
  int vfs_statfs(struct dentry *dentry, struct kstatfs *buf)
  {
  	int retval = -ENODEV;
-@@ -1039,6 +1043,7 @@ long do_sys_open(int dfd, const char __user *filename, int flags, int mode)
+@@ -1040,6 +1044,7 @@ long do_sys_open(int dfd, const char __user *filename, int flags, int mode)
  			} else {
  				fsnotify_open(f->f_path.dentry);
  				fd_install(fd, f);
@@ -35,7 +39,7 @@ index a3a78ce..bd9eb9d 100644
  		putname(tmp);
 diff --git a/include/trace/fs.h b/include/trace/fs.h
 new file mode 100644
-index 0000000..870eec2
+index 0000000..405d5be
 --- /dev/null
 +++ b/include/trace/fs.h
 @@ -0,0 +1,11 @@
@@ -46,17 +50,17 @@ index 0000000..870eec2
 +#include <linux/tracepoint.h>
 +
 +DECLARE_TRACE(do_sys_open,
-+	TPPROTO(struct file *filp, int flags, int mode, long fd),
-+		TPARGS(filp, flags, mode, fd));
++	TP_PROTO(struct file *filp, int flags, int mode, long fd),
++		TP_ARGS(filp, flags, mode, fd));
 +
 +#endif
 diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
-index e2a4ff6..d2a1ec1 100644
+index 417d198..d69d60e 100644
 --- a/kernel/trace/Kconfig
 +++ b/kernel/trace/Kconfig
-@@ -149,6 +149,15 @@ config CONTEXT_SWITCH_TRACER
- 	  This tracer gets called from the context switch and records
- 	  all switching of tasks.
+@@ -189,6 +189,15 @@ config FTRACE_SYSCALLS
+ 	help
+ 	  Basic tracer to catch the syscall entry and exit events.
  
 +config OPEN_TRACER
 +	bool "Trace open() calls"
@@ -69,32 +73,34 @@ index e2a4ff6..d2a1ec1 100644
 +
  config BOOT_TRACER
  	bool "Trace boot initcalls"
- 	depends on DEBUG_KERNEL
+ 	select TRACING
 diff --git a/kernel/trace/Makefile b/kernel/trace/Makefile
-index 349d5a9..7f2a366 100644
+index 2630f51..5a9f6c1 100644
 --- a/kernel/trace/Makefile
 +++ b/kernel/trace/Makefile
-@@ -20,6 +20,7 @@ obj-$(CONFIG_RING_BUFFER) += ring_buffer.o
- 
- obj-$(CONFIG_TRACING) += trace.o
+@@ -24,6 +24,7 @@ obj-$(CONFIG_TRACING) += trace_output.o
+ obj-$(CONFIG_TRACING) += trace_stat.o
+ obj-$(CONFIG_TRACING) += trace_printk.o
  obj-$(CONFIG_CONTEXT_SWITCH_TRACER) += trace_sched_switch.o
 +obj-$(CONFIG_OPEN_TRACER) += trace_open.o
  obj-$(CONFIG_SYSPROF_TRACER) += trace_sysprof.o
  obj-$(CONFIG_FUNCTION_TRACER) += trace_functions.o
  obj-$(CONFIG_IRQSOFF_TRACER) += trace_irqsoff.o
---- a/kernel/trace/trace.h.orig	2009-06-10 05:05:27.000000000 +0200
-+++ b/kernel/trace/trace.h	2009-07-10 19:00:05.801929743 +0200
-@@ -36,6 +36,7 @@
- 	TRACE_KMEM_ALLOC,
+diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
+index e685ac2..4733e01 100644
+--- a/kernel/trace/trace.h
++++ b/kernel/trace/trace.h
+@@ -37,6 +37,7 @@ enum trace_type {
  	TRACE_KMEM_FREE,
  	TRACE_POWER,
-+	TRACE_OPEN,
  	TRACE_BLK,
++	TRACE_OPEN,
  
  	__TRACE_LAST_TYPE,
+ };
 diff --git a/kernel/trace/trace_open.c b/kernel/trace/trace_open.c
 new file mode 100644
-index 0000000..7153dfc
+index 0000000..69f0f36
 --- /dev/null
 +++ b/kernel/trace/trace_open.c
 @@ -0,0 +1,149 @@
@@ -141,7 +147,7 @@ index 0000000..7153dfc
 +	if (IS_ERR(fname))
 +		goto out;
 +
-+	ftrace_printk("%s: open(\"%s\", %d, %d) = %ld\n",
++	trace_printk("%s: open(\"%s\", %d, %d) = %ld\n",
 +		current->comm, fname, flags, mode, fd);
 +
 +out:
@@ -247,3 +253,6 @@ index 0000000..7153dfc
 +}
 +device_initcall(init_open_trace);
 +
+-- 
+1.6.1
+
