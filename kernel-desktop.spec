@@ -512,7 +512,8 @@ cat %{SOURCE12} >> %{defconfig}
 %endif
 
 %if %{with sreadahead}
-%__sed -i "s:# CONFIG_OPEN_TRACER is not set:CONFIG_OPEN_TRACER=y:" %{defconfig}
+#%__sed -i "s:# CONFIG_OPEN_TRACER is not set:CONFIG_OPEN_TRACER=y:" %{defconfig}
+echo "CONFIG_OPEN_TRACER=y" >> %{defconfig}
 %endif
 }
 
