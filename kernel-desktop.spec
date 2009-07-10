@@ -33,6 +33,7 @@
 %bcond_with	pae		# build PAE (HIGHMEM64G) support on uniprocessor
 %bcond_with	laptop		# build for laptops - 100Hz
 %bcond_with	grsec_minimal	# build wihout grsec_minimal
+%bcond_with	sreadahead	# uuooaaa, be frickin' fast at boot
 
 %{?debug:%define with_verbose 1}
 
@@ -94,6 +95,8 @@ Patch0:		kernel-desktop-bootsplash.patch
 Patch1:		kernel-desktop-unionfs.patch
 Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
+# sreadahead - get it from http://code.google.com/p/sreadahead/source/browse/trunk/0001-kernel-trace-open.patch
+Patch4:		kernel-desktop-trace-open.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -429,6 +432,10 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # grsec-minimal
 %if %{with grsec_minimal}
 %patch3 -p1
+%endif
+# sreadahead
+%if %{with sreadahead}
+%patch4 -p1
 %endif
 
 # Fix EXTRAVERSION in main Makefile
