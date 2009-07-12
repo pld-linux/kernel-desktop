@@ -92,6 +92,7 @@ Source101:	http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.
 Patch0:		kernel-desktop-bootsplash.patch
 Patch1:		kernel-desktop-squashfs.patch
 Patch2:		kernel-desktop-security_inode_permission.patch
+Patch3:		kernel-md_driver_fix.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -426,6 +427,8 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 # unionfs
 %{__gzip} -dc %{SOURCE101} | patch -p1 -s
+
+%patch3 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
