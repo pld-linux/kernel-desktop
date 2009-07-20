@@ -919,9 +919,9 @@ fi
 /lib/firmware/tigon/tg3.bin
 /lib/firmware/tigon/tg3_tso.bin
 /lib/firmware/tigon/tg3_tso5.bin
-%ifarch %{ix86}
-/lib/firmware/tr_smctr.bin
-%endif
+#%ifarch %{ix86}
+#/lib/firmware/tr_smctr.bin
+#%endif
 %dir /lib/firmware/3com
 /lib/firmware/3com/3C359.bin
 /lib/firmware/3com/typhoon.bin
@@ -952,9 +952,9 @@ fi
 %dir /lib/firmware/yam
 /lib/firmware/yam/1200.bin
 /lib/firmware/yam/9600.bin
-%ifarch %{ix86}
-/lib/firmware/yamaha/yss225_registers.bin
-%endif
+#%ifarch %{ix86}
+#/lib/firmware/yamaha/yss225_registers.bin
+#%endif
 
 %files headers
 %defattr(644,root,root,755)
