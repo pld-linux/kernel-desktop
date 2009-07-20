@@ -97,6 +97,7 @@ Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
 # sreadahead - get it from http://code.google.com/p/sreadahead/source/browse/trunk/0001-kernel-trace-open.patch
 Patch4:		kernel-desktop-trace-open.patch
+Patch5:		kernel-desktop-ir.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -437,6 +438,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %if %{with sreadahead}
 %patch4 -p1
 %endif
+%patch5 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
@@ -919,6 +921,9 @@ fi
 /lib/firmware/tigon/tg3.bin
 /lib/firmware/tigon/tg3_tso.bin
 /lib/firmware/tigon/tg3_tso5.bin
+%ifarch %{ix86}
+/lib/firmware/tr_smctr.bin
+%endif
 %dir /lib/firmware/3com
 /lib/firmware/3com/3C359.bin
 /lib/firmware/3com/typhoon.bin
@@ -949,7 +954,9 @@ fi
 %dir /lib/firmware/yam
 /lib/firmware/yam/1200.bin
 /lib/firmware/yam/9600.bin
-
+%ifarch %{ix86}
+/lib/firmware/yamaha/yss225_registers.bin
+%endif
 
 %files headers
 %defattr(644,root,root,755)
