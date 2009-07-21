@@ -906,6 +906,7 @@ fi
 %dir /lib/firmware/cxgb3
 /lib/firmware/cxgb3/t3b_psram-1.1.0.bin
 /lib/firmware/cxgb3/t3c_psram-1.1.0.bin
+/lib/firmware/cxgb3/t3fw-7.1.0.bin
 %dir /lib/firmware/e100
 /lib/firmware/e100/d101m_ucode.bin
 /lib/firmware/e100/d101s_ucode.bin
@@ -939,8 +940,6 @@ fi
 /lib/firmware/bnx2/bnx2-rv2p-09-4.6.15.fw
 %dir /lib/firmware/cis
 /lib/firmware/cis/LA-PCM.cis
-%dir /lib/firmware/cxgb3
-/lib/firmware/cxgb3/t3fw-7.1.0.bin
 %dir /lib/firmware/ositech
 /lib/firmware/ositech/Xilinx7OD.bin
 %dir /lib/firmware/qlogic
