@@ -217,6 +217,19 @@ się w komputerze, takiego jak sterowniki dysków itp.
 
 %{Features}
 
+%package dirs
+Summary:	common dirs for kernel packages
+Summary(pl.UTF-8):	Katalogi wspólne dla pakietów kernela
+Group:		Base/Kernel
+
+%description dirs
+This package provides common dirs shared between various kernel
+packages.
+
+%description dirs -l pl.UTF-8
+Katalog ten udostepnia katalogi współdzielone pomiędzy różnymi
+pakietami kernela.
+
 %package vmlinux
 Summary:	vmlinux - uncompressed kernel image
 Summary(de.UTF-8):	vmlinux - dekompressiertes Kernel Bild
@@ -797,6 +810,10 @@ fi
 %ghost /lib/modules/%{kernel_release}/source
 %dir %{_sysconfdir}/modprobe.d/%{kernel_release}
 
+%files dirs
+%defattr(644,root,root,755)
+%dir %{_kernelsrcdir}
+
 %files vmlinux
 %defattr(644,root,root,755)
 /boot/vmlinux-%{kernel_release}
@@ -957,7 +974,6 @@ fi
 
 %files headers
 %defattr(644,root,root,755)
-%dir %{_kernelsrcdir}
 %{_kernelsrcdir}/include
 %dir %{_kernelsrcdir}/arch
 %dir %{_kernelsrcdir}/arch/[!K]*
@@ -999,7 +1015,6 @@ fi
 
 %files doc
 %defattr(644,root,root,755)
-%dir %{_kernelsrcdir}
 %{_kernelsrcdir}/Documentation
 
 %if %{with source}
