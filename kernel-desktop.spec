@@ -18,7 +18,7 @@
 #    be part of this kernel (apparmor, grsec(well maybe the minimal patch will be considered as part of this kernel)
 #    netfilter, etc.).
 # 8) Patches for laptops shall only be applied if laptop mode is enable. So should desktop patches too.
-# 9) Please don't change the configs to this multiarch version - I don't want to waste my time upgrading the kernel 
+# 9) Please don't change the configs to this multiarch version - I don't want to waste my time upgrading the kernel
 #    and managing yet another symbols style.
 # 10) If you'd like something in this kernel that isn't already included but don't have the time/know how to add it
 #     yourself, let me know of it and why it is important to you. If the patches are actively updated and maintained
@@ -34,6 +34,7 @@
 %bcond_with	laptop		# build for laptops - 100Hz
 %bcond_with	grsec_minimal	# build wihout grsec_minimal
 %bcond_with	sreadahead	# uuooaaa, be frickin' fast at boot
+%bcond_with	bfs		# Brain Fuck Scheduler (by -ck) - could be good only for desktops/laptops/eeePC
 
 %{?debug:%define with_verbose 1}
 
@@ -44,14 +45,14 @@
 
 %define		_basever		2.6.30
 %define		_postver		.5
-%define		_rel			1
+%define		_rel			2
 
 %define		_enable_debug_packages			0
 
 %if %{with laptop}
-%define		alt_kernel	laptop%{?with_pae:-pae}%{?with_grsec_minimal:-grsec}
+%define		alt_kernel	laptop%{?with_pae:-pae}%{?with_bfs:-bfs}%{?with_grsec_minimal:-grsec}
 %else
-%define		alt_kernel	desktop%{?with_pae:-pae}%{?with_grsec_minimal:-grsec}
+%define		alt_kernel	desktop%{?with_pae:-pae}%{?with_bfs:-bfs}%{?with_grsec_minimal:-grsec}
 %endif
 
 # kernel release (used in filesystem and eventually in uname -r)
@@ -97,6 +98,8 @@ Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
 # sreadahead - get it from http://code.google.com/p/sreadahead/source/browse/trunk/0001-kernel-trace-open.patch
 Patch4:		kernel-desktop-trace-open.patch
+# replace for cfs : http://ck.kolivas.org/patches/bfs/ see bfs-faq.txt
+Patch5:		kernel-desktop-sched-bfs.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -449,6 +452,11 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # sreadahead
 %if %{with sreadahead}
 %patch4 -p1
+%endif
+
+# bfs
+%if %{with bfs}
+%patch5 -p1
 %endif
 
 # Fix EXTRAVERSION in main Makefile
