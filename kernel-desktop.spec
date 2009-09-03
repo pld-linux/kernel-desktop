@@ -34,7 +34,7 @@
 %bcond_with	laptop		# build for laptops - 100Hz
 %bcond_with	grsec_minimal	# build wihout grsec_minimal
 %bcond_with	sreadahead	# uuooaaa, be frickin' fast at boot
-%bcond_with	bfs		# Brain Fuck Scheduler (by -ck) - could be good only for desktops/laptops/eeePC
+%bcond_with	bfs		# Brain Fuck Scheduler - could be good only for desktops/laptops/eeePC
 
 %{?debug:%define with_verbose 1}
 
