@@ -25,6 +25,14 @@
 #     the chances are realy high that I will add it.
 # 11) Now that you've come this far, read 1) again.
 #
+# TODO: 2.6.31
+# - x86_64 config
+# - add firmware
+#  /lib/firmware/bnx2x-e1-4.8.53.0.fw                                     
+#  /lib/firmware/bnx2x-e1h-4.8.53.0.fw                                                   
+#  /lib/firmware/cis/3CCFEM556.cis                                                              
+#  /lib/firmware/cis/3CXEM556.cis
+# - tuxonice patch
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-desktop-source package
@@ -43,9 +51,9 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.30
-%define		_postver		.5
-%define		_rel			6
+%define		_basever		2.6.31
+%define		_postver		%{nil}
+%define		_rel			0.1
 
 %define		_enable_debug_packages			0
 
@@ -73,7 +81,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	7a80058a6382e5108cdb5554d1609615
+# Source0-md5:	84c077a37684e4cbfa67b18154390d8a
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	47841c7ff5c81a7b349a79f2fa8e9138
@@ -92,7 +100,7 @@ Source12:	kernel-desktop-grsec_minimal.config
 Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.30.patch-20090620-v1.bz2
 # Source100-md5:	cb24f77d96cd2aa851169ef5489b559b
 Patch0:		kernel-desktop-bootsplash.patch
-# http://download.filesystems.org/unionfs/stable/unionfs-2.5.1_for_2.6.27.10.diff.gz
+# http://download.filesystems.org/unionfs/stable/unionfs-2.5.2_for_2.6.30.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
 Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
@@ -442,7 +450,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # unionfs
 %patch1 -p1
 # TuxOnIce
-%{__bzip2} -dc %{SOURCE100} | patch -p1 -s
+#%{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 # small_fixes.patch
 #%patch2 -p0
 # grsec-minimal
@@ -453,7 +461,6 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %if %{with sreadahead}
 %patch4 -p1
 %endif
-
 # bfs
 %if %{with bfs}
 %patch5 -p1
@@ -931,7 +938,7 @@ fi
 %dir /lib/firmware/cxgb3
 /lib/firmware/cxgb3/t3b_psram-1.1.0.bin
 /lib/firmware/cxgb3/t3c_psram-1.1.0.bin
-/lib/firmware/cxgb3/t3fw-7.1.0.bin
+/lib/firmware/cxgb3/t3fw-7.4.0.bin
 %dir /lib/firmware/e100
 /lib/firmware/e100/d101m_ucode.bin
 /lib/firmware/e100/d101s_ucode.bin
