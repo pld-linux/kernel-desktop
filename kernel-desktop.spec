@@ -32,7 +32,6 @@
 #  /lib/firmware/bnx2x-e1h-4.8.53.0.fw                                                   
 #  /lib/firmware/cis/3CCFEM556.cis                                                              
 #  /lib/firmware/cis/3CXEM556.cis
-# - tuxonice patch
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-desktop-source package
@@ -97,8 +96,8 @@ Source12:	kernel-desktop-grsec_minimal.config
 
 #### Patches ######
 #Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.0.1-for-2.6.29.patch.bz2
-Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.30.patch-20090620-v1.bz2
-# Source100-md5:	cb24f77d96cd2aa851169ef5489b559b
+Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.31.patch-20090911-v1.bz2
+# Source100-md5:	0683813ac1a521408b4c136d72fbb9d2
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.2_for_2.6.30.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
@@ -450,7 +449,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # unionfs
 %patch1 -p1
 # TuxOnIce
-#%{__bzip2} -dc %{SOURCE100} | patch -p1 -s
+%{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 # small_fixes.patch
 #%patch2 -p0
 # grsec-minimal
