@@ -1,29 +1,10 @@
---- kernel/power/tuxonice_modules.c.orig	2009-04-14 19:09:31.019917794 +0200
-+++ kernel/power/tuxonice_modules.c	2009-04-14 19:10:26.866370704 +0200
-@@ -83,6 +83,8 @@
- 			bytes + sizeof(struct toi_module_header));
+--- linux-2.6.31/mm/swapfile.c~ 2009-09-13 09:09:36.506565318 +0200
++++ linux-2.6.31/mm/swapfile.c  2009-09-14 08:14:30.692422596 +0200
+@@ -518,6 +518,7 @@
+        spin_unlock(&swap_lock);
+        return (swp_entry_t) {0};
  }
- 
-+EXPORT_SYMBOL_GPL(print_toi_header_storage_for_modules);
-+
- /*
-  * toi_memory_for_modules
-  *
---- kernel/power/tuxonice_prepare_image.c.orig	2009-04-14 19:05:14.354371634 +0200
-+++ kernel/power/tuxonice_prepare_image.c	2009-04-14 19:06:02.437440242 +0200
-@@ -423,6 +423,7 @@
- 
- 	return DIV_ROUND_UP(bytes, PAGE_SIZE);
- }
-+EXPORT_SYMBOL_GPL(get_header_storage_needed);
- 
- /*
-  * When freeing memory, pages from either pageset might be freed.
---- kernel/power/tuxonice_pageflags.c.orig	2009-04-14 19:07:35.173263672 +0200
-+++ kernel/power/tuxonice_pageflags.c	2009-04-14 19:08:34.458188001 +0200
-@@ -25,3 +25,5 @@
- 
- 	return total;
- }
-+
-+EXPORT_SYMBOL_GPL(toi_pageflags_space_needed);
++EXPORT_SYMBOL_GPL(get_swap_page_of_type);
+
+ static struct swap_info_struct * swap_info_get(swp_entry_t entry)
+ {
