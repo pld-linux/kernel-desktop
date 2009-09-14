@@ -25,12 +25,6 @@
 #     the chances are realy high that I will add it.
 # 11) Now that you've come this far, read 1) again.
 #
-# TODO: 2.6.31
-# - add firmware
-#  /lib/firmware/bnx2x-e1-4.8.53.0.fw                                     
-#  /lib/firmware/bnx2x-e1h-4.8.53.0.fw                                                   
-#  /lib/firmware/cis/3CCFEM556.cis                                                              
-#  /lib/firmware/cis/3CXEM556.cis
 #
 # Conditional build:
 %bcond_without	source		# don't build kernel-desktop-source package
@@ -971,8 +965,12 @@ fi
 /lib/firmware/bnx2/bnx2-mips-09-4.6.17.fw
 /lib/firmware/bnx2/bnx2-rv2p-06-4.6.16.fw
 /lib/firmware/bnx2/bnx2-rv2p-09-4.6.15.fw
+/lib/firmware/bnx2x-e1-4.8.53.0.fw
+/lib/firmware/bnx2x-e1h-4.8.53.0.fw
 %dir /lib/firmware/cis
 /lib/firmware/cis/LA-PCM.cis
+/lib/firmware/cis/3CCFEM556.cis
+/lib/firmware/cis/3CXEM556.cis
 %dir /lib/firmware/ositech
 /lib/firmware/ositech/Xilinx7OD.bin
 %dir /lib/firmware/qlogic
