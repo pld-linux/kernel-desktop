@@ -452,7 +452,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # TuxOnIce
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 # small_fixes.patch
-#%patch2 -p0
+%patch2 -p0
 # grsec-minimal
 %if %{with grsec_minimal}
 %patch3 -p1
