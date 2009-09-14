@@ -26,7 +26,6 @@
 # 11) Now that you've come this far, read 1) again.
 #
 # TODO: 2.6.31
-# - x86_64 config
 # - add firmware
 #  /lib/firmware/bnx2x-e1-4.8.53.0.fw                                     
 #  /lib/firmware/bnx2x-e1h-4.8.53.0.fw                                                   
@@ -107,6 +106,8 @@ Patch3:		kernel-desktop-grsec-minimal.patch
 Patch4:		kernel-desktop-trace-open.patch
 # replace for cfs : http://ck.kolivas.org/patches/bfs/ see bfs-faq.txt
 Patch5:		kernel-desktop-sched-bfs.patch
+# patch preventing intel gpu screen flickering
+Patch6:		kernel-desktop-intel-gpu-fifo.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
