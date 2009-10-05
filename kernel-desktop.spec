@@ -44,8 +44,8 @@
 %define		have_isa	1
 
 %define		_basever		2.6.31
-%define		_postver		.1
-%define		_rel			3
+%define		_postver		.2
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -76,7 +76,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	84c077a37684e4cbfa67b18154390d8a
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	43977a0a264dd7d173b6ef122c62fb20
+# Source1-md5:	04bbd7d8b61e5e7536b978435f370f09
 %endif
 
 Source2:	kernel-desktop-autoconf.h
@@ -100,8 +100,6 @@ Patch3:		kernel-desktop-grsec-minimal.patch
 Patch4:		kernel-desktop-trace-open.patch
 # replace for cfs : http://ck.kolivas.org/patches/bfs/ see bfs-faq.txt
 Patch5:		kernel-desktop-sched-bfs.patch
-# patch preventing intel gpu screen flickering
-Patch6:		kernel-desktop-intel-gpu-fifo.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -449,7 +447,6 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %if %{with bfs}
 %patch5 -p1
 %endif
-%patch6 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
