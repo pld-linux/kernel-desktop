@@ -100,6 +100,8 @@ Patch3:		kernel-desktop-grsec-minimal.patch
 Patch4:		kernel-desktop-trace-open.patch
 # replace for cfs : http://ck.kolivas.org/patches/bfs/ see bfs-faq.txt
 Patch5:		kernel-desktop-sched-bfs.patch
+# keyboard hang patch - 2.6.31 regression 
+Patch6:		kernel-desktop-bug-14388-keyboard-hang-on-x.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -433,8 +435,8 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %patch1 -p1
 # TuxOnIce
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
-# small_fixes.patch
-%patch2 -p1
+# small_fixes.patch - this breaks compilation on mm/swapfile.c - to remove?
+#%patch2 -p1
 # grsec-minimal
 %if %{with grsec_minimal}
 %patch3 -p1
@@ -447,6 +449,8 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %if %{with bfs}
 %patch5 -p1
 %endif
+# keyboard patch
+%patch6 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
