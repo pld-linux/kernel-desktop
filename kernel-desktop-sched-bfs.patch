@@ -7289,21 +7289,6 @@ Index: linux-2.6.31-bfs/include/linux/ioprio.h
  		return IOPRIO_CLASS_IDLE;
  	else if (task->policy == SCHED_FIFO || task->policy == SCHED_RR)
  		return IOPRIO_CLASS_RT;
-Index: linux-2.6.31-bfs/Makefile
-===================================================================
---- linux-2.6.31-bfs.orig/Makefile	2009-10-06 21:06:26.266820780 +1100
-+++ linux-2.6.31-bfs/Makefile	2009-10-16 21:20:11.159775382 +1100
-@@ -1,8 +1,8 @@
- VERSION = 2
- PATCHLEVEL = 6
- SUBLEVEL = 31
--EXTRAVERSION =
--NAME = Man-Eating Seals of Antiquity
-+EXTRAVERSION = -bfs304
-+NAME = BFS Powered
- 
- # *DOCUMENTATION*
- # To see a list of typical targets execute "make help"
 Index: linux-2.6.31-bfs/kernel/timer.c
 ===================================================================
 --- linux-2.6.31-bfs.orig/kernel/timer.c	2009-10-06 21:06:26.202821621 +1100
