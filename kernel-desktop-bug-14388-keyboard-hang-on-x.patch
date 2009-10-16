@@ -1,0 +1,56 @@
+diff --git a/drivers/char/tty_buffer.c b/drivers/char/tty_buffer.c
+index 0296612..66fa4e1 100644
+--- a/drivers/char/tty_buffer.c
++++ b/drivers/char/tty_buffer.c
+@@ -468,7 +468,7 @@ static void flush_to_ldisc(struct work_struct *work)
+  */
+ void tty_flush_to_ldisc(struct tty_struct *tty)
+ {
+-	flush_to_ldisc(&tty->buf.work.work);
++	flush_delayed_work(&tty->buf.work);
+ }
+ 
+ /**
+diff --git a/include/linux/workqueue.h b/include/linux/workqueue.h
+index 7ef0c7b..cf24c20 100644
+--- a/include/linux/workqueue.h
++++ b/include/linux/workqueue.h
+@@ -207,6 +207,7 @@ extern int queue_delayed_work_on(int cpu, struct workqueue_struct *wq,
+ 
+ extern void flush_workqueue(struct workqueue_struct *wq);
+ extern void flush_scheduled_work(void);
++extern void flush_delayed_work(struct delayed_work *work);
+ 
+ extern int schedule_work(struct work_struct *work);
+ extern int schedule_work_on(int cpu, struct work_struct *work);
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index addfe2d..ccefe57 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -640,6 +640,24 @@ int schedule_delayed_work(struct delayed_work *dwork,
+ EXPORT_SYMBOL(schedule_delayed_work);
+ 
+ /**
++ * flush_delayed_work - block until a dwork_struct's callback has terminated
++ * @dwork: the delayed work which is to be flushed
++ *
++ * Any timeout is cancelled, and any pending work is run immediately.
++ */
++void flush_delayed_work(struct delayed_work *dwork)
++{
++	if (del_timer(&dwork->timer)) {
++		struct cpu_workqueue_struct *cwq;
++		cwq = wq_per_cpu(keventd_wq, get_cpu());
++		__queue_work(cwq, &dwork->work);
++		put_cpu();
++	}
++	flush_work(&dwork->work);
++}
++EXPORT_SYMBOL(flush_delayed_work);
++
++/**
+  * schedule_delayed_work_on - queue work in global workqueue on CPU after delay
+  * @cpu: cpu to use
+  * @dwork: job to be done
+
+  
