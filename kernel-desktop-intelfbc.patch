@@ -1,0 +1,11 @@
+--- drivers/gpu/drm/i915/intel_display.c.orig	2009-10-16 02:41:50.000000000 +0200
++++ drivers/gpu/drm/i915/intel_display.c	2009-10-25 21:40:52.820687564 +0100
+@@ -4175,7 +4175,7 @@
+ 		dev_priv->display.dpms = i9xx_crtc_dpms;
+ 
+ 	/* Only mobile has FBC, leave pointers NULL for other chips */
+-	if (IS_MOBILE(dev)) {
++	if (0 && IS_MOBILE(dev)) {
+ 		if (IS_GM45(dev)) {
+ 			dev_priv->display.fbc_enabled = g4x_fbc_enabled;
+ 			dev_priv->display.enable_fbc = g4x_enable_fbc;
