@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.32
 %define		_postver		%{nil}
-%define		_rel			0.rc5.2
+%define		_rel			0.rc6.1
 
 %define		_enable_debug_packages			0
 
@@ -73,8 +73,8 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{_basever}-rc5.tar.bz2
-# Source0-md5:	f5959aae6459e552a37f05bf79b2ee68
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{_basever}-rc6.tar.bz2
+# Source0-md5:	4733963dd729bd5e7f67621623db7f5f
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	6cac5e59d5562b591cdda485941204d5
@@ -102,8 +102,6 @@ Patch3:		kernel-desktop-grsec-minimal.patch
 Patch4:		kernel-desktop-trace-open.patch
 # replace for cfs : http://ck.kolivas.org/patches/bfs/ see bfs-faq.txt
 Patch5:		kernel-desktop-sched-bfs.patch
-# intel fbc
-Patch6:		kernel-desktop-intelfbc.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -425,7 +423,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{_basever}-rc5
+%setup -q -n linux-%{_basever}-rc6
 
 %if "%{_postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
@@ -453,7 +451,6 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %if %{with bfs}
 %patch5 -p1
 %endif
-%patch6 -p0
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
