@@ -904,6 +904,7 @@ fi
 %{_kernelsrcdir}/scripts/basic
 %{_kernelsrcdir}/scripts/mkmakefile
 %{_kernelsrcdir}/scripts/mod
+%{_kernelsrcdir}/scripts/module-common.lds
 %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/*.c
 %{_kernelsrcdir}/scripts/*.sh
