@@ -102,6 +102,10 @@ Patch4:		kernel-desktop-trace-open.patch
 Patch5:		kernel-desktop-sched-bfs.patch
 # keyboard hang patch - 2.6.31 regression 
 Patch6:		kernel-desktop-bug-14388-keyboard-hang-on-x.patch
+# DRM driver for old ATI Mach64 cards
+Patch7:		kernel-gpu-drm-mach64.patch
+Patch8:		kernel-gpu-drm-mach64-fixes.patch
+Patch9:		kernel-gpu-drm-mach64-2.6.31.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -451,6 +455,10 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %endif
 # keyboard patch
 %patch6 -p1
+# mach64 drm
+%patch7 -p1
+%patch8 -p1
+%patch9 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
