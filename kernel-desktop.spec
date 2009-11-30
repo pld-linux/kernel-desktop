@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.32
 %define		_postver		%{nil}
-%define		_rel			0.rc8.1
+%define		_rel			0.rc8.2
 
 %define		_enable_debug_packages			0
 
@@ -91,8 +91,8 @@ Source13:	kernel-desktop-tuxonice.config
 
 #### Patches ######
 #Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.0.1-for-2.6.29.patch.bz2
-Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.31.patch-20091009-v1.bz2
-# Source100-md5:	8066cf922d24d227bf8e849dcba2e0b3
+Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch-20091009-v1.bz2
+# Source100-md5:	653957b7b2f7492a255fa17f7530c36f
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.2_for_2.6.30.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
