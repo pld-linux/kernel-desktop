@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.32
 %define		_postver		%{nil}
-%define		_rel			0.rc8.2
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -73,8 +73,8 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/testing/linux-%{_basever}-rc8.tar.bz2
-# Source0-md5:	4355b8f065f3c023109c0f99f0f3a0d7
+Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
+# Source0-md5:	260551284ac224c3a43c4adac7df4879
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	6cac5e59d5562b591cdda485941204d5
@@ -423,7 +423,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 /usr/src/linux/Documentation.
 
 %prep
-%setup -q -n linux-%{_basever}-rc8
+%setup -q -n linux-%{_basever}
 
 %if "%{_postver}" != "%{nil}"
 %{__bzip2} -dc %{SOURCE1} | patch -p1 -s
