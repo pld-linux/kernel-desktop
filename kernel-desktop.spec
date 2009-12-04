@@ -35,6 +35,7 @@
 %bcond_with	grsec_minimal	# build wihout grsec_minimal
 %bcond_with	sreadahead	# uuooaaa, be frickin' fast at boot
 %bcond_with	bfs		# Brain Fuck Scheduler - could be good only for desktops/laptops/eeePC
+%bcond_without	tuxonice	# build without tuxonice support
 
 %{?debug:%define with_verbose 1}
 
@@ -43,8 +44,8 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.31
-%define		_postver		.5
+%define		_basever		2.6.32
+%define		_postver		%{nil}
 %define		_rel			1
 
 %define		_enable_debug_packages			0
@@ -73,7 +74,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	84c077a37684e4cbfa67b18154390d8a
+# Source0-md5:	260551284ac224c3a43c4adac7df4879
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	6cac5e59d5562b591cdda485941204d5
@@ -86,11 +87,12 @@ Source4:	kernel-desktop-module-build.pl
 Source10:	kernel-desktop-x86.config
 Source11:	kernel-desktop-x86_64.config
 Source12:	kernel-desktop-grsec_minimal.config
+Source13:	kernel-desktop-tuxonice.config
 
 #### Patches ######
 #Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.0.1-for-2.6.29.patch.bz2
-Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.31.patch-20091009-v1.bz2
-# Source100-md5:	8066cf922d24d227bf8e849dcba2e0b3
+Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch-20091009-v1.bz2
+# Source100-md5:	653957b7b2f7492a255fa17f7530c36f
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.2_for_2.6.30.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
@@ -100,12 +102,6 @@ Patch3:		kernel-desktop-grsec-minimal.patch
 Patch4:		kernel-desktop-trace-open.patch
 # replace for cfs : http://ck.kolivas.org/patches/bfs/ see bfs-faq.txt
 Patch5:		kernel-desktop-sched-bfs.patch
-# keyboard hang patch - 2.6.31 regression 
-Patch6:		kernel-desktop-bug-14388-keyboard-hang-on-x.patch
-# DRM driver for old ATI Mach64 cards
-Patch7:		kernel-gpu-drm-mach64.patch
-Patch8:		kernel-gpu-drm-mach64-fixes.patch
-Patch9:		kernel-gpu-drm-mach64-2.6.31.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -438,7 +434,9 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # unionfs
 %patch1 -p1
 # TuxOnIce
+%if %{with tuxonice}
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
+%endif
 # small_fixes.patch - this breaks compilation on mm/swapfile.c - to remove?
 #%patch2 -p1
 # grsec-minimal
@@ -453,12 +451,6 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %if %{with bfs}
 %patch5 -p1
 %endif
-# keyboard patch
-%patch6 -p1
-# mach64 drm
-%patch7 -p1
-%patch8 -p1
-%patch9 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
@@ -527,6 +519,11 @@ BuildConfig() {
 %__sed -i "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:" %{defconfig}
 %__sed -i "s:CONFIG_HZ_1000=y:# CONFIG_HZ_1000 is not set:" %{defconfig}
 %__sed -i "s:CONFIG_HZ=1000:CONFIG_HZ=100:" %{defconfig}
+%__sed -i "s:# CONFIG_NO_HZ is not set:CONFIG_NO_HZ=y:" %{defconfig}
+%endif
+
+%if %{with tuxonice}
+cat %{SOURCE13} >> %{defconfig}
 %endif
 
 %if %{with grsec_minimal}
@@ -908,6 +905,7 @@ fi
 %{_kernelsrcdir}/scripts/basic
 %{_kernelsrcdir}/scripts/mkmakefile
 %{_kernelsrcdir}/scripts/mod
+%{_kernelsrcdir}/scripts/module-common.lds
 %{_kernelsrcdir}/scripts/setlocalversion
 %{_kernelsrcdir}/scripts/*.c
 %{_kernelsrcdir}/scripts/*.sh
