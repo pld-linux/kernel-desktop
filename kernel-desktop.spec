@@ -91,8 +91,8 @@ Source13:	kernel-desktop-tuxonice.config
 
 #### Patches ######
 #Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.0.1-for-2.6.29.patch.bz2
-Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-head.patch-20091009-v1.bz2
-# Source100-md5:	653957b7b2f7492a255fa17f7530c36f
+Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.32.patch-20091212-v1.bz2
+# Source100-md5:	c76bcdb35ea79aa3b825ca79f89ca68a
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.2_for_2.6.30.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
