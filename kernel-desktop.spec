@@ -495,6 +495,7 @@ TuneUpConfigForIX86 () {
 	if [ "$pae" = "yes" ]; then
 		sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
 		sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
+		echo "CONFIG_I2O_EXT_ADAPTEC_DMA64=y" >> $1
 	fi
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
 	%endif
