@@ -536,6 +536,9 @@ cat %{SOURCE12} >> %{defconfig}
 echo "CONFIG_OPEN_TRACER=y" >> %{defconfig}
 %endif
 
+%if %{with bfs}
+echo "CONFIG_SCHED_BFS=y" >> %{defconfig}
+%endif
 }
 
 BuildKernel() {
