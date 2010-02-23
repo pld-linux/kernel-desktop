@@ -214,22 +214,6 @@ diff -Nru linux-2.6.29-orig/fs/proc/Kconfig linux-2.6.29/fs/proc/Kconfig
          help
          Exports the dump image of crashed kernel in ELF format.
  
-diff -Nru linux-2.6.29-orig/fs/proc/kcore.c linux-2.6.29/fs/proc/kcore.c
---- linux-2.6.29-orig/fs/proc/kcore.c	2009-03-24 00:12:14.000000000 +0100
-+++ linux-2.6.29/fs/proc/kcore.c	2009-03-29 23:34:04.452349599 +0200
-@@ -404,10 +404,12 @@
- 
- static int __init proc_kcore_init(void)
- {
-+#if defined(CONFIG_PROC_KCORE) && !defined(CONFIG_GRKERNSEC_PROC_ADD)
- 	proc_root_kcore = proc_create("kcore", S_IRUSR, NULL, &proc_kcore_operations);
- 	if (proc_root_kcore)
- 		proc_root_kcore->size =
- 				(size_t)high_memory - PAGE_OFFSET + PAGE_SIZE;
-+#endif
- 	return 0;
- }
- module_init(proc_kcore_init);
 diff -Nru linux-2.6.29-orig/fs/proc/root.c linux-2.6.29/fs/proc/root.c
 --- linux-2.6.29-orig/fs/proc/root.c	2009-03-24 00:12:14.000000000 +0100
 +++ linux-2.6.29/fs/proc/root.c	2009-03-29 23:34:04.452349599 +0200
@@ -833,10 +817,10 @@ diff -Nru linux-2.6.29-orig/kernel/configs.c linux-2.6.29/kernel/configs.c
 diff -Nru linux-2.6.29-orig/kernel/exit.c linux-2.6.29/kernel/exit.c
 --- linux-2.6.29-orig/kernel/exit.c	2009-03-24 00:12:14.000000000 +0100
 +++ linux-2.6.29/kernel/exit.c	2009-03-29 23:34:04.459223012 +0200
-@@ -48,6 +48,7 @@
- #include <linux/tracehook.h>
+@@ -49,6 +49,7 @@
  #include <linux/init_task.h>
- #include <trace/sched.h>
+ #include <linux/perf_event.h>
+ #include <trace/events/sched.h>
 +#include <linux/grsecurity.h>
  
  #include <asm/uaccess.h>
@@ -1143,10 +1127,10 @@ diff -Nru linux-2.6.29-orig/security/Kconfig linux-2.6.29/security/Kconfig
  static int proc_tid_base_readdir(struct file * filp,
 --- linux-2.6.30/net/socket.c.orig	2009-06-10 05:05:27.000000000 +0200
 +++ linux-2.6.30/net/socket.c	2009-06-25 11:21:18.914153098 +0200
-@@ -86,6 +86,7 @@
- #include <linux/audit.h>
+@@ -87,6 +87,7 @@
  #include <linux/wireless.h>
  #include <linux/nsproxy.h>
+ #include <linux/magic.h>
 +#include <linux/in.h>
  
  #include <asm/uaccess.h>
@@ -1168,3 +1152,21 @@ diff -Nru linux-2.6.29-orig/security/Kconfig linux-2.6.29/security/Kconfig
  	if (err)
  		goto out_fd;
  
+--- linux-2.6.32/fs/proc/kcore.c.orig	2009-12-03 04:51:21.000000000 +0100
++++ linux-2.6.32/fs/proc/kcore.c	2010-02-23 22:07:01.819528896 +0100
+@@ -612,6 +612,7 @@
+ 
+ static int __init proc_kcore_init(void)
+ {
++#if defined(CONFIG_PROC_KCORE) && !defined(CONFIG_GRKERNSEC_PROC_ADD)
+ 	proc_root_kcore = proc_create("kcore", S_IRUSR, NULL,
+ 				      &proc_kcore_operations);
+ 	if (!proc_root_kcore) {
+@@ -627,6 +628,7 @@
+ 	/* Store direct-map area from physical memory map */
+ 	kcore_update_ram();
+ 	hotplug_memory_notifier(kcore_callback, 0);
++#endif
+ 
+ 	return 0;
+ }
