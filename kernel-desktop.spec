@@ -44,9 +44,9 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.32
-%define		_postver		.9
-%define		_rel			1
+%define		_basever		2.6.33
+%define		_postver		%{nil}
+%define		_rel			0.1
 
 %define		_enable_debug_packages			0
 
@@ -74,7 +74,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	260551284ac224c3a43c4adac7df4879
+# Source0-md5:	c3883760b18d50e8d78819c54d579b00
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	7f615dd3b4a3b19fb86e479996a2deb5
@@ -91,8 +91,8 @@ Source13:	kernel-desktop-tuxonice.config
 
 #### Patches ######
 #Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.0.1-for-2.6.29.patch.bz2
-Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.32.patch-20091212-v1.bz2
-# Source100-md5:	c76bcdb35ea79aa3b825ca79f89ca68a
+Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.0.99.48-for-head.patch.bz2
+# Source100-md5:	a7b10e0a2d46efcdef455a5a356d8553
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/stable/unionfs-2.5.2_for_2.6.30.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
@@ -432,7 +432,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # kernel-desktop-bootsplash.patch
 %patch0 -p1
 # unionfs
-%patch1 -p1
+#%patch1 -p1 --upstream?
 # TuxOnIce
 %if %{with tuxonice}
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
@@ -597,18 +597,17 @@ KERNEL_INSTALL_DIR="$KERNEL_BUILD_DIR/build-done/kernel"
 rm -rf $KERNEL_INSTALL_DIR
 BuildConfig
 ln -sf %{defconfig} .config
-install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux
-rm -f include/linux/autoconf.h
-%{__make} %CrossOpts include/linux/autoconf.h
-install include/linux/autoconf.h \
-	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux/autoconf-dist.h
+BuildKernel
+install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/generated
+install include/generated/autoconf.h \
+	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/generated/autoconf-dist.h
+install include/generated/utsrelease.h \
+	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/generated/
 install .config \
 	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-dist
-BuildKernel
 PreInstallKernel
 
-%{__make} %CrossOpts include/linux/utsrelease.h
-cp include/linux/utsrelease.h{,.save}
+cp include/generated/utsrelease.h{,.save}
 cp include/linux/version.h{,.save}
 cp scripts/mkcompile_h{,.save}
 
@@ -644,9 +643,9 @@ cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 %{__make} %CrossOpts mrproper archclean \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
-if [ -e $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/linux/autoconf-dist.h ]; then
-	install $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/linux/autoconf-dist.h \
-		$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
+if [ -e $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/generated/autoconf-dist.h ]; then
+	install $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/generated/autoconf-dist.h \
+		$RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
 	install	$KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/config-dist \
 		$RPM_BUILD_ROOT%{_kernelsrcdir}
 fi
@@ -655,12 +654,9 @@ cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 
 %{__make} %CrossOpts mrproper
-mv -f include/linux/utsrelease.h.save $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/utsrelease.h
-cp include/linux/version.h{.save,}
-cp scripts/mkcompile_h{.save,}
-rm -rf include/linux/version.h.save
-rm -rf scripts/mkcompile_h.save
-install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/autoconf.h
+install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
+install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
+install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated/autoconf.h
 install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
 # collect module-build files and directories
