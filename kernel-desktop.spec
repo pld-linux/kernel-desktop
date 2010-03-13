@@ -599,10 +599,13 @@ BuildConfig
 ln -sf %{defconfig} .config
 BuildKernel
 install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/generated
+install -d $KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux
 install include/generated/autoconf.h \
 	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/generated/autoconf-dist.h
 install include/generated/utsrelease.h \
 	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/generated/
+install include/linux/version.h \
+	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/include/linux/
 install .config \
 	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-dist
 PreInstallKernel
