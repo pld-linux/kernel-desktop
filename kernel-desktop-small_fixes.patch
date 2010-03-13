@@ -1,10 +1,12 @@
---- linux-2.6.31/mm/swapfile.c~ 2009-09-13 09:09:36.506565318 +0200
-+++ linux-2.6.31/mm/swapfile.c  2009-09-14 08:14:30.692422596 +0200
-@@ -518,6 +518,7 @@
-        spin_unlock(&swap_lock);
-        return (swp_entry_t) {0};
- }
-+EXPORT_SYMBOL_GPL(get_swap_page_of_type);
-
- static struct swap_info_struct * swap_info_get(swp_entry_t entry)
- {
+--- linux-2.6.33/scripts/mod/modpost.c~	2010-02-24 19:52:17.000000000 +0100
++++ linux-2.6.33/scripts/mod/modpost.c	2010-03-07 14:26:47.242168558 +0100
+@@ -15,7 +15,8 @@
+ #include <stdio.h>
+ #include <ctype.h>
+ #include "modpost.h"
+-#include "../../include/generated/autoconf.h"
++// PLD architectures don't use CONFIG_SYMBOL_PREFIX
++//#include "../../include/generated/autoconf.h"
+ #include "../../include/linux/license.h"
+ 
+ /* Some toolchains use a `_' prefix for all user symbols. */
