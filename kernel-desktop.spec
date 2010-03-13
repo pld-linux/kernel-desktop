@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.33
 %define		_postver		%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_enable_debug_packages			0
 
@@ -438,7 +438,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 %endif
 # small_fixes.patch - this breaks compilation on mm/swapfile.c - to remove?
-#%patch2 -p1
+%patch2 -p1
 # grsec-minimal
 %if %{with grsec_minimal}
 %patch3 -p1
