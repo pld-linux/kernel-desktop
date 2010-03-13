@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.33
 %define		_postver		%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_enable_debug_packages			0
 
@@ -643,19 +643,16 @@ cd $RPM_BUILD_ROOT%{_kernelsrcdir}
 %{__make} %CrossOpts mrproper archclean \
 	RCS_FIND_IGNORE='-name build-done -prune -o'
 
-if [ -e $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/generated/autoconf-dist.h ]; then
-	install $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/generated/autoconf-dist.h \
-		$RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
-	install	$KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/config-dist \
-		$RPM_BUILD_ROOT%{_kernelsrcdir}
-fi
-
 cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 
 %{__make} %CrossOpts mrproper
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
+install $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/generated/autoconf-dist.h \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
+install	$KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/config-dist \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}
 install %{SOURCE2} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated/autoconf.h
 install %{SOURCE3} $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux/config.h
 
