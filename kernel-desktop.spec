@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.33
 %define		_postver		%{nil}
-%define		_rel			0.4
+%define		_rel			0.5
 
 %define		_enable_debug_packages			0
 
@@ -607,8 +607,6 @@ install .config \
 	$KERNEL_INSTALL_DIR%{_kernelsrcdir}/config-dist
 PreInstallKernel
 
-cp include/generated/utsrelease.h{,.save}
-cp include/linux/version.h{,.save}
 cp scripts/mkcompile_h{,.save}
 
 %install
@@ -649,7 +647,11 @@ cp -Rdp$l $KERNEL_BUILD_DIR/include/linux/* \
 %{__make} %CrossOpts mrproper
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
 install -d $RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
+install $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/linux/version.h \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/linux
 install $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/generated/autoconf-dist.h \
+	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
+install $KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/include/generated/utsrelease.h \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}/include/generated
 install	$KERNEL_BUILD_DIR/build-done/kernel%{_kernelsrcdir}/config-dist \
 	$RPM_BUILD_ROOT%{_kernelsrcdir}
