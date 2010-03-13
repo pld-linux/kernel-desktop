@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.33
 %define		_postver		%{nil}
-%define		_rel			0.3
+%define		_rel			0.4
 
 %define		_enable_debug_packages			0
 
@@ -911,8 +911,11 @@ fi
 %dir %{_kernelsrcdir}/scripts/selinux
 %{_kernelsrcdir}/scripts/selinux/Makefile
 %dir %{_kernelsrcdir}/scripts/selinux/mdp
+%dir %{_kernelsrcdir}/scripts/selinux/genheaders
 %{_kernelsrcdir}/scripts/selinux/mdp/Makefile
 %{_kernelsrcdir}/scripts/selinux/mdp/*.c
+%{_kernelsrcdir}/scripts/selinux/genheaders/Makefile
+%{_kernelsrcdir}/scripts/selinux/genheaders/*.c
 
 %files doc
 %defattr(644,root,root,755)
