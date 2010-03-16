@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.33
 %define		_postver		.1
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_enable_debug_packages			0
 
@@ -93,7 +93,7 @@ Source13:	kernel-desktop-tuxonice.config
 Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.1-for-2.6.33.patch.bz2
 # Source100-md5:	4e53be56402475e482ce4af2181573b8
 Patch0:		kernel-desktop-bootsplash.patch
-# http://download.filesystems.org/unionfs/stable/unionfs-2.5.2_for_2.6.30.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.33.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
 Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
@@ -431,7 +431,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # kernel-desktop-bootsplash.patch
 %patch0 -p1
 # unionfs
-#%patch1 -p1 --upstream?
+%patch1 -p1
 # TuxOnIce
 %if %{with tuxonice}
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
