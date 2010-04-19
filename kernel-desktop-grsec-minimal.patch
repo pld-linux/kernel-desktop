@@ -814,25 +814,6 @@ diff -Nru linux-2.6.29-orig/kernel/configs.c linux-2.6.29/kernel/configs.c
  	if (!entry)
  		return -ENOMEM;
  
-diff -Nru linux-2.6.29-orig/kernel/exit.c linux-2.6.29/kernel/exit.c
---- linux-2.6.29-orig/kernel/exit.c	2009-03-24 00:12:14.000000000 +0100
-+++ linux-2.6.29/kernel/exit.c	2009-03-29 23:34:04.459223012 +0200
-@@ -49,6 +49,7 @@
- #include <linux/init_task.h>
- #include <linux/perf_event.h>
- #include <trace/events/sched.h>
-+#include <linux/grsecurity.h>
- 
- #include <asm/uaccess.h>
- #include <asm/unistd.h>
-@@ -140,6 +141,7 @@
- 	 */
- 	flush_sigqueue(&tsk->pending);
- 
-+	gr_del_task_from_ip_table(tsk);
- 	tsk->signal = NULL;
- 	tsk->sighand = NULL;
- 	spin_unlock(&sighand->siglock);
 diff -Nru linux-2.6.29-orig/kernel/kallsyms.c linux-2.6.29/kernel/kallsyms.c
 --- linux-2.6.29-orig/kernel/kallsyms.c	2009-03-24 00:12:14.000000000 +0100
 +++ linux-2.6.29/kernel/kallsyms.c	2009-03-29 23:34:04.459223012 +0200
@@ -1170,3 +1151,21 @@ diff -Nru linux-2.6.29-orig/security/Kconfig linux-2.6.29/security/Kconfig
  
  	return 0;
  }
+--- linux-2.6.33/kernel/exit.c.orig	2010-02-24 19:52:17.000000000 +0100
++++ linux-2.6.33/kernel/exit.c	2010-04-19 14:48:34.973087384 +0200
+@@ -49,6 +49,7 @@
+ #include <linux/init_task.h>
+ #include <linux/perf_event.h>
+ #include <trace/events/sched.h>
++#include <linux/grsecurity.h>
+ #include <linux/hw_breakpoint.h>
+ 
+ #include <asm/uaccess.h>
+@@ -133,6 +134,7 @@
+ 	 */
+ 	flush_sigqueue(&tsk->pending);
+ 
++	gr_del_task_from_ip_table(tsk);
+ 	tsk->signal = NULL;
+ 	tsk->sighand = NULL;
+ 	spin_unlock(&sighand->siglock);
