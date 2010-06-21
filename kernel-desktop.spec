@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.34
 %define		_postver		%{nil}
-%define		_rel			0.2
+%define		_rel			0.3
 
 %define		_enable_debug_packages			0
 
@@ -90,9 +90,9 @@ Source12:	kernel-desktop-grsec_minimal.config
 Source13:	kernel-desktop-tuxonice.config
 
 #### Patches ######
-#Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.1-for-2.6.34.patch.bz2
-Source100:	tuxonice-3.1-for-2.6.34.patch.bz2
-# Source100-md5:	6e9646a0390c963da5099d8aec2a5b65
+Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.1.1.1-for-2.6.34.patch.bz2
+# Source100-md5:	d1bd3ba8d10ae891395e34bc7dbb8479
+#Source100:	tuxonice-3.1-for-2.6.34.patch.bz2
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.33.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
