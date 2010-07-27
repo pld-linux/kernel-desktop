@@ -478,6 +478,7 @@ TuneUpConfigForIX86 () {
 	%endif
 	%ifarch i586
 	sed -i 's:# CONFIG_M586 is not set:CONFIG_M586=y:' $1
+	sed -i 's:CONFIG_X86_CMOV=y:# CONFIG_X86_CMOV is not set:' $1
 	%endif
 	%ifarch i686
 	sed -i 's:# CONFIG_M686 is not set:CONFIG_M686=y:' $1
