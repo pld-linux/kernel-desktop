@@ -478,7 +478,6 @@ TuneUpConfigForIX86 () {
 	%endif
 	%ifarch i586
 	sed -i 's:# CONFIG_M586 is not set:CONFIG_M586=y:' $1
-	sed -i 's:CONFIG_X86_CMOV=y:# CONFIG_X86_CMOV is not set:' $1
 	%endif
 	%ifarch i686
 	sed -i 's:# CONFIG_M686 is not set:CONFIG_M686=y:' $1
@@ -516,6 +515,10 @@ BuildConfig() {
 %{?debug:sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" %{defconfig}}
 %{?debug:sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" %{defconfig}}
 %{?debug:sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" %{defconfig}}
+	
+%ifarch i586
+%__sed -i 's:CONFIG_X86_CMOV=y:# CONFIG_X86_CMOV is not set:' %{defconfig}
+%endif
 
 %if %{with laptop}
 %__sed -i "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:" %{defconfig}
