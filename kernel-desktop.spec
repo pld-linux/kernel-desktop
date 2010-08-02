@@ -44,9 +44,9 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.34
-%define		_postver		.1
-%define		_rel			3
+%define		_basever		2.6.35
+%define		_postver		%{nil}
+%define		_rel			0.31415
 
 %define		_enable_debug_packages			0
 
@@ -74,7 +74,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	10eebcb0178fb4540e2165bfd7efc7ad
+# Source0-md5:	091abeb4684ce03d1d936851618687b6
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	6606bcddb89228bd4c7a5b82de384aa5
@@ -431,11 +431,11 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 
 # kernel-desktop-bootsplash.patch
 %patch0 -p1
-# unionfs
-%patch1 -p1
+# unionfs - need update
+#%patch1 -p1
 # TuxOnIce
 %if %{with tuxonice}
-%{__bzip2} -dc %{SOURCE100} | patch -p1 -s
+#%{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 %endif
 # small_fixes.patch - this breaks compilation on mm/swapfile.c - to remove?
 %patch2 -p1
