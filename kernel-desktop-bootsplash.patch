@@ -1,22 +1,3 @@
-diff -Nur linux-2.6.27.orig/drivers/char/keyboard.c linux-2.6.27/drivers/char/keyboard.c
---- linux-2.6.27.orig/drivers/char/keyboard.c	2008-10-10 00:13:53.000000000 +0200
-+++ linux-2.6.27/drivers/char/keyboard.c	2009-03-10 03:32:23.487449249 +0100
-@@ -1180,6 +1180,15 @@
- 			if (keycode < BTN_MISC && printk_ratelimit())
- 				printk(KERN_WARNING "keyboard.c: can't emulate rawmode for keycode %d\n", keycode);
- 
-+#ifdef CONFIG_BOOTSPLASH
-+	/* This code has to be redone for some non-x86 platforms */
-+	if (down == 1 && (keycode == 0x3c || keycode == 0x01)) {        /* F2 and ESC on PC keyboard */
-+		extern int splash_verbose(void);
-+		if (splash_verbose())
-+			return; 
-+	}       
-+#endif
-+
- #ifdef CONFIG_MAGIC_SYSRQ	       /* Handle the SysRq Hack */
- 	if (keycode == KEY_SYSRQ && (sysrq_down || (down == 1 && sysrq_alt))) {
- 		if (!sysrq_down) {
 diff -Nur linux-2.6.27.orig/drivers/char/n_tty.c linux-2.6.27/drivers/char/n_tty.c
 --- linux-2.6.27.orig/drivers/char/n_tty.c	2008-10-10 00:13:53.000000000 +0200
 +++ linux-2.6.27/drivers/char/n_tty.c	2009-03-10 03:32:23.487449249 +0100
@@ -2794,3 +2775,20 @@ diff -Nur linux-2.6.27.orig/include/linux/console_struct.h linux-2.6.27/include/
  	/* we need the PCI or similiar aperture base/size not
  	   smem_start/size as smem_start may just be an object
  	   allocated inside the aperture so may not actually overlap */
+--- linux-2.6.35/drivers/char/keyboard.c.orig	2010-08-02 00:11:14.000000000 +0200
++++ linux-2.6.35/drivers/char/keyboard.c	2010-08-02 11:24:48.421352314 +0200
+@@ -1184,6 +1184,14 @@
+ 			if (keycode < BTN_MISC && printk_ratelimit())
+ 				pr_warning("can't emulate rawmode for keycode %d\n",
+ 					   keycode);
++#ifdef CONFIG_BOOTSPLASH
++      /* This code has to be redone for some non-x86 platforms */
++      if (down == 1 && (keycode == 0x3c || keycode == 0x01)) {        /* F2 and ESC on PC keyboard */
++              extern int splash_verbose(void);
++              if (splash_verbose())
++                      return; 
++      }       
++#endif
+ 
+ #ifdef CONFIG_SPARC
+ 	if (keycode == KEY_A && sparc_l1_a_state) {
