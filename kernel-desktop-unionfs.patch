@@ -532,10 +532,10 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 2533fc4..23bc981 100644
+index 317ed38..582ffe5 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -5446,6 +5446,14 @@ F:	Documentation/cdrom/
+@@ -5452,6 +5452,14 @@ F:	Documentation/cdrom/
  F:	drivers/cdrom/cdrom.c
  F:	include/linux/cdrom.h
  
@@ -733,11 +733,11 @@ index 0000000..f3c1ac4
 +	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..1ef873e
+index 0000000..1db51b0
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.4 (for 2.6.33)"
++UNIONFS_VERSION="2.5.4 (for 2.6.34-rc0)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
