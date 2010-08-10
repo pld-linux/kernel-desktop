@@ -36,6 +36,7 @@
 %bcond_with	sreadahead	# uuooaaa, be frickin' fast at boot
 %bcond_with	bfs		# Brain Fuck Scheduler - could be good only for desktops/laptops/eeePC
 %bcond_without	tuxonice	# build without tuxonice support
+%bcond_without	unionfs		# build without unionfs support
 
 %{?debug:%define with_verbose 1}
 
@@ -88,6 +89,7 @@ Source10:	kernel-desktop-x86.config
 Source11:	kernel-desktop-x86_64.config
 Source12:	kernel-desktop-grsec_minimal.config
 Source13:	kernel-desktop-tuxonice.config
+Source14:	kernel-desktop-unionfs.config
 
 #### Patches ######
 #Source100:	http://www.tuxonice.net/downloads/all/tuxonice-3.1.1.1-for-2.6.34.patch.bz2
@@ -413,7 +415,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 
 # kernel-desktop-bootsplash.patch
 %patch0 -p1
-# unionfs - need update
+# unionfs
 %patch1 -p1
 # TuxOnIce
 %if %{with tuxonice}
@@ -515,6 +517,10 @@ cat %{SOURCE13} >> %{defconfig}
 
 %if %{with grsec_minimal}
 cat %{SOURCE12} >> %{defconfig}
+%endif
+
+%if %{with unionfs}
+cat %{SOURCE14} >> %{defconfig}
 %endif
 
 %if %{with sreadahead}
