@@ -414,7 +414,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # kernel-desktop-bootsplash.patch
 %patch0 -p1
 # unionfs - need update
-#%patch1 -p1
+%patch1 -p1
 # TuxOnIce
 %if %{with tuxonice}
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
