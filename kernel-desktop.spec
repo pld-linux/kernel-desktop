@@ -121,6 +121,7 @@ Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
+Obsoletes:	kernel%{_alt_kernel}-drm
 Obsoletes:	kernel%{_alt_kernel}-firmware
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Obsoletes:	kernel-misc-acer_acpi
@@ -251,25 +252,6 @@ vmlinux - dekompressiertes Kernel Bild.
 
 %description vmlinux -l pl.UTF-8
 vmlinux - rozpakowany obraz jądra.
-
-%package drm
-Summary:	DRM kernel modules
-Summary(de.UTF-8):	DRM Kernel Treiber
-Summary(pl.UTF-8):	Sterowniki DRM
-Group:		Base/Kernel
-Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
-Requires:	%{name} = %{epoch}:%{version}-%{release}
-Obsoletes:	kernel-smp-drm
-Autoreqprov:	no
-
-%description drm
-DRM kernel modules.
-
-%description drm -l de.UTF-8
-DRM Kernel Treiber.
-
-%description drm -l pl.UTF-8
-Sterowniki DRM.
 
 %package pcmcia
 Summary:	PCMCIA modules
@@ -724,12 +706,6 @@ fi
 mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux-%{alt_kernel}.old 2> /dev/null > /dev/null
 ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}
 
-%post drm
-%depmod %{kernel_release}
-
-%postun drm
-%depmod %{kernel_release}
-
 %post pcmcia
 %depmod %{kernel_release}
 
@@ -781,7 +757,7 @@ fi
 /lib/modules/%{kernel_release}/kernel/crypto
 /lib/modules/%{kernel_release}/kernel/drivers
 %if %{have_drm}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/gpu/drm
+/lib/modules/%{kernel_release}/kernel/drivers/gpu/drm
 %endif
 /lib/modules/%{kernel_release}/kernel/fs
 
@@ -832,12 +808,6 @@ fi
 %files vmlinux
 %defattr(644,root,root,755)
 /boot/vmlinux-%{kernel_release}
-
-%if %{have_drm}
-%files drm
-%defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/gpu/drm
-%endif
 
 %if %{with pcmcia}
 %files pcmcia
