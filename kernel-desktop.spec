@@ -39,14 +39,13 @@
 
 %{?debug:%define with_verbose 1}
 
-%define		have_drm	1
 %define		have_oss	1
 %define		have_sound	1
 %define		have_isa	1
 
 %define		_basever		2.6.34
-%define		_postver		.3
-%define		_rel			2
+%define		_postver		.4
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -77,7 +76,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
 # Source0-md5:	10eebcb0178fb4540e2165bfd7efc7ad
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	53c4176b48a615b2837ed1a2db2f3c1f
+# Source1-md5:	158f4c022c3fecff98c329b6dc49e3b6
 %endif
 
 Source2:	kernel-desktop-autoconf.h
@@ -756,9 +755,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/arch
 /lib/modules/%{kernel_release}/kernel/crypto
 /lib/modules/%{kernel_release}/kernel/drivers
-%if %{have_drm}
-/lib/modules/%{kernel_release}/kernel/drivers/gpu/drm
-%endif
 /lib/modules/%{kernel_release}/kernel/fs
 
 # this directory will be removed after disabling rcutorture mod. in 2.6.20.
@@ -776,8 +772,6 @@ fi
 %endif
 %dir /lib/modules/%{kernel_release}/misc
 %if %{with pcmcia}
-%dir /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
-/lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/[!p]*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pd6729.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
@@ -812,9 +806,9 @@ fi
 %if %{with pcmcia}
 %files pcmcia
 %defattr(644,root,root,755)
+%dir /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
 /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/*ko*
 /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
