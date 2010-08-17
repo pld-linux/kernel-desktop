@@ -40,7 +40,6 @@
 
 %{?debug:%define with_verbose 1}
 
-%define		have_drm	1
 %define		have_oss	1
 %define		have_sound	1
 %define		have_isa	1
@@ -763,9 +762,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/crypto
 /lib/modules/%{kernel_release}/kernel/drivers
 /lib/modules/%{kernel_release}/kernel/fs
-%if %{have_drm}
-/lib/modules/%{kernel_release}/kernel/drivers/gpu/drm
-%endif
 
 # this directory will be removed after disabling rcutorture mod. in 2.6.20.
 /lib/modules/%{kernel_release}/kernel/kernel
@@ -782,8 +778,6 @@ fi
 %endif
 %dir /lib/modules/%{kernel_release}/misc
 %if %{with pcmcia}
-%dir /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
-/lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/[!p]*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pd6729.ko*
 %exclude /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
@@ -818,9 +812,9 @@ fi
 %if %{with pcmcia}
 %files pcmcia
 %defattr(644,root,root,755)
+%dir /lib/modules/%{kernel_release}/kernel/drivers/pcmcia
 /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/*ko*
 /lib/modules/%{kernel_release}/kernel/drivers/*/pcmcia
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/pcmcia/pcmcia*ko*
 /lib/modules/%{kernel_release}/kernel/drivers/bluetooth/*_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/isdn/hardware/avm/avm_cs.ko*
 /lib/modules/%{kernel_release}/kernel/drivers/telephony/ixj_pcmcia.ko*
