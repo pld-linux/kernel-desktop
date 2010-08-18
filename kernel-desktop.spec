@@ -40,7 +40,6 @@
 
 %{?debug:%define with_verbose 1}
 
-%define		have_drm	1
 %define		have_oss	1
 %define		have_sound	1
 %define		have_isa	1
@@ -123,6 +122,7 @@ Requires:	/sbin/depmod
 Requires:	coreutils
 Requires:	geninitrd >= 2.57
 Requires:	module-init-tools >= 0.9.9
+Obsoletes:	kernel%{_alt_kernel}-drm
 Obsoletes:	kernel%{_alt_kernel}-firmware
 Obsoletes:	kernel%{_alt_kernel}-isdn-mISDN
 Obsoletes:	kernel-misc-acer_acpi
@@ -253,25 +253,6 @@ vmlinux - dekompressiertes Kernel Bild.
 
 %description vmlinux -l pl.UTF-8
 vmlinux - rozpakowany obraz jądra.
-
-%package drm
-Summary:	DRM kernel modules
-Summary(de.UTF-8):	DRM Kernel Treiber
-Summary(pl.UTF-8):	Sterowniki DRM
-Group:		Base/Kernel
-Requires(postun):	%{name} = %{epoch}:%{version}-%{release}
-Requires:	%{name} = %{epoch}:%{version}-%{release}
-Obsoletes:	kernel-smp-drm
-Autoreqprov:	no
-
-%description drm
-DRM kernel modules.
-
-%description drm -l de.UTF-8
-DRM Kernel Treiber.
-
-%description drm -l pl.UTF-8
-Sterowniki DRM.
 
 %package pcmcia
 Summary:	PCMCIA modules
@@ -700,8 +681,6 @@ ln -sf System.map-%{kernel_release} /boot/System.map-%{alt_kernel}
 
 %depmod %{kernel_release}
 
-%posttrans
-# generate initrd after all dependant modules are installed
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2> /dev/null > /dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}
@@ -731,12 +710,6 @@ fi
 %post vmlinux
 mv -f /boot/vmlinux-%{alt_kernel} /boot/vmlinux-%{alt_kernel}.old 2> /dev/null > /dev/null
 ln -sf vmlinux-%{kernel_release} /boot/vmlinux-%{alt_kernel}
-
-%post drm
-%depmod %{kernel_release}
-
-%postun drm
-%depmod %{kernel_release}
 
 %post pcmcia
 %depmod %{kernel_release}
@@ -788,9 +761,6 @@ fi
 /lib/modules/%{kernel_release}/kernel/arch
 /lib/modules/%{kernel_release}/kernel/crypto
 /lib/modules/%{kernel_release}/kernel/drivers
-%if %{have_drm}
-%exclude /lib/modules/%{kernel_release}/kernel/drivers/gpu/drm
-%endif
 /lib/modules/%{kernel_release}/kernel/fs
 
 # this directory will be removed after disabling rcutorture mod. in 2.6.20.
@@ -838,12 +808,6 @@ fi
 %files vmlinux
 %defattr(644,root,root,755)
 /boot/vmlinux-%{kernel_release}
-
-%if %{have_drm}
-%files drm
-%defattr(644,root,root,755)
-/lib/modules/%{kernel_release}/kernel/drivers/gpu/drm
-%endif
 
 %if %{with pcmcia}
 %files pcmcia
