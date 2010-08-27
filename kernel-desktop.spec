@@ -81,6 +81,9 @@ Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 %endif
 %if %{with pae} || %{with laptop}
 NoSource:	0
+%if "%{_postver}" != "%{nil}"
+NoSource:	1
+%endif
 %endif
 
 Source2:	kernel-desktop-autoconf.h
