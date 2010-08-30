@@ -1,4 +1,4 @@
-The Brain Fuck Scheduler v0.323 by Con Kolivas.
+The Brain Fuck Scheduler v0.330 by Con Kolivas.
 
 A single shared runqueue O(n) strict fairness earliest deadline first design.
 
@@ -24,7 +24,7 @@ Includes accurate sub-tick accounting of tasks so userspace reported
 cpu usage may be very different if you have very short lived tasks.
 
 ---
- Documentation/scheduler/sched-BFS.txt     |  356 +
+ Documentation/scheduler/sched-BFS.txt     |  351 +
  Documentation/sysctl/kernel.txt           |   26 
  arch/powerpc/platforms/cell/spufs/sched.c |    5 
  fs/proc/base.c                            |    2 
@@ -38,17 +38,17 @@ cpu usage may be very different if you have very short lived tasks.
  kernel/kthread.c                          |    2 
  kernel/posix-cpu-timers.c                 |   14 
  kernel/sched.c                            |    4 
- kernel/sched_bfs.c                        | 6832 ++++++++++++++++++++++++++++++
+ kernel/sched_bfs.c                        | 6874 ++++++++++++++++++++++++++++++
  kernel/slow-work.c                        |    1 
  kernel/sysctl.c                           |   31 
  lib/Kconfig.debug                         |    2 
  mm/oom_kill.c                             |    2 
- 19 files changed, 7444 insertions(+), 28 deletions(-)
+ 19 files changed, 7481 insertions(+), 28 deletions(-)
 
-Index: linux-2.6.35-ck1/Documentation/sysctl/kernel.txt
+Index: linux-2.6.35-bfs/Documentation/sysctl/kernel.txt
 ===================================================================
---- linux-2.6.35-ck1.orig/Documentation/sysctl/kernel.txt	2010-08-06 19:38:28.838115005 +1000
-+++ linux-2.6.35-ck1/Documentation/sysctl/kernel.txt	2010-08-06 19:38:30.313113290 +1000
+--- linux-2.6.35-bfs.orig/Documentation/sysctl/kernel.txt	2010-02-25 21:51:46.000000000 +1100
++++ linux-2.6.35-bfs/Documentation/sysctl/kernel.txt	2010-08-13 08:39:05.070929446 +1000
 @@ -31,6 +31,7 @@ show up in /proc/sys/kernel:
  - domainname
  - hostname
@@ -103,10 +103,10 @@ Index: linux-2.6.35-ck1/Documentation/sysctl/kernel.txt
  rtsig-max & rtsig-nr:
  
  The file rtsig-max can be used to tune the maximum number
-Index: linux-2.6.35-ck1/include/linux/init_task.h
+Index: linux-2.6.35-bfs/include/linux/init_task.h
 ===================================================================
---- linux-2.6.35-ck1.orig/include/linux/init_task.h	2010-08-06 19:38:28.869114968 +1000
-+++ linux-2.6.35-ck1/include/linux/init_task.h	2010-08-06 19:38:30.313113290 +1000
+--- linux-2.6.35-bfs.orig/include/linux/init_task.h	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/include/linux/init_task.h	2010-08-13 08:39:05.070929446 +1000
 @@ -106,6 +106,69 @@ extern struct cred init_cred;
   *  INIT_TASK is used to set up the first task table, touch at
   * your own risk!. Base=0, limit=0x1fffff (=2MB)
@@ -186,10 +186,10 @@ Index: linux-2.6.35-ck1/include/linux/init_task.h
  
  #define INIT_CPU_TIMERS(cpu_timers)					\
  {									\
-Index: linux-2.6.35-ck1/include/linux/sched.h
+Index: linux-2.6.35-bfs/include/linux/sched.h
 ===================================================================
---- linux-2.6.35-ck1.orig/include/linux/sched.h	2010-08-06 19:38:28.859114980 +1000
-+++ linux-2.6.35-ck1/include/linux/sched.h	2010-08-06 19:38:43.767097655 +1000
+--- linux-2.6.35-bfs.orig/include/linux/sched.h	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/include/linux/sched.h	2010-08-29 09:24:24.689454445 +1000
 @@ -36,8 +36,15 @@
  #define SCHED_FIFO		1
  #define SCHED_RR		2
@@ -234,7 +234,7 @@ Index: linux-2.6.35-ck1/include/linux/sched.h
  	unsigned int rt_priority;
 +#ifdef CONFIG_SCHED_BFS
 +	int time_slice, first_time_slice;
-+	unsigned long deadline;
++	u64 deadline;
 +	struct list_head run_list;
 +	u64 last_ran;
 +	u64 sched_time; /* sched_clock time spent running */
@@ -281,7 +281,7 @@ Index: linux-2.6.35-ck1/include/linux/sched.h
 +
 +static inline void print_scheduler_version(void)
 +{
-+	printk(KERN_INFO"BFS CPU scheduler v0.323 by Con Kolivas.\n");
++	printk(KERN_INFO"BFS CPU scheduler v0.330 by Con Kolivas.\n");
 +}
 +
 +static inline int iso_task(struct task_struct *p)
@@ -366,10 +366,10 @@ Index: linux-2.6.35-ck1/include/linux/sched.h
  extern void sched_dead(struct task_struct *p);
  
  extern void proc_caches_init(void);
-Index: linux-2.6.35-ck1/kernel/sysctl.c
+Index: linux-2.6.35-bfs/kernel/sysctl.c
 ===================================================================
---- linux-2.6.35-ck1.orig/kernel/sysctl.c	2010-08-06 19:38:28.922114906 +1000
-+++ linux-2.6.35-ck1/kernel/sysctl.c	2010-08-06 19:38:30.315113288 +1000
+--- linux-2.6.35-bfs.orig/kernel/sysctl.c	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/kernel/sysctl.c	2010-08-13 08:39:05.071929295 +1000
 @@ -115,7 +115,12 @@ static int zero;
  static int __maybe_unused one = 1;
  static int __maybe_unused two = 2;
@@ -436,11 +436,11 @@ Index: linux-2.6.35-ck1/kernel/sysctl.c
  #if defined(CONFIG_S390) && defined(CONFIG_SMP)
  	{
  		.procname	= "spin_retry",
-Index: linux-2.6.35-ck1/kernel/sched_bfs.c
+Index: linux-2.6.35-bfs/kernel/sched_bfs.c
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.35-ck1/kernel/sched_bfs.c	2010-08-06 19:38:30.320113282 +1000
-@@ -0,0 +1,6832 @@
++++ linux-2.6.35-bfs/kernel/sched_bfs.c	2010-08-29 10:02:43.030955931 +1000
+@@ -0,0 +1,6874 @@
 +/*
 + *  kernel/sched_bfs.c, was sched.c
 + *
@@ -598,6 +598,11 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +#ifdef CONFIG_SMP
 +	unsigned long qnr; /* queued not running */
 +	cpumask_t cpu_idle_map;
++	int idle_cpus;
++#endif
++#if BITS_PER_LONG < 64
++	unsigned long jiffies;
++	u64 jiffies_64;
 +#endif
 +};
 +
@@ -954,6 +959,43 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +#endif /* __ARCH_WANT_UNLOCKED_CTXSW */
 +
 +/*
++ * In order to have a monotonic clock that does not wrap we have a 64 bit
++ * unsigned long that's protected by grq.lock used in place of jiffies on
++ * 32 bit builds.
++ */
++#if BITS_PER_LONG < 64
++static inline void update_gjiffies(void)
++{
++	if (grq.jiffies != jiffies) {
++		grq_lock();
++		grq.jiffies = jiffies;
++		grq.jiffies_64++;
++		grq_unlock();
++	}
++}
++
++#define gjiffies (grq.jiffies_64)
++
++#else /* BITS_PER_LONG < 64 */
++static inline void update_gjiffies(void)
++{
++}
++
++#define gjiffies jiffies
++
++#endif /* BITS_PER_LONG < 64 */
++
++static inline int deadline_before(u64 deadline, u64 time)
++{
++	return (deadline < time);
++}
++
++static inline int deadline_after(u64 deadline, u64 time)
++{
++	return (deadline > time);
++}
++
++/*
 + * A task that is queued but not running will be on the grq run list.
 + * A task that is not running or queued will not be on the grq run list.
 + * A task that is currently running will have ->oncpu set but not on the
@@ -1076,21 +1118,28 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +}
 +
 +/*
-+ * The cpu_idle_map stores a bitmap of all the cpus currently idle to
-+ * allow easy lookup of whether any suitable idle cpus are available.
++ * The cpu_idle_map stores a bitmap of all the CPUs currently idle to
++ * allow easy lookup of whether any suitable idle CPUs are available.
++ * It's cheaper to maintain a binary yes/no if there are any idle CPUs on the
++ * idle_cpus variable than to do a full bitmask check when we are busy.
 + */
 +static inline void set_cpuidle_map(unsigned long cpu)
 +{
 +	cpu_set(cpu, grq.cpu_idle_map);
++	grq.idle_cpus = 1;
 +}
 +
 +static inline void clear_cpuidle_map(unsigned long cpu)
 +{
 +	cpu_clear(cpu, grq.cpu_idle_map);
++	if (cpus_empty(grq.cpu_idle_map))
++		grq.idle_cpus = 0;
 +}
 +
 +static int suitable_idle_cpus(struct task_struct *p)
 +{
++	if (!grq.idle_cpus)
++		return 0;
 +	return (cpus_intersects(p->cpus_allowed, grq.cpu_idle_map));
 +}
 +
@@ -1614,7 +1663,7 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +				  cache_distance(this_rq, rq, p);
 +
 +		if (rq_prio > highest_prio ||
-+		    (time_after(offset_deadline, latest_deadline) ||
++		    (deadline_after(offset_deadline, latest_deadline) ||
 +		    (offset_deadline == latest_deadline && this_rq == rq))) {
 +			latest_deadline = offset_deadline;
 +			highest_prio = rq_prio;
@@ -1623,7 +1672,8 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +	}
 +
 +	if (p->prio > highest_prio || (p->prio == highest_prio &&
-+	    p->policy == SCHED_NORMAL && !time_before(p->deadline, latest_deadline)))
++	    p->policy == SCHED_NORMAL &&
++	    !deadline_before(p->deadline, latest_deadline)))
 +		return;
 +
 +	/* p gets to preempt highest_prio_rq->curr */
@@ -1635,7 +1685,7 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +{
 +	if (p->prio < uprq->rq_prio ||
 +	    (p->prio == uprq->rq_prio && p->policy == SCHED_NORMAL &&
-+	     time_before(p->deadline, uprq->rq_deadline)))
++	     deadline_before(p->deadline, uprq->rq_deadline)))
 +		resched_task(uprq->curr);
 +}
 +#endif /* CONFIG_SMP */
@@ -1843,7 +1893,7 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +	unsigned long flags;
 +	struct rq *rq;
 +
-+	rq = task_grq_lock(p, &flags); ;
++	rq = task_grq_lock(p, &flags);
 +	p->state = TASK_RUNNING;
 +	parent = p->parent;
 +	/* Unnecessary but small chance that the parent changed CPU */
@@ -2681,6 +2731,7 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +	sched_clock_tick();
 +	update_rq_clock(rq);
 +	update_cpu_clock(rq, rq->curr, 1);
++	update_gjiffies();
 +	if (!rq_idle(rq))
 +		task_running_tick(rq);
 +	else
@@ -2746,7 +2797,7 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +#endif
 +
 +/*
-+ * Deadline is "now" in jiffies + (offset by priority). Setting the deadline
++ * Deadline is "now" in gjiffies + (offset by priority). Setting the deadline
 + * is the key to everything. It distributes cpu fairly amongst tasks of the
 + * same nice value, it proportions cpu according to nice level, it means the
 + * task that last woke up the longest ago has the earliest deadline, thus
@@ -2782,7 +2833,7 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +{
 +	reset_first_time_slice(p);
 +	p->time_slice = timeslice();
-+	p->deadline = jiffies + task_deadline_diff(p);
++	p->deadline = gjiffies + task_deadline_diff(p);
 +}
 +
 +static inline void check_deadline(struct task_struct *p)
@@ -2808,22 +2859,16 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 + * earliest deadline.
 + * Finally if no SCHED_NORMAL tasks are found, SCHED_IDLEPRIO tasks are
 + * selected by the earliest deadline.
-+ * Once deadlines are expired (jiffies has passed it) tasks are chosen in FIFO
-+ * order. Note that very few tasks will be FIFO for very long because they
-+ * only end up that way if they sleep for long or if if there are enough fully
-+ * cpu bound tasks to push the load to ~8 higher than the number of CPUs for
-+ * nice 0.
 + */
 +static inline struct
 +task_struct *earliest_deadline_task(struct rq *rq, struct task_struct *idle)
 +{
 +	unsigned long dl, earliest_deadline = 0; /* Initialise to silence compiler */
-+	struct task_struct *p, *edt;
++	struct task_struct *p, *edt = idle;
 +	unsigned int cpu = cpu_of(rq);
 +	struct list_head *queue;
 +	int idx = 0;
 +
-+	edt = idle;
 +retry:
 +	idx = find_next_bit(grq.prio_bitmap, PRIO_LIMIT, idx);
 +	if (idx >= PRIO_LIMIT)
@@ -2842,21 +2887,12 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +		dl = p->deadline + cache_distance(task_rq(p), rq, p);
 +
 +		/*
-+		 * Look for tasks with old deadlines and pick them in FIFO
-+		 * order, taking the first one found.
-+		 */
-+		if (time_is_before_jiffies(dl)) {
-+			edt = p;
-+			goto out_take;
-+		}
-+
-+		/*
 +		 * No rt tasks. Find the earliest deadline task. Now we're in
 +		 * O(n) territory. This is what we silenced the compiler for:
 +		 * edt will always start as idle.
 +		 */
 +		if (edt == idle ||
-+		    time_before(dl, earliest_deadline)) {
++		    deadline_before(dl, earliest_deadline)) {
 +			earliest_deadline = dl;
 +			edt = p;
 +		}
@@ -3731,7 +3767,8 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +	if (prio <= 0)
 +		goto out;
 +
-+	delta = (p->deadline - jiffies) * 40 / longest_deadline_diff();
++	delta = p->deadline - gjiffies;
++	delta = delta * 40 / longest_deadline_diff();
 +	if (delta > 0 && delta <= 80)
 +		prio += delta;
 +	if (idleprio_task(p))
@@ -4971,7 +5008,8 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +
 +}
 +
-+/* Schedules idle task to be the next runnable task on current CPU.
++/*
++ * Schedules idle task to be the next runnable task on current CPU.
 + * It does so by boosting its priority to highest possible.
 + * Used by CPU offline code.
 + */
@@ -6941,8 +6979,12 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +		prio_ratios[i] = prio_ratios[i - 1] * 11 / 10;
 +
 +	raw_spin_lock_init(&grq.lock);
++	grq.nr_running = grq.nr_uninterruptible = grq.nr_switches = 0;
++	grq.iso_ticks = grq.iso_refractory = 0;
 +#ifdef CONFIG_SMP
 +	init_defrootdomain();
++	grq.qnr = grq.idle_cpus = 0;
++	cpumask_clear(&grq.cpu_idle_map);
 +#else
 +	uprq = &per_cpu(runqueues, 0);
 +#endif
@@ -7273,10 +7315,10 @@ Index: linux-2.6.35-ck1/kernel/sched_bfs.c
 +	return smt_gain;
 +}
 +#endif
-Index: linux-2.6.35-ck1/kernel/posix-cpu-timers.c
+Index: linux-2.6.35-bfs/kernel/posix-cpu-timers.c
 ===================================================================
---- linux-2.6.35-ck1.orig/kernel/posix-cpu-timers.c	2010-08-06 19:38:28.929114898 +1000
-+++ linux-2.6.35-ck1/kernel/posix-cpu-timers.c	2010-08-06 19:38:30.320113283 +1000
+--- linux-2.6.35-bfs.orig/kernel/posix-cpu-timers.c	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/kernel/posix-cpu-timers.c	2010-08-13 08:39:05.075928688 +1000
 @@ -249,7 +249,7 @@ void thread_group_cputime(struct task_st
  	do {
  		times->utime = cputime_add(times->utime, t->utime);
@@ -7340,10 +7382,10 @@ Index: linux-2.6.35-ck1/kernel/posix-cpu-timers.c
  		};
  
  		if (task_cputime_expired(&task_sample, &tsk->cputime_expires))
-Index: linux-2.6.35-ck1/kernel/exit.c
+Index: linux-2.6.35-bfs/kernel/exit.c
 ===================================================================
---- linux-2.6.35-ck1.orig/kernel/exit.c	2010-08-06 19:38:28.957114867 +1000
-+++ linux-2.6.35-ck1/kernel/exit.c	2010-08-06 19:38:30.320113283 +1000
+--- linux-2.6.35-bfs.orig/kernel/exit.c	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/kernel/exit.c	2010-08-13 08:39:05.076928538 +1000
 @@ -123,7 +123,7 @@ static void __exit_signal(struct task_st
  		sig->inblock += task_io_get_inblock(tsk);
  		sig->oublock += task_io_get_oublock(tsk);
@@ -7353,10 +7395,10 @@ Index: linux-2.6.35-ck1/kernel/exit.c
  	}
  
  	sig->nr_threads--;
-Index: linux-2.6.35-ck1/mm/oom_kill.c
+Index: linux-2.6.35-bfs/mm/oom_kill.c
 ===================================================================
---- linux-2.6.35-ck1.orig/mm/oom_kill.c	2010-08-06 19:38:28.914114917 +1000
-+++ linux-2.6.35-ck1/mm/oom_kill.c	2010-08-06 19:38:30.320113283 +1000
+--- linux-2.6.35-bfs.orig/mm/oom_kill.c	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/mm/oom_kill.c	2010-08-13 08:39:05.076928538 +1000
 @@ -411,7 +411,7 @@ static void __oom_kill_task(struct task_
  	 * all the memory it needs. That way it should be able to
  	 * exit() and clear out its resources quickly...
@@ -7366,10 +7408,10 @@ Index: linux-2.6.35-ck1/mm/oom_kill.c
  	set_tsk_thread_flag(p, TIF_MEMDIE);
  
  	force_sig(SIGKILL, p);
-Index: linux-2.6.35-ck1/init/Kconfig
+Index: linux-2.6.35-bfs/init/Kconfig
 ===================================================================
---- linux-2.6.35-ck1.orig/init/Kconfig	2010-08-06 19:38:28.885114949 +1000
-+++ linux-2.6.35-ck1/init/Kconfig	2010-08-06 19:38:30.322113281 +1000
+--- linux-2.6.35-bfs.orig/init/Kconfig	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/init/Kconfig	2010-08-13 08:39:05.076928538 +1000
 @@ -23,6 +23,19 @@ config CONSTRUCTORS
  
  menu "General setup"
@@ -7408,10 +7450,10 @@ Index: linux-2.6.35-ck1/init/Kconfig
  	default n
  	help
  	  This feature lets CPU scheduler recognize task groups and control CPU
-Index: linux-2.6.35-ck1/kernel/delayacct.c
+Index: linux-2.6.35-bfs/kernel/delayacct.c
 ===================================================================
---- linux-2.6.35-ck1.orig/kernel/delayacct.c	2010-08-06 19:38:28.943114882 +1000
-+++ linux-2.6.35-ck1/kernel/delayacct.c	2010-08-06 19:38:30.322113281 +1000
+--- linux-2.6.35-bfs.orig/kernel/delayacct.c	2009-12-03 21:40:09.000000000 +1100
++++ linux-2.6.35-bfs/kernel/delayacct.c	2010-08-13 08:39:05.076928538 +1000
 @@ -128,7 +128,7 @@ int __delayacct_add_tsk(struct taskstats
  	 */
  	t1 = tsk->sched_info.pcount;
@@ -7421,10 +7463,10 @@ Index: linux-2.6.35-ck1/kernel/delayacct.c
  
  	d->cpu_count += t1;
  
-Index: linux-2.6.35-ck1/fs/proc/base.c
+Index: linux-2.6.35-bfs/fs/proc/base.c
 ===================================================================
---- linux-2.6.35-ck1.orig/fs/proc/base.c	2010-08-06 19:38:28.878114958 +1000
-+++ linux-2.6.35-ck1/fs/proc/base.c	2010-08-06 19:38:30.323113279 +1000
+--- linux-2.6.35-bfs.orig/fs/proc/base.c	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/fs/proc/base.c	2010-08-13 08:39:05.077928388 +1000
 @@ -355,7 +355,7 @@ static int proc_pid_stack(struct seq_fil
  static int proc_pid_schedstat(struct task_struct *task, char *buffer)
  {
@@ -7434,10 +7476,10 @@ Index: linux-2.6.35-ck1/fs/proc/base.c
  			(unsigned long long)task->sched_info.run_delay,
  			task->sched_info.pcount);
  }
-Index: linux-2.6.35-ck1/init/main.c
+Index: linux-2.6.35-bfs/init/main.c
 ===================================================================
---- linux-2.6.35-ck1.orig/init/main.c	2010-08-06 19:38:28.893114940 +1000
-+++ linux-2.6.35-ck1/init/main.c	2010-08-06 19:38:30.323113279 +1000
+--- linux-2.6.35-bfs.orig/init/main.c	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/init/main.c	2010-08-13 08:39:05.077928388 +1000
 @@ -834,6 +834,7 @@ static noinline int init_post(void)
  	system_state = SYSTEM_RUNNING;
  	numa_default_policy();
@@ -7446,11 +7488,11 @@ Index: linux-2.6.35-ck1/init/main.c
  
  	current->signal->flags |= SIGNAL_UNKILLABLE;
  
-Index: linux-2.6.35-ck1/Documentation/scheduler/sched-BFS.txt
+Index: linux-2.6.35-bfs/Documentation/scheduler/sched-BFS.txt
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.35-ck1/Documentation/scheduler/sched-BFS.txt	2010-08-06 19:38:30.323113279 +1000
-@@ -0,0 +1,356 @@
++++ linux-2.6.35-bfs/Documentation/scheduler/sched-BFS.txt	2010-08-29 09:24:24.691454548 +1000
+@@ -0,0 +1,351 @@
 +BFS - The Brain Fuck Scheduler by Con Kolivas.
 +
 +Goals.
@@ -7571,12 +7613,7 @@ Index: linux-2.6.35-ck1/Documentation/scheduler/sched-BFS.txt
 +earlier deadline is the key to which task is next chosen for the first and
 +second cases. Once a task is descheduled, it is put back on the queue, and an
 +O(n) lookup of all queued-but-not-running tasks is done to determine which has
-+the earliest deadline and that task is chosen to receive CPU next. The one
-+caveat to this is that if a deadline has already passed (jiffies is greater
-+than the deadline), the tasks are chosen in FIFO (first in first out) order as
-+the deadlines are old and their absolute value becomes decreasingly relevant
-+apart from being a flag that they have been asleep and deserve CPU time ahead
-+of all later deadlines.
++the earliest deadline and that task is chosen to receive CPU next.
 +
 +The CPU proportion of different nice tasks works out to be approximately the
 +
@@ -7806,11 +7843,11 @@ Index: linux-2.6.35-ck1/Documentation/scheduler/sched-BFS.txt
 +"cpu usage".
 +
 +
-+Con Kolivas <kernel@kolivas.org> Thu Dec 3 2009
-Index: linux-2.6.35-ck1/lib/Kconfig.debug
++Con Kolivas <kernel@kolivas.org> Fri Aug 27 2010
+Index: linux-2.6.35-bfs/lib/Kconfig.debug
 ===================================================================
---- linux-2.6.35-ck1.orig/lib/Kconfig.debug	2010-08-06 19:38:28.831115012 +1000
-+++ linux-2.6.35-ck1/lib/Kconfig.debug	2010-08-06 19:38:30.324113277 +1000
+--- linux-2.6.35-bfs.orig/lib/Kconfig.debug	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/lib/Kconfig.debug	2010-08-13 08:39:05.078928237 +1000
 @@ -760,7 +760,7 @@ config BOOT_PRINTK_DELAY
  
  config RCU_TORTURE_TEST
@@ -7820,10 +7857,10 @@ Index: linux-2.6.35-ck1/lib/Kconfig.debug
  	default n
  	help
  	  This option provides a kernel module that runs torture tests
-Index: linux-2.6.35-ck1/arch/powerpc/platforms/cell/spufs/sched.c
+Index: linux-2.6.35-bfs/arch/powerpc/platforms/cell/spufs/sched.c
 ===================================================================
---- linux-2.6.35-ck1.orig/arch/powerpc/platforms/cell/spufs/sched.c	2010-08-06 19:38:28.906114925 +1000
-+++ linux-2.6.35-ck1/arch/powerpc/platforms/cell/spufs/sched.c	2010-08-06 19:38:30.324113277 +1000
+--- linux-2.6.35-bfs.orig/arch/powerpc/platforms/cell/spufs/sched.c	2010-05-17 18:51:19.000000000 +1000
++++ linux-2.6.35-bfs/arch/powerpc/platforms/cell/spufs/sched.c	2010-08-13 08:39:05.078928237 +1000
 @@ -64,11 +64,6 @@ static struct timer_list spusched_timer;
  static struct timer_list spuloadavg_timer;
  
@@ -7836,10 +7873,10 @@ Index: linux-2.6.35-ck1/arch/powerpc/platforms/cell/spufs/sched.c
   * Frequency of the spu scheduler tick.  By default we do one SPU scheduler
   * tick for every 10 CPU scheduler ticks.
   */
-Index: linux-2.6.35-ck1/kernel/sched.c
+Index: linux-2.6.35-bfs/kernel/sched.c
 ===================================================================
---- linux-2.6.35-ck1.orig/kernel/sched.c	2010-08-06 19:38:28.950114874 +1000
-+++ linux-2.6.35-ck1/kernel/sched.c	2010-08-06 19:38:30.326113275 +1000
+--- linux-2.6.35-bfs.orig/kernel/sched.c	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.35-bfs/kernel/sched.c	2010-08-13 08:39:05.080927935 +1000
 @@ -1,3 +1,6 @@
 +#ifdef CONFIG_SCHED_BFS
 +#include "sched_bfs.c"
@@ -7853,10 +7890,10 @@ Index: linux-2.6.35-ck1/kernel/sched.c
  #endif /* #else #ifndef CONFIG_SMP */
 +#endif /* CONFIG_SCHED_BFS */
 \ No newline at end of file
-Index: linux-2.6.35-ck1/include/linux/ioprio.h
+Index: linux-2.6.35-bfs/include/linux/ioprio.h
 ===================================================================
---- linux-2.6.35-ck1.orig/include/linux/ioprio.h	2010-08-06 19:38:28.852114989 +1000
-+++ linux-2.6.35-ck1/include/linux/ioprio.h	2010-08-06 19:38:30.326113276 +1000
+--- linux-2.6.35-bfs.orig/include/linux/ioprio.h	2009-06-10 13:05:27.000000000 +1000
++++ linux-2.6.35-bfs/include/linux/ioprio.h	2010-08-13 08:39:05.080927935 +1000
 @@ -64,6 +64,8 @@ static inline int task_ioprio_class(stru
  
  static inline int task_nice_ioprio(struct task_struct *task)
@@ -7866,10 +7903,10 @@ Index: linux-2.6.35-ck1/include/linux/ioprio.h
  	return (task_nice(task) + 20) / 5;
  }
  
-Index: linux-2.6.35-ck1/kernel/kthread.c
+Index: linux-2.6.35-bfs/kernel/kthread.c
 ===================================================================
---- linux-2.6.35-ck1.orig/kernel/kthread.c	2010-08-06 19:38:28.965114857 +1000
-+++ linux-2.6.35-ck1/kernel/kthread.c	2010-08-06 19:38:30.326113276 +1000
+--- linux-2.6.35-bfs.orig/kernel/kthread.c	2010-05-17 18:51:25.000000000 +1000
++++ linux-2.6.35-bfs/kernel/kthread.c	2010-08-13 08:39:05.080927935 +1000
 @@ -167,7 +167,9 @@ void kthread_bind(struct task_struct *p,
  	}
  
@@ -7880,10 +7917,10 @@ Index: linux-2.6.35-ck1/kernel/kthread.c
  	p->flags |= PF_THREAD_BOUND;
  }
  EXPORT_SYMBOL(kthread_bind);
-Index: linux-2.6.35-ck1/kernel/slow-work.c
+Index: linux-2.6.35-bfs/kernel/slow-work.c
 ===================================================================
---- linux-2.6.35-ck1.orig/kernel/slow-work.c	2010-08-06 19:38:28.936114890 +1000
-+++ linux-2.6.35-ck1/kernel/slow-work.c	2010-08-06 19:38:30.326113276 +1000
+--- linux-2.6.35-bfs.orig/kernel/slow-work.c	2010-05-17 18:51:25.000000000 +1000
++++ linux-2.6.35-bfs/kernel/slow-work.c	2010-08-13 08:39:05.081927782 +1000
 @@ -716,7 +716,6 @@ static int slow_work_thread(void *_data)
  	DEFINE_WAIT(wait);
  
