@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.35
 %define		_postver		.4
-%define		_rel			2
+%define		_rel			3
 
 %define		_enable_debug_packages			0
 
@@ -681,9 +681,18 @@ ln -sf System.map-%{kernel_release} /boot/System.map-%{alt_kernel}
 
 %depmod %{kernel_release}
 
+%posttrans
+# generate initrd after all dependant modules are installed
 /sbin/geninitrd -f --initrdfs=rom %{initrd_dir}/initrd-%{kernel_release}.gz %{kernel_release}
 mv -f %{initrd_dir}/initrd-%{alt_kernel} %{initrd_dir}/initrd-%{alt_kernel}.old 2> /dev/null > /dev/null
 ln -sf initrd-%{kernel_release}.gz %{initrd_dir}/initrd-%{alt_kernel}
+
+# update boot loaders when old package files are gone from filesystem
+if [ -x /sbin/update-grub -a -f /etc/sysconfig/grub ]; then
+	if [ "$(. /etc/sysconfig/grub; echo ${UPDATE_GRUB:-no})" = "yes" ]; then
+		/sbin/update-grub >/dev/null
+	fi
+fi
 
 if [ -x /sbin/new-kernel-pkg ]; then
 	if [ -f /etc/pld-release ]; then
