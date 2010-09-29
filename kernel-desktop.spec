@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.35
 %define		_postver		.7
-%define		_rel			1
+%define		_rel			2
 
 %define		_enable_debug_packages			0
 
@@ -709,11 +709,16 @@ elif [ -x /sbin/rc-boot ]; then
 fi
 
 # kde4-kernelupdatenotifier
+UID=$(id -u)
 if [ -x /usr/bin/kernelupdatenotifier ]; then
-	# TODO: Send to all kde4 sessions
-	for user in $(ps -o user= -C kded4 | sort -u); do
-		su -s /bin/sh -l $user -c "/usr/bin/kernelupdatenotifier %{name}-%{version}-%{release}" &
-	done
+	if [ $UID -eq 0 ]; then
+		# TODO: Send to all kde4 sessions
+		for user in $(ps -o user= -C kded4 | sort -u); do
+			su -s /bin/sh -l $user -c "/usr/bin/kernelupdatenotifier %{name}-%{version}-%{release}" &
+		done
+	else
+		/usr/bin/kernelupdatenotifier %{name}-%{version}-%{release} &
+	fi
 fi
 
 %post vmlinux
