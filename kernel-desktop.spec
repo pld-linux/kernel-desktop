@@ -44,9 +44,9 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.35
-%define		_postver		.7
-%define		_rel			2
+%define		_basever		2.6.36
+%define		_postver		%{nil}
+%define		_rel			0.271
 
 %define		_enable_debug_packages			0
 
@@ -74,7 +74,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	091abeb4684ce03d1d936851618687b6
+# Source0-md5:	61f3739a73afb6914cb007f37fb09b62
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	6a00ec267b0100f20a3fa900b97a5b7f
