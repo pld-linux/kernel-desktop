@@ -1,28 +1,3 @@
-The Brain Fuck Scheduler v0.350 by Con Kolivas.
-
-A single shared runqueue O(n) strict fairness earliest deadline first design.
-
-Ultra low latency and excellent desktop performance for 1 to many CPUs.
-Not recommended for 4096 cpus.
-
-Scalability is optimal when your workload is equal to the number of CPUs on
-bfs. ie you should ONLY do make -j4 on quad core, -j2 on dual core and so on.
-
-Features SCHED_IDLEPRIO and SCHED_ISO scheduling policies as well.
-You do NOT need to use these policies for good performance, they are purely
-optional for even better performance in extreme conditions.
-
-To run something idleprio, use schedtool like so:
-
-schedtool -D -e make -j4
-
-To run something isoprio, use schedtool like so:
-
-schedtool -I -e amarok
-
-Includes accurate sub-tick accounting of tasks so userspace reported
-cpu usage may be very different if you have very short lived tasks.
-
 ---
  Documentation/scheduler/sched-BFS.txt     |  351 +
  Documentation/sysctl/kernel.txt           |   26 
@@ -30,7 +5,7 @@ cpu usage may be very different if you have very short lived tasks.
  fs/proc/base.c                            |    2 
  include/linux/init_task.h                 |   65 
  include/linux/ioprio.h                    |    2 
- include/linux/sched.h                     |  106 
+ include/linux/sched.h                     |   89 
  init/Kconfig                              |   17 
  init/main.c                               |    1 
  kernel/delayacct.c                        |    2 
@@ -38,17 +13,387 @@ cpu usage may be very different if you have very short lived tasks.
  kernel/kthread.c                          |    2 
  kernel/posix-cpu-timers.c                 |   14 
  kernel/sched.c                            |    4 
- kernel/sched_bfs.c                        | 6984 ++++++++++++++++++++++++++++++
- kernel/slow-work.c                        |    1 
+ kernel/sched_bfs.c                        | 6933 ++++++++++++++++++++++++++++++
  kernel/sysctl.c                           |   31 
  lib/Kconfig.debug                         |    2 
- mm/oom_kill.c                             |    2 
- 19 files changed, 7591 insertions(+), 28 deletions(-)
+ 17 files changed, 7522 insertions(+), 26 deletions(-)
 
-Index: linux-2.6.35.5-ck1/Documentation/sysctl/kernel.txt
+Index: linux-2.6.36-ck1/arch/powerpc/platforms/cell/spufs/sched.c
 ===================================================================
---- linux-2.6.35.5-ck1.orig/Documentation/sysctl/kernel.txt	2010-02-25 21:51:46.000000000 +1100
-+++ linux-2.6.35.5-ck1/Documentation/sysctl/kernel.txt	2010-09-25 01:17:57.872918484 +1000
+--- linux-2.6.36-ck1.orig/arch/powerpc/platforms/cell/spufs/sched.c	2010-05-17 18:51:19.000000000 +1000
++++ linux-2.6.36-ck1/arch/powerpc/platforms/cell/spufs/sched.c	2010-10-21 10:28:34.044580421 +1100
+@@ -64,11 +64,6 @@ static struct timer_list spusched_timer;
+ static struct timer_list spuloadavg_timer;
+ 
+ /*
+- * Priority of a normal, non-rt, non-niced'd process (aka nice level 0).
+- */
+-#define NORMAL_PRIO		120
+-
+-/*
+  * Frequency of the spu scheduler tick.  By default we do one SPU scheduler
+  * tick for every 10 CPU scheduler ticks.
+  */
+Index: linux-2.6.36-ck1/Documentation/scheduler/sched-BFS.txt
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.36-ck1/Documentation/scheduler/sched-BFS.txt	2010-10-21 10:28:34.045580378 +1100
+@@ -0,0 +1,351 @@
++BFS - The Brain Fuck Scheduler by Con Kolivas.
++
++Goals.
++
++The goal of the Brain Fuck Scheduler, referred to as BFS from here on, is to
++completely do away with the complex designs of the past for the cpu process
++scheduler and instead implement one that is very simple in basic design.
++The main focus of BFS is to achieve excellent desktop interactivity and
++responsiveness without heuristics and tuning knobs that are difficult to
++understand, impossible to model and predict the effect of, and when tuned to
++one workload cause massive detriment to another.
++
++
++Design summary.
++
++BFS is best described as a single runqueue, O(n) lookup, earliest effective
++virtual deadline first design, loosely based on EEVDF (earliest eligible virtual
++deadline first) and my previous Staircase Deadline scheduler. Each component
++shall be described in order to understand the significance of, and reasoning for
++it. The codebase when the first stable version was released was approximately
++9000 lines less code than the existing mainline linux kernel scheduler (in
++2.6.31). This does not even take into account the removal of documentation and
++the cgroups code that is not used.
++
++Design reasoning.
++
++The single runqueue refers to the queued but not running processes for the
++entire system, regardless of the number of CPUs. The reason for going back to
++a single runqueue design is that once multiple runqueues are introduced,
++per-CPU or otherwise, there will be complex interactions as each runqueue will
++be responsible for the scheduling latency and fairness of the tasks only on its
++own runqueue, and to achieve fairness and low latency across multiple CPUs, any
++advantage in throughput of having CPU local tasks causes other disadvantages.
++This is due to requiring a very complex balancing system to at best achieve some
++semblance of fairness across CPUs and can only maintain relatively low latency
++for tasks bound to the same CPUs, not across them. To increase said fairness
++and latency across CPUs, the advantage of local runqueue locking, which makes
++for better scalability, is lost due to having to grab multiple locks.
++
++A significant feature of BFS is that all accounting is done purely based on CPU
++used and nowhere is sleep time used in any way to determine entitlement or
++interactivity. Interactivity "estimators" that use some kind of sleep/run
++algorithm are doomed to fail to detect all interactive tasks, and to falsely tag
++tasks that aren't interactive as being so. The reason for this is that it is
++close to impossible to determine that when a task is sleeping, whether it is
++doing it voluntarily, as in a userspace application waiting for input in the
++form of a mouse click or otherwise, or involuntarily, because it is waiting for
++another thread, process, I/O, kernel activity or whatever. Thus, such an
++estimator will introduce corner cases, and more heuristics will be required to
++cope with those corner cases, introducing more corner cases and failed
++interactivity detection and so on. Interactivity in BFS is built into the design
++by virtue of the fact that tasks that are waking up have not used up their quota
++of CPU time, and have earlier effective deadlines, thereby making it very likely
++they will preempt any CPU bound task of equivalent nice level. See below for
++more information on the virtual deadline mechanism. Even if they do not preempt
++a running task, because the rr interval is guaranteed to have a bound upper
++limit on how long a task will wait for, it will be scheduled within a timeframe
++that will not cause visible interface jitter.
++
++
++Design details.
++
++Task insertion.
++
++BFS inserts tasks into each relevant queue as an O(1) insertion into a double
++linked list. On insertion, *every* running queue is checked to see if the newly
++queued task can run on any idle queue, or preempt the lowest running task on the
++system. This is how the cross-CPU scheduling of BFS achieves significantly lower
++latency per extra CPU the system has. In this case the lookup is, in the worst
++case scenario, O(n) where n is the number of CPUs on the system.
++
++Data protection.
++
++BFS has one single lock protecting the process local data of every task in the
++global queue. Thus every insertion, removal and modification of task data in the
++global runqueue needs to grab the global lock. However, once a task is taken by
++a CPU, the CPU has its own local data copy of the running process' accounting
++information which only that CPU accesses and modifies (such as during a
++timer tick) thus allowing the accounting data to be updated lockless. Once a
++CPU has taken a task to run, it removes it from the global queue. Thus the
++global queue only ever has, at most,
++
++	(number of tasks requesting cpu time) - (number of logical CPUs) + 1
++
++tasks in the global queue. This value is relevant for the time taken to look up
++tasks during scheduling. This will increase if many tasks with CPU affinity set
++in their policy to limit which CPUs they're allowed to run on if they outnumber
++the number of CPUs. The +1 is because when rescheduling a task, the CPU's
++currently running task is put back on the queue. Lookup will be described after
++the virtual deadline mechanism is explained.
++
++Virtual deadline.
++
++The key to achieving low latency, scheduling fairness, and "nice level"
++distribution in BFS is entirely in the virtual deadline mechanism. The one
++tunable in BFS is the rr_interval, or "round robin interval". This is the
++maximum time two SCHED_OTHER (or SCHED_NORMAL, the common scheduling policy)
++tasks of the same nice level will be running for, or looking at it the other
++way around, the longest duration two tasks of the same nice level will be
++delayed for. When a task requests cpu time, it is given a quota (time_slice)
++equal to the rr_interval and a virtual deadline. The virtual deadline is
++offset from the current time in jiffies by this equation:
++
++	jiffies + (prio_ratio * rr_interval)
++
++The prio_ratio is determined as a ratio compared to the baseline of nice -20
++and increases by 10% per nice level. The deadline is a virtual one only in that
++no guarantee is placed that a task will actually be scheduled by this time, but
++it is used to compare which task should go next. There are three components to
++how a task is next chosen. First is time_slice expiration. If a task runs out
++of its time_slice, it is descheduled, the time_slice is refilled, and the
++deadline reset to that formula above. Second is sleep, where a task no longer
++is requesting CPU for whatever reason. The time_slice and deadline are _not_
++adjusted in this case and are just carried over for when the task is next
++scheduled. Third is preemption, and that is when a newly waking task is deemed
++higher priority than a currently running task on any cpu by virtue of the fact
++that it has an earlier virtual deadline than the currently running task. The
++earlier deadline is the key to which task is next chosen for the first and
++second cases. Once a task is descheduled, it is put back on the queue, and an
++O(n) lookup of all queued-but-not-running tasks is done to determine which has
++the earliest deadline and that task is chosen to receive CPU next.
++
++The CPU proportion of different nice tasks works out to be approximately the
++
++	(prio_ratio difference)^2
++
++The reason it is squared is that a task's deadline does not change while it is
++running unless it runs out of time_slice. Thus, even if the time actually
++passes the deadline of another task that is queued, it will not get CPU time
++unless the current running task deschedules, and the time "base" (jiffies) is
++constantly moving.
++
++Task lookup.
++
++BFS has 103 priority queues. 100 of these are dedicated to the static priority
++of realtime tasks, and the remaining 3 are, in order of best to worst priority,
++SCHED_ISO (isochronous), SCHED_NORMAL, and SCHED_IDLEPRIO (idle priority
++scheduling). When a task of these priorities is queued, a bitmap of running
++priorities is set showing which of these priorities has tasks waiting for CPU
++time. When a CPU is made to reschedule, the lookup for the next task to get
++CPU time is performed in the following way:
++
++First the bitmap is checked to see what static priority tasks are queued. If
++any realtime priorities are found, the corresponding queue is checked and the
++first task listed there is taken (provided CPU affinity is suitable) and lookup
++is complete. If the priority corresponds to a SCHED_ISO task, they are also
++taken in FIFO order (as they behave like SCHED_RR). If the priority corresponds
++to either SCHED_NORMAL or SCHED_IDLEPRIO, then the lookup becomes O(n). At this
++stage, every task in the runlist that corresponds to that priority is checked
++to see which has the earliest set deadline, and (provided it has suitable CPU
++affinity) it is taken off the runqueue and given the CPU. If a task has an
++expired deadline, it is taken and the rest of the lookup aborted (as they are
++chosen in FIFO order).
++
++Thus, the lookup is O(n) in the worst case only, where n is as described
++earlier, as tasks may be chosen before the whole task list is looked over.
++
++
++Scalability.
++
++The major limitations of BFS will be that of scalability, as the separate
++runqueue designs will have less lock contention as the number of CPUs rises.
++However they do not scale linearly even with separate runqueues as multiple
++runqueues will need to be locked concurrently on such designs to be able to
++achieve fair CPU balancing, to try and achieve some sort of nice-level fairness
++across CPUs, and to achieve low enough latency for tasks on a busy CPU when
++other CPUs would be more suited. BFS has the advantage that it requires no
++balancing algorithm whatsoever, as balancing occurs by proxy simply because
++all CPUs draw off the global runqueue, in priority and deadline order. Despite
++the fact that scalability is _not_ the prime concern of BFS, it both shows very
++good scalability to smaller numbers of CPUs and is likely a more scalable design
++at these numbers of CPUs.
++
++It also has some very low overhead scalability features built into the design
++when it has been deemed their overhead is so marginal that they're worth adding.
++The first is the local copy of the running process' data to the CPU it's running
++on to allow that data to be updated lockless where possible. Then there is
++deference paid to the last CPU a task was running on, by trying that CPU first
++when looking for an idle CPU to use the next time it's scheduled. Finally there
++is the notion of cache locality beyond the last running CPU. The sched_domains
++information is used to determine the relative virtual "cache distance" that
++other CPUs have from the last CPU a task was running on. CPUs with shared
++caches, such as SMT siblings, or multicore CPUs with shared caches, are treated
++as cache local. CPUs without shared caches are treated as not cache local, and
++CPUs on different NUMA nodes are treated as very distant. This "relative cache
++distance" is used by modifying the virtual deadline value when doing lookups.
++Effectively, the deadline is unaltered between "cache local" CPUs, doubled for
++"cache distant" CPUs, and quadrupled for "very distant" CPUs. The reasoning
++behind the doubling of deadlines is as follows. The real cost of migrating a
++task from one CPU to another is entirely dependant on the cache footprint of
++the task, how cache intensive the task is, how long it's been running on that
++CPU to take up the bulk of its cache, how big the CPU cache is, how fast and
++how layered the CPU cache is, how fast a context switch is... and so on. In
++other words, it's close to random in the real world where we do more than just
++one sole workload. The only thing we can be sure of is that it's not free. So
++BFS uses the principle that an idle CPU is a wasted CPU and utilising idle CPUs
++is more important than cache locality, and cache locality only plays a part
++after that. Doubling the effective deadline is based on the premise that the
++"cache local" CPUs will tend to work on the same tasks up to double the number
++of cache local CPUs, and once the workload is beyond that amount, it is likely
++that none of the tasks are cache warm anywhere anyway. The quadrupling for NUMA
++is a value I pulled out of my arse.
++
++When choosing an idle CPU for a waking task, the cache locality is determined
++according to where the task last ran and then idle CPUs are ranked from best
++to worst to choose the most suitable idle CPU based on cache locality, NUMA
++node locality and hyperthread sibling business. They are chosen in the
++following preference (if idle):
++
++* Same core, idle or busy cache, idle threads
++* Other core, same cache, idle or busy cache, idle threads.
++* Same node, other CPU, idle cache, idle threads.
++* Same node, other CPU, busy cache, idle threads.
++* Same core, busy threads.
++* Other core, same cache, busy threads.
++* Same node, other CPU, busy threads.
++* Other node, other CPU, idle cache, idle threads.
++* Other node, other CPU, busy cache, idle threads.
++* Other node, other CPU, busy threads.
++
++This shows the SMT or "hyperthread" awareness in the design as well which will
++choose a real idle core first before a logical SMT sibling which already has
++tasks on the physical CPU.
++
++Early benchmarking of BFS suggested scalability dropped off at the 16 CPU mark.
++However this benchmarking was performed on an earlier design that was far less
++scalable than the current one so it's hard to know how scalable it is in terms
++of both CPUs (due to the global runqueue) and heavily loaded machines (due to
++O(n) lookup) at this stage. Note that in terms of scalability, the number of
++_logical_ CPUs matters, not the number of _physical_ CPUs. Thus, a dual (2x)
++quad core (4X) hyperthreaded (2X) machine is effectively a 16X. Newer benchmark
++results are very promising indeed, without needing to tweak any knobs, features
++or options. Benchmark contributions are most welcome.
++
++
++Features
++
++As the initial prime target audience for BFS was the average desktop user, it
++was designed to not need tweaking, tuning or have features set to obtain benefit
++from it. Thus the number of knobs and features has been kept to an absolute
++minimum and should not require extra user input for the vast majority of cases.
++There are precisely 2 tunables, and 2 extra scheduling policies. The rr_interval
++and iso_cpu tunables, and the SCHED_ISO and SCHED_IDLEPRIO policies. In addition
++to this, BFS also uses sub-tick accounting. What BFS does _not_ now feature is
++support for CGROUPS. The average user should neither need to know what these
++are, nor should they need to be using them to have good desktop behaviour.
++
++rr_interval
++
++There is only one "scheduler" tunable, the round robin interval. This can be
++accessed in
++
++	/proc/sys/kernel/rr_interval
++
++The value is in milliseconds, and the default value is set to 6 on a
++uniprocessor machine, and automatically set to a progressively higher value on
++multiprocessor machines. The reasoning behind increasing the value on more CPUs
++is that the effective latency is decreased by virtue of there being more CPUs on
++BFS (for reasons explained above), and increasing the value allows for less
++cache contention and more throughput. Valid values are from 1 to 1000
++Decreasing the value will decrease latencies at the cost of decreasing
++throughput, while increasing it will improve throughput, but at the cost of
++worsening latencies. The accuracy of the rr interval is limited by HZ resolution
++of the kernel configuration. Thus, the worst case latencies are usually slightly
++higher than this actual value. The default value of 6 is not an arbitrary one.
++It is based on the fact that humans can detect jitter at approximately 7ms, so
++aiming for much lower latencies is pointless under most circumstances. It is
++worth noting this fact when comparing the latency performance of BFS to other
++schedulers. Worst case latencies being higher than 7ms are far worse than
++average latencies not being in the microsecond range.
++
++Isochronous scheduling.
++
++Isochronous scheduling is a unique scheduling policy designed to provide
++near-real-time performance to unprivileged (ie non-root) users without the
++ability to starve the machine indefinitely. Isochronous tasks (which means
++"same time") are set using, for example, the schedtool application like so:
++
++	schedtool -I -e amarok
++
++This will start the audio application "amarok" as SCHED_ISO. How SCHED_ISO works
++is that it has a priority level between true realtime tasks and SCHED_NORMAL
++which would allow them to preempt all normal tasks, in a SCHED_RR fashion (ie,
++if multiple SCHED_ISO tasks are running, they purely round robin at rr_interval
++rate). However if ISO tasks run for more than a tunable finite amount of time,
++they are then demoted back to SCHED_NORMAL scheduling. This finite amount of
++time is the percentage of _total CPU_ available across the machine, configurable
++as a percentage in the following "resource handling" tunable (as opposed to a
++scheduler tunable):
++
++	/proc/sys/kernel/iso_cpu
++
++and is set to 70% by default. It is calculated over a rolling 5 second average
++Because it is the total CPU available, it means that on a multi CPU machine, it
++is possible to have an ISO task running as realtime scheduling indefinitely on
++just one CPU, as the other CPUs will be available. Setting this to 100 is the
++equivalent of giving all users SCHED_RR access and setting it to 0 removes the
++ability to run any pseudo-realtime tasks.
++
++A feature of BFS is that it detects when an application tries to obtain a
++realtime policy (SCHED_RR or SCHED_FIFO) and the caller does not have the
++appropriate privileges to use those policies. When it detects this, it will
++give the task SCHED_ISO policy instead. Thus it is transparent to the user.
++Because some applications constantly set their policy as well as their nice
++level, there is potential for them to undo the override specified by the user
++on the command line of setting the policy to SCHED_ISO. To counter this, once
++a task has been set to SCHED_ISO policy, it needs superuser privileges to set
++it back to SCHED_NORMAL. This will ensure the task remains ISO and all child
++processes and threads will also inherit the ISO policy.
++
++Idleprio scheduling.
++
++Idleprio scheduling is a scheduling policy designed to give out CPU to a task
++_only_ when the CPU would be otherwise idle. The idea behind this is to allow
++ultra low priority tasks to be run in the background that have virtually no
++effect on the foreground tasks. This is ideally suited to distributed computing
++clients (like setiathome, folding, mprime etc) but can also be used to start
++a video encode or so on without any slowdown of other tasks. To avoid this
++policy from grabbing shared resources and holding them indefinitely, if it
++detects a state where the task is waiting on I/O, the machine is about to
++suspend to ram and so on, it will transiently schedule them as SCHED_NORMAL. As
++per the Isochronous task management, once a task has been scheduled as IDLEPRIO,
++it cannot be put back to SCHED_NORMAL without superuser privileges. Tasks can
++be set to start as SCHED_IDLEPRIO with the schedtool command like so:
++
++	schedtool -D -e ./mprime
++
++Subtick accounting.
++
++It is surprisingly difficult to get accurate CPU accounting, and in many cases,
++the accounting is done by simply determining what is happening at the precise
++moment a timer tick fires off. This becomes increasingly inaccurate as the
++timer tick frequency (HZ) is lowered. It is possible to create an application
++which uses almost 100% CPU, yet by being descheduled at the right time, records
++zero CPU usage. While the main problem with this is that there are possible
++security implications, it is also difficult to determine how much CPU a task
++really does use. BFS tries to use the sub-tick accounting from the TSC clock,
++where possible, to determine real CPU usage. This is not entirely reliable, but
++is far more likely to produce accurate CPU usage data than the existing designs
++and will not show tasks as consuming no CPU usage when they actually are. Thus,
++the amount of CPU reported as being used by BFS will more accurately represent
++how much CPU the task itself is using (as is shown for example by the 'time'
++application), so the reported values may be quite different to other schedulers.
++Values reported as the 'load' are more prone to problems with this design, but
++per process values are closer to real usage. When comparing throughput of BFS
++to other designs, it is important to compare the actual completed work in terms
++of total wall clock time taken and total work done, rather than the reported
++"cpu usage".
++
++
++Con Kolivas <kernel@kolivas.org> Fri Aug 27 2010
+Index: linux-2.6.36-ck1/Documentation/sysctl/kernel.txt
+===================================================================
+--- linux-2.6.36-ck1.orig/Documentation/sysctl/kernel.txt	2010-02-25 21:51:46.000000000 +1100
++++ linux-2.6.36-ck1/Documentation/sysctl/kernel.txt	2010-10-21 10:28:34.045580378 +1100
 @@ -31,6 +31,7 @@ show up in /proc/sys/kernel:
  - domainname
  - hostname
@@ -96,17 +441,30 @@ Index: linux-2.6.35.5-ck1/Documentation/sysctl/kernel.txt
 +milliseconds and the default value chosen depends on the number of
 +cpus available at scheduler initialisation with a minimum of 6.
 +
-+Valid values are from 1-5000.
++Valid values are from 1-1000.
 +
 +==============================================================
 +
  rtsig-max & rtsig-nr:
  
  The file rtsig-max can be used to tune the maximum number
-Index: linux-2.6.35.5-ck1/include/linux/init_task.h
+Index: linux-2.6.36-ck1/fs/proc/base.c
 ===================================================================
---- linux-2.6.35.5-ck1.orig/include/linux/init_task.h	2010-08-02 11:12:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/include/linux/init_task.h	2010-09-25 01:17:57.873918535 +1000
+--- linux-2.6.36-ck1.orig/fs/proc/base.c	2010-10-21 10:23:45.529211812 +1100
++++ linux-2.6.36-ck1/fs/proc/base.c	2010-10-21 10:28:34.045580378 +1100
+@@ -356,7 +356,7 @@ static int proc_pid_stack(struct seq_fil
+ static int proc_pid_schedstat(struct task_struct *task, char *buffer)
+ {
+ 	return sprintf(buffer, "%llu %llu %lu\n",
+-			(unsigned long long)task->se.sum_exec_runtime,
++			(unsigned long long)tsk_seruntime(task),
+ 			(unsigned long long)task->sched_info.run_delay,
+ 			task->sched_info.pcount);
+ }
+Index: linux-2.6.36-ck1/include/linux/init_task.h
+===================================================================
+--- linux-2.6.36-ck1.orig/include/linux/init_task.h	2010-08-02 11:12:25.000000000 +1000
++++ linux-2.6.36-ck1/include/linux/init_task.h	2010-10-21 10:28:34.046580334 +1100
 @@ -106,6 +106,69 @@ extern struct cred init_cred;
   *  INIT_TASK is used to set up the first task table, touch at
   * your own risk!. Base=0, limit=0x1fffff (=2MB)
@@ -186,10 +544,23 @@ Index: linux-2.6.35.5-ck1/include/linux/init_task.h
  
  #define INIT_CPU_TIMERS(cpu_timers)					\
  {									\
-Index: linux-2.6.35.5-ck1/include/linux/sched.h
+Index: linux-2.6.36-ck1/include/linux/ioprio.h
 ===================================================================
---- linux-2.6.35.5-ck1.orig/include/linux/sched.h	2010-09-25 01:17:40.364012559 +1000
-+++ linux-2.6.35.5-ck1/include/linux/sched.h	2010-09-25 01:21:34.406120878 +1000
+--- linux-2.6.36-ck1.orig/include/linux/ioprio.h	2009-06-10 13:05:27.000000000 +1000
++++ linux-2.6.36-ck1/include/linux/ioprio.h	2010-10-21 10:28:34.046580334 +1100
+@@ -64,6 +64,8 @@ static inline int task_ioprio_class(stru
+ 
+ static inline int task_nice_ioprio(struct task_struct *task)
+ {
++	if (iso_task(task))
++		return 0;
+ 	return (task_nice(task) + 20) / 5;
+ }
+ 
+Index: linux-2.6.36-ck1/include/linux/sched.h
+===================================================================
+--- linux-2.6.36-ck1.orig/include/linux/sched.h	2010-10-21 10:23:47.133141563 +1100
++++ linux-2.6.36-ck1/include/linux/sched.h	2010-10-21 10:28:34.046580334 +1100
 @@ -36,8 +36,15 @@
  #define SCHED_FIFO		1
  #define SCHED_RR		2
@@ -215,8 +586,8 @@ Index: linux-2.6.35.5-ck1/include/linux/sched.h
 -
  extern cpumask_var_t nohz_cpu_mask;
  #if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ)
- extern int select_nohz_load_balancer(int cpu);
-@@ -1173,17 +1178,31 @@ struct task_struct {
+ extern void select_nohz_load_balancer(int stop_tick);
+@@ -1169,17 +1174,31 @@ struct task_struct {
  
  	int lock_depth;		/* BKL lock depth */
  
@@ -248,7 +619,7 @@ Index: linux-2.6.35.5-ck1/include/linux/sched.h
  
  #ifdef CONFIG_PREEMPT_NOTIFIERS
  	/* list of struct preempt_notifier: */
-@@ -1278,6 +1297,9 @@ struct task_struct {
+@@ -1274,6 +1293,9 @@ struct task_struct {
  	int __user *clear_child_tid;		/* CLONE_CHILD_CLEARTID */
  
  	cputime_t utime, stime, utimescaled, stimescaled;
@@ -258,7 +629,7 @@ Index: linux-2.6.35.5-ck1/include/linux/sched.h
  	cputime_t gtime;
  #ifndef CONFIG_VIRT_CPU_ACCOUNTING
  	cputime_t prev_utime, prev_stime;
-@@ -1500,6 +1522,67 @@ struct task_struct {
+@@ -1496,6 +1518,53 @@ struct task_struct {
  #endif
  };
  
@@ -268,11 +639,6 @@ Index: linux-2.6.35.5-ck1/include/linux/sched.h
 +#define tsk_seruntime(t)		((t)->sched_time)
 +#define tsk_rttimeout(t)		((t)->rt_timeout)
 +
-+static inline void set_oom_timeslice(struct task_struct *p)
-+{
-+	p->time_slice = HZ;
-+}
-+
 +static inline void tsk_cpus_current(struct task_struct *p)
 +{
 +}
@@ -281,7 +647,7 @@ Index: linux-2.6.35.5-ck1/include/linux/sched.h
 +
 +static inline void print_scheduler_version(void)
 +{
-+	printk(KERN_INFO"BFS CPU scheduler v0.350 by Con Kolivas.\n");
++	printk(KERN_INFO"BFS CPU scheduler v0.357 by Con Kolivas.\n");
 +}
 +
 +static inline int iso_task(struct task_struct *p)
@@ -293,15 +659,6 @@ Index: linux-2.6.35.5-ck1/include/linux/sched.h
 +extern int runqueue_is_locked(int cpu);
 +#define tsk_seruntime(t)	((t)->se.sum_exec_runtime)
 +#define tsk_rttimeout(t)	((t)->rt.timeout)
-+
-+static inline void sched_exit(struct task_struct *p)
-+{
-+}
-+
-+static inline void set_oom_timeslice(struct task_struct *p)
-+{
-+	p->rt.time_slice = HZ;
-+}
 +
 +static inline void tsk_cpus_current(struct task_struct *p)
 +{
@@ -326,7 +683,7 @@ Index: linux-2.6.35.5-ck1/include/linux/sched.h
  /* Future-safe accessor for struct task_struct's cpus_allowed. */
  #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
  
-@@ -1518,9 +1601,19 @@ struct task_struct {
+@@ -1514,9 +1583,19 @@ struct task_struct {
  
  #define MAX_USER_RT_PRIO	100
  #define MAX_RT_PRIO		MAX_USER_RT_PRIO
@@ -347,7 +704,7 @@ Index: linux-2.6.35.5-ck1/include/linux/sched.h
  
  static inline int rt_prio(int prio)
  {
-@@ -1829,7 +1922,7 @@ task_sched_runtime(struct task_struct *t
+@@ -1831,7 +1910,7 @@ task_sched_runtime(struct task_struct *t
  extern unsigned long long thread_group_sched_runtime(struct task_struct *task);
  
  /* sched_exec is called by processes performing an exec */
@@ -356,91 +713,172 @@ Index: linux-2.6.35.5-ck1/include/linux/sched.h
  extern void sched_exec(void);
  #else
  #define sched_exec()   {}
-@@ -1993,6 +2086,9 @@ extern void wake_up_new_task(struct task
-  static inline void kick_process(struct task_struct *tsk) { }
- #endif
- extern void sched_fork(struct task_struct *p, int clone_flags);
-+#ifdef CONFIG_SCHED_BFS
-+extern void sched_exit(struct task_struct *p);
-+#endif
- extern void sched_dead(struct task_struct *p);
- 
- extern void proc_caches_init(void);
-Index: linux-2.6.35.5-ck1/kernel/sysctl.c
+Index: linux-2.6.36-ck1/init/Kconfig
 ===================================================================
---- linux-2.6.35.5-ck1.orig/kernel/sysctl.c	2010-08-02 11:12:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/kernel/sysctl.c	2010-09-25 01:19:19.941498189 +1000
-@@ -115,7 +115,12 @@ static int zero;
- static int __maybe_unused one = 1;
- static int __maybe_unused two = 2;
- static unsigned long one_ul = 1;
--static int one_hundred = 100;
-+static int __maybe_unused one_hundred = 100;
-+#ifdef CONFIG_SCHED_BFS
-+extern int rr_interval;
-+extern int sched_iso_cpu;
-+static int __read_mostly one_thousand = 1000;
-+#endif
- #ifdef CONFIG_PRINTK
- static int ten_thousand = 10000;
- #endif
-@@ -252,7 +257,7 @@ static struct ctl_table root_table[] = {
- 	{ }
- };
+--- linux-2.6.36-ck1.orig/init/Kconfig	2010-10-21 10:23:47.483126236 +1100
++++ linux-2.6.36-ck1/init/Kconfig	2010-10-21 10:28:34.047580290 +1100
+@@ -23,6 +23,19 @@ config CONSTRUCTORS
  
--#ifdef CONFIG_SCHED_DEBUG
-+#if defined(CONFIG_SCHED_DEBUG) && !defined(CONFIG_SCHED_BFS)
- static int min_sched_granularity_ns = 100000;		/* 100 usecs */
- static int max_sched_granularity_ns = NSEC_PER_SEC;	/* 1 second */
- static int min_wakeup_granularity_ns;			/* 0 usecs */
-@@ -269,6 +274,7 @@ static int max_extfrag_threshold = 1000;
- #endif
+ menu "General setup"
  
- static struct ctl_table kern_table[] = {
++config SCHED_BFS
++	bool "BFS cpu scheduler"
++	---help---
++	  The Brain Fuck CPU Scheduler for excellent interactivity and
++	  responsiveness on the desktop and solid scalability on normal
++          hardware. Not recommended for 4096 CPUs.
++
++	  Currently incompatible with the Group CPU scheduler, and RCU TORTURE
++          TEST so these options are disabled.
++
++          Say Y here.
++	default y
++
+ config EXPERIMENTAL
+ 	bool "Prompt for development and/or incomplete code/drivers"
+ 	---help---
+@@ -541,7 +554,7 @@ config PROC_PID_CPUSET
+ 
+ config CGROUP_CPUACCT
+ 	bool "Simple CPU accounting cgroup subsystem"
+-	depends on CGROUPS
++	depends on CGROUPS && !SCHED_BFS
+ 	help
+ 	  Provides a simple Resource Controller for monitoring the
+ 	  total CPU consumed by the tasks in a cgroup.
+@@ -596,7 +609,7 @@ config CGROUP_MEM_RES_CTLR_SWAP
+ 
+ menuconfig CGROUP_SCHED
+ 	bool "Group CPU scheduler"
+-	depends on EXPERIMENTAL && CGROUPS
++	depends on EXPERIMENTAL && CGROUPS && !SCHED_BFS
+ 	default n
+ 	help
+ 	  This feature lets CPU scheduler recognize task groups and control CPU
+Index: linux-2.6.36-ck1/init/main.c
+===================================================================
+--- linux-2.6.36-ck1.orig/init/main.c	2010-10-21 10:23:47.484126192 +1100
++++ linux-2.6.36-ck1/init/main.c	2010-10-21 10:28:34.047580290 +1100
+@@ -828,6 +828,7 @@ static noinline int init_post(void)
+ 	system_state = SYSTEM_RUNNING;
+ 	numa_default_policy();
+ 
++	print_scheduler_version();
+ 
+ 	current->signal->flags |= SIGNAL_UNKILLABLE;
+ 
+Index: linux-2.6.36-ck1/kernel/delayacct.c
+===================================================================
+--- linux-2.6.36-ck1.orig/kernel/delayacct.c	2009-12-03 21:40:09.000000000 +1100
++++ linux-2.6.36-ck1/kernel/delayacct.c	2010-10-21 10:28:34.047580290 +1100
+@@ -128,7 +128,7 @@ int __delayacct_add_tsk(struct taskstats
+ 	 */
+ 	t1 = tsk->sched_info.pcount;
+ 	t2 = tsk->sched_info.run_delay;
+-	t3 = tsk->se.sum_exec_runtime;
++	t3 = tsk_seruntime(tsk);
+ 
+ 	d->cpu_count += t1;
+ 
+Index: linux-2.6.36-ck1/kernel/exit.c
+===================================================================
+--- linux-2.6.36-ck1.orig/kernel/exit.c	2010-10-21 10:23:47.496125667 +1100
++++ linux-2.6.36-ck1/kernel/exit.c	2010-10-21 10:28:34.047580290 +1100
+@@ -123,7 +123,7 @@ static void __exit_signal(struct task_st
+ 		sig->inblock += task_io_get_inblock(tsk);
+ 		sig->oublock += task_io_get_oublock(tsk);
+ 		task_io_accounting_add(&sig->ioac, &tsk->ioac);
+-		sig->sum_sched_runtime += tsk->se.sum_exec_runtime;
++		sig->sum_sched_runtime += tsk_seruntime(tsk);
+ 	}
+ 
+ 	sig->nr_threads--;
+Index: linux-2.6.36-ck1/kernel/kthread.c
+===================================================================
+--- linux-2.6.36-ck1.orig/kernel/kthread.c	2010-10-21 10:23:47.500125491 +1100
++++ linux-2.6.36-ck1/kernel/kthread.c	2010-10-21 10:28:34.048580246 +1100
+@@ -184,7 +184,9 @@ void kthread_bind(struct task_struct *p,
+ 	}
+ 
+ 	p->cpus_allowed = cpumask_of_cpu(cpu);
 +#ifndef CONFIG_SCHED_BFS
- 	{
- 		.procname	= "sched_child_runs_first",
- 		.data		= &sysctl_sched_child_runs_first,
-@@ -382,6 +388,7 @@ static struct ctl_table kern_table[] = {
- 		.mode		= 0644,
- 		.proc_handler	= proc_dointvec,
- 	},
-+#endif /* !CONFIG_SCHED_BFS */
- #ifdef CONFIG_PROVE_LOCKING
- 	{
- 		.procname	= "prove_locking",
-@@ -779,6 +786,26 @@ static struct ctl_table kern_table[] = {
- 		.proc_handler	= proc_dointvec,
- 	},
- #endif
-+#ifdef CONFIG_SCHED_BFS
-+	{
-+		.procname	= "rr_interval",
-+		.data		= &rr_interval,
-+		.maxlen		= sizeof (int),
-+		.mode		= 0644,
-+		.proc_handler	= &proc_dointvec_minmax,
-+		.extra1		= &one,
-+		.extra2		= &one_thousand,
-+	},
-+	{
-+		.procname	= "iso_cpu",
-+		.data		= &sched_iso_cpu,
-+		.maxlen		= sizeof (int),
-+		.mode		= 0644,
-+		.proc_handler	= &proc_dointvec_minmax,
-+		.extra1		= &zero,
-+		.extra2		= &one_hundred,
-+	},
+ 	p->rt.nr_cpus_allowed = 1;
 +#endif
- #if defined(CONFIG_S390) && defined(CONFIG_SMP)
- 	{
- 		.procname	= "spin_retry",
-Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
+ 	p->flags |= PF_THREAD_BOUND;
+ }
+ EXPORT_SYMBOL(kthread_bind);
+Index: linux-2.6.36-ck1/kernel/posix-cpu-timers.c
+===================================================================
+--- linux-2.6.36-ck1.orig/kernel/posix-cpu-timers.c	2010-10-21 10:23:47.508125142 +1100
++++ linux-2.6.36-ck1/kernel/posix-cpu-timers.c	2010-10-21 10:28:34.048580246 +1100
+@@ -248,7 +248,7 @@ void thread_group_cputime(struct task_st
+ 	do {
+ 		times->utime = cputime_add(times->utime, t->utime);
+ 		times->stime = cputime_add(times->stime, t->stime);
+-		times->sum_exec_runtime += t->se.sum_exec_runtime;
++		times->sum_exec_runtime += tsk_seruntime(t);
+ 	} while_each_thread(tsk, t);
+ out:
+ 	rcu_read_unlock();
+@@ -508,7 +508,7 @@ static void cleanup_timers(struct list_h
+ void posix_cpu_timers_exit(struct task_struct *tsk)
+ {
+ 	cleanup_timers(tsk->cpu_timers,
+-		       tsk->utime, tsk->stime, tsk->se.sum_exec_runtime);
++		       tsk->utime, tsk->stime, tsk_seruntime(tsk));
+ 
+ }
+ void posix_cpu_timers_exit_group(struct task_struct *tsk)
+@@ -518,7 +518,7 @@ void posix_cpu_timers_exit_group(struct
+ 	cleanup_timers(tsk->signal->cpu_timers,
+ 		       cputime_add(tsk->utime, sig->utime),
+ 		       cputime_add(tsk->stime, sig->stime),
+-		       tsk->se.sum_exec_runtime + sig->sum_sched_runtime);
++		       tsk_seruntime(tsk) + sig->sum_sched_runtime);
+ }
+ 
+ static void clear_dead_task(struct k_itimer *timer, union cpu_time_count now)
+@@ -949,7 +949,7 @@ static void check_thread_timers(struct t
+ 		struct cpu_timer_list *t = list_first_entry(timers,
+ 						      struct cpu_timer_list,
+ 						      entry);
+-		if (!--maxfire || tsk->se.sum_exec_runtime < t->expires.sched) {
++		if (!--maxfire || tsk_seruntime(tsk) < t->expires.sched) {
+ 			tsk->cputime_expires.sched_exp = t->expires.sched;
+ 			break;
+ 		}
+@@ -966,7 +966,7 @@ static void check_thread_timers(struct t
+ 			ACCESS_ONCE(sig->rlim[RLIMIT_RTTIME].rlim_max);
+ 
+ 		if (hard != RLIM_INFINITY &&
+-		    tsk->rt.timeout > DIV_ROUND_UP(hard, USEC_PER_SEC/HZ)) {
++		    tsk_rttimeout(tsk) > DIV_ROUND_UP(hard, USEC_PER_SEC/HZ)) {
+ 			/*
+ 			 * At the hard limit, we just die.
+ 			 * No need to calculate anything else now.
+@@ -974,7 +974,7 @@ static void check_thread_timers(struct t
+ 			__group_send_sig_info(SIGKILL, SEND_SIG_PRIV, tsk);
+ 			return;
+ 		}
+-		if (tsk->rt.timeout > DIV_ROUND_UP(soft, USEC_PER_SEC/HZ)) {
++		if (tsk_rttimeout(tsk) > DIV_ROUND_UP(soft, USEC_PER_SEC/HZ)) {
+ 			/*
+ 			 * At the soft limit, send a SIGXCPU every second.
+ 			 */
+@@ -1276,7 +1276,7 @@ static inline int fastpath_timer_check(s
+ 		struct task_cputime task_sample = {
+ 			.utime = tsk->utime,
+ 			.stime = tsk->stime,
+-			.sum_exec_runtime = tsk->se.sum_exec_runtime
++			.sum_exec_runtime = tsk_seruntime(tsk)
+ 		};
+ 
+ 		if (task_cputime_expired(&task_sample, &tsk->cputime_expires))
+Index: linux-2.6.36-ck1/kernel/sched_bfs.c
 ===================================================================
 --- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.35.5-ck1/kernel/sched_bfs.c	2010-09-25 01:21:48.281964938 +1000
-@@ -0,0 +1,6984 @@
++++ linux-2.6.36-ck1/kernel/sched_bfs.c	2010-10-21 10:28:34.051580114 +1100
+@@ -0,0 +1,6933 @@
 +/*
 + *  kernel/sched_bfs.c, was sched.c
 + *
@@ -515,6 +953,9 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +#include <asm/tlb.h>
 +#include <asm/unistd.h>
 +
++#include "sched_cpupri.h"
++#include "workqueue_sched.h"
++
 +#define CREATE_TRACE_POINTS
 +#include <trace/events/sched.h>
 +
@@ -554,6 +995,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 + * approximate multiples of ten for less overhead.
 + */
 +#define JIFFIES_TO_NS(TIME)	((TIME) * (1000000000 / HZ))
++#define JIFFY_NS		(1000000000 / HZ)
 +#define HALF_JIFFY_NS		(1000000000 / HZ / 2)
 +#define HALF_JIFFY_US		(1000000 / HZ / 2)
 +#define MS_TO_NS(TIME)		((TIME) << 20)
@@ -608,8 +1050,8 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	cpumask_t cpu_idle_map;
 +	int idle_cpus;
 +#endif
-+	/* Nanosecond jiffies */
-+	u64 niffies;
++	u64 niffies; /* Nanosecond jiffies */
++	unsigned long last_jiffy; /* Last jiffy we updated niffies */
 +
 +	raw_spinlock_t iso_lock;
 +	int iso_ticks;
@@ -636,7 +1078,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	struct mm_struct *prev_mm;
 +
 +	/* Stored data about rq->curr to work outside grq lock */
-+	unsigned long rq_deadline;
++	u64 rq_deadline;
 +	unsigned int rq_policy;
 +	int rq_time_slice;
 +	u64 rq_last_ran;
@@ -706,6 +1148,18 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +static DEFINE_MUTEX(sched_domains_mutex);
 +
 +/*
++ * By default the system creates a single root-domain with all cpus as
++ * members (mimicking the global state we have today).
++ */
++static struct root_domain def_root_domain;
++
++int __weak arch_sd_sibling_asym_packing(void)
++{
++       return 0*SD_ASYM_PACKING;
++}
++#endif
++
++/*
 + * We add the notion of a root-domain which will be used to define per-domain
 + * variables. Each exclusive cpuset essentially defines an island domain by
 + * fully partitioning the member cpus from any other cpuset. Whenever a new
@@ -724,22 +1178,10 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	 */
 +	cpumask_var_t rto_mask;
 +	atomic_t rto_count;
-+#if defined(CONFIG_SCHED_MC) || defined(CONFIG_SCHED_SMT)
-+	/*
-+	 * Preferred wake up cpu nominated by sched_mc balance that will be
-+	 * used when most cpus are idle in the system indicating overall very
-+	 * low system utilisation. Triggered at POWERSAVINGS_BALANCE_WAKEUP(2)
-+	 */
-+	unsigned int sched_mc_preferred_wakeup_cpu;
++#ifdef CONFIG_SMP
++	struct cpupri cpupri;
 +#endif
 +};
-+
-+/*
-+ * By default the system creates a single root-domain with all cpus as
-+ * members (mimicking the global state we have today).
-+ */
-+static struct root_domain def_root_domain;
-+#endif
 +
 +#define rcu_dereference_check_sched_domain(p) \
 +	rcu_dereference_check((p), \
@@ -757,6 +1199,27 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	for (__sd = rcu_dereference_check_sched_domain(cpu_rq(cpu)->sd); __sd; __sd = __sd->parent)
 +
 +static inline void update_rq_clock(struct rq *rq);
++
++/*
++ * Sanity check should sched_clock return bogus values. We make sure it does
++ * not appear to go backwards, and use jiffies to determine the maximum and
++ * minimum it could possibly have increased, and round down to the nearest
++ * jiffy when it falls outside this.
++ */
++static inline void niffy_diff(s64 *niff_diff, int jiff_diff)
++{
++	unsigned long min_diff, max_diff;
++
++	if (jiff_diff > 1)
++		min_diff = JIFFIES_TO_NS(jiff_diff - 1);
++	else
++		min_diff = 1;
++	/*  Round up to the nearest tick for maximum */
++	max_diff = JIFFIES_TO_NS(jiff_diff + 1);
++
++	if (unlikely(*niff_diff < min_diff || *niff_diff > max_diff))
++		*niff_diff = min_diff;
++}
 +
 +#ifdef CONFIG_SMP
 +#define cpu_rq(cpu)		(&per_cpu(runqueues, (cpu)))
@@ -778,18 +1241,16 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +static inline void update_clocks(struct rq *rq)
 +{
 +	s64 ndiff;
++	long jdiff;
 +
 +	update_rq_clock(rq);
 +	ndiff = rq->clock - rq->old_clock;
 +	/* old_clock is only updated when we are updating niffies */
 +	rq->old_clock = rq->clock;
 +	ndiff -= grq.niffies - rq->last_niffy;
-+	/*
-+	 * Sanity check should sched_clock return bogus values or be limited to
-+	 * just jiffy resolution. Some time will always have passed.
-+	 */
-+	if (unlikely(ndiff < 1 || ndiff > MS_TO_NS(rr_interval)))
-+		ndiff = 1;
++	jdiff = jiffies - grq.last_jiffy;
++	niffy_diff(&ndiff, jdiff);
++	grq.last_jiffy += jdiff;
 +	grq.niffies += ndiff;
 +	rq->last_niffy = grq.niffies;
 +}
@@ -807,12 +1268,14 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +static inline void update_clocks(struct rq *rq)
 +{
 +	s64 ndiff;
++	long jdiff;
 +
 +	update_rq_clock(rq);
 +	ndiff = rq->clock - rq->old_clock;
 +	rq->old_clock = rq->clock;
-+	if (unlikely(ndiff < 1 || ndiff > MS_TO_US(rr_interval)))
-+		ndiff = 1;
++	jdiff = jiffies - grq.last_jiffy;
++	niffy_diff(&ndiff, jdiff);
++	grq.last_jiffy += jdiff;
 +	grq.niffies += ndiff;
 +}
 +#endif
@@ -1138,8 +1601,10 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 + */
 +static inline void set_cpuidle_map(unsigned long cpu)
 +{
-+	cpu_set(cpu, grq.cpu_idle_map);
-+	grq.idle_cpus = 1;
++	if (likely(cpu_online(cpu))) {
++		cpu_set(cpu, grq.cpu_idle_map);
++		grq.idle_cpus = 1;
++	}
 +}
 +
 +static inline void clear_cpuidle_map(unsigned long cpu)
@@ -1645,7 +2110,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 + * prio PRIO_LIMIT so it is always preempted.
 + */
 +static inline int
-+can_preempt(struct task_struct *p, int prio, unsigned long deadline,
++can_preempt(struct task_struct *p, int prio, u64 deadline,
 +	    unsigned int policy)
 +{
 +	/* Better static priority RT task or better policy preemption */
@@ -1695,7 +2160,8 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +static void try_preempt(struct task_struct *p, struct rq *this_rq)
 +{
 +	struct rq *highest_prio_rq = this_rq;
-+	unsigned long latest_deadline, cpu;
++	u64 latest_deadline;
++	unsigned long cpu;
 +	int highest_prio;
 +	cpumask_t tmp;
 +
@@ -1717,7 +2183,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	highest_prio = -1;
 +
 +	for_each_cpu_mask(cpu, tmp) {
-+		unsigned long offset_deadline;
++		u64 offset_deadline;
 +		struct rq *rq;
 +		int rq_prio;
 +
@@ -1780,11 +2246,41 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	preempt_enable();
 +}
 +
++static inline void ttwu_activate(struct task_struct *p, struct rq *rq,
++				 bool is_sync)
++{
++	activate_task(p, rq);
++
++	/*
++	 * Sync wakeups (i.e. those types of wakeups where the waker
++	 * has indicated that it will leave the CPU in short order)
++	 * don't trigger a preemption if there are no idle cpus,
++	 * instead waiting for current to deschedule.
++	 */
++	if (!is_sync || suitable_idle_cpus(p))
++		try_preempt(p, rq);
++}
++
++static inline void ttwu_post_activation(struct task_struct *p, struct rq *rq,
++					bool success)
++{
++	trace_sched_wakeup(p, success);
++	p->state = TASK_RUNNING;
++
++	/*
++	 * if a worker is waking up, notify workqueue. Note that on BFS, we
++	 * don't really know what cpu it will be, so we fake it for
++	 * wq_worker_waking_up :/
++	 */
++	if ((p->flags & PF_WQ_WORKER) && success)
++		wq_worker_waking_up(p, cpu_of(rq));
++}
++
 +/***
 + * try_to_wake_up - wake up a thread
-+ * @p: the to-be-woken-up thread
++ * @p: the thread to be awakened
 + * @state: the mask of task states that can be woken
-+ * @sync: do a synchronous wakeup?
++ * @wake_flags: wake modifier flags (WF_*)
 + *
 + * Put it on the run-queue if it's not already there. The "current"
 + * thread is always on the run-queue (except when the actual
@@ -1792,13 +2288,14 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 + * the simpler "current->state = TASK_RUNNING" to mark yourself
 + * runnable without the overhead of this.
 + *
-+ * returns failure only if the task is already active.
++ * Returns %true if @p was woken up, %false if it was already running
++ * or @state didn't match @p's state.
 + */
 +static int try_to_wake_up(struct task_struct *p, unsigned int state,
 +			  int wake_flags)
 +{
-+	int sync, success = 0;
 +	unsigned long flags;
++	int success = 0;
 +	struct rq *rq;
 +
 +	get_cpu();
@@ -1819,27 +2316,47 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	if (task_queued(p) || task_running(p))
 +		goto out_running;
 +
-+	activate_task(p, rq);
-+	sync = wake_flags & WF_SYNC;
-+
-+	/*
-+	 * Sync wakeups (i.e. those types of wakeups where the waker
-+	 * has indicated that it will leave the CPU in short order)
-+	 * don't trigger a preemption if there are no idle cpus,
-+	 * instead waiting for current to deschedule.
-+	 */
-+	if (!sync || suitable_idle_cpus(p))
-+		try_preempt(p, rq);
-+	success = 1;
++	ttwu_activate(p, rq, wake_flags & WF_SYNC);
++	success = true;
 +
 +out_running:
-+	trace_sched_wakeup(p, success);
-+	p->state = TASK_RUNNING;
++	ttwu_post_activation(p, rq, success);
 +out_unlock:
 +	task_grq_unlock(&flags);
 +	put_cpu();
 +
 +	return success;
++}
++
++/**
++ * try_to_wake_up_local - try to wake up a local task with grq lock held
++ * @p: the thread to be awakened
++ *
++ * Put @p on the run-queue if it's not already there.  The caller must
++ * ensure that grq is locked and, @p is not the current task.
++ * grq stays locked over invocation.
++ */
++static void try_to_wake_up_local(struct task_struct *p)
++{
++	struct rq *rq = task_rq(p);
++	bool success = false;
++
++	BUG_ON(rq != this_rq());
++	BUG_ON(p == current);
++	lockdep_assert_held(&grq.lock);
++
++	if (!(p->state & TASK_NORMAL))
++		return;
++
++	if (!task_queued(p)) {
++		if (likely(!task_running(p))) {
++			schedstat_inc(rq, ttwu_count);
++			schedstat_inc(rq, ttwu_local);
++		}
++		ttwu_activate(p, rq, false);
++		success = true;
++	}
++	ttwu_post_activation(p, rq, success);
 +}
 +
 +/**
@@ -1992,11 +2509,6 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	} else
 +		try_preempt(p, rq);
 +	task_grq_unlock(&flags);
-+}
-+
-+/* Nothing to do here */
-+void sched_exit(struct task_struct *p)
-+{
 +}
 +
 +#ifdef CONFIG_PREEMPT_NOTIFIERS
@@ -2418,16 +2930,12 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +}
 +
 +/* Convert nanoseconds to percentage of one tick. */
-+#define NS_TO_PC(NS)	(NS * 100 / JIFFIES_TO_NS(1))
++#define NS_TO_PC(NS)	(NS * 100 / JIFFY_NS)
 +
 +/*
 + * This is called on clock ticks and on context switches.
 + * Bank in p->sched_time the ns elapsed since the last tick or switch.
 + * CPU scheduler quota accounting is also performed here in microseconds.
-+ * The value returned from sched_clock() occasionally gives bogus values so
-+ * some sanity checking is required. Time is supposed to be banked all the
-+ * time so default to half a tick to make up for when sched_clock reverts
-+ * to just returning jiffies, and for hardware that can't do tsc.
 + */
 +static void
 +update_cpu_clock(struct rq *rq, struct task_struct *p, int tick)
@@ -2462,18 +2970,9 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +
 +	/* time_slice accounting is done in usecs to avoid overflow on 32bit */
 +	if (rq->rq_policy != SCHED_FIFO && p != idle) {
-+		long time_diff = rq->clock - rq->rq_last_ran;
++		s64 time_diff = rq->clock - rq->rq_last_ran;
 +
-+		/*
-+		 * There should be less than or equal to one jiffy worth, and not
-+		 * negative/overflow. time_diff is only used for internal scheduler
-+		 * time_slice accounting.
-+		 */
-+		if (unlikely(time_diff <= 0))
-+			time_diff = JIFFIES_TO_NS(1) / 2;
-+		else if (unlikely(time_diff > JIFFIES_TO_NS(1)))
-+			time_diff = JIFFIES_TO_NS(1);
-+
++		niffy_diff(&time_diff, 1);
 +		rq->rq_time_slice -= NS_TO_US(time_diff);
 +	}
 +	rq->rq_last_ran = rq->timekeep_clock = rq->clock;
@@ -2881,17 +3380,17 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 + * proportion works out to the square of the virtual deadline difference, so
 + * this equation will give nice 19 3% CPU compared to nice 0.
 + */
-+static inline int prio_deadline_diff(int user_prio)
++static inline u64 prio_deadline_diff(int user_prio)
 +{
 +	return (prio_ratios[user_prio] * rr_interval * (MS_TO_NS(1) / 128));
 +}
 +
-+static inline int task_deadline_diff(struct task_struct *p)
++static inline u64 task_deadline_diff(struct task_struct *p)
 +{
 +	return prio_deadline_diff(TASK_USER_PRIO(p));
 +}
 +
-+static inline int static_deadline_diff(int static_prio)
++static inline u64 static_deadline_diff(int static_prio)
 +{
 +	return prio_deadline_diff(USER_PRIO(static_prio));
 +}
@@ -2947,7 +3446,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +static inline struct
 +task_struct *earliest_deadline_task(struct rq *rq, struct task_struct *idle)
 +{
-+	unsigned long dl, earliest_deadline = 0; /* Initialise to silence compiler */
++	u64 dl, earliest_deadline = 0; /* Initialise to silence compiler */
 +	struct task_struct *p, *edt = idle;
 +	unsigned int cpu = cpu_of(rq);
 +	struct list_head *queue;
@@ -3079,7 +3578,6 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	idle = rq->idle;
 +	rcu_note_context_switch(cpu);
 +	prev = rq->curr;
-+	switch_count = &prev->nivcsw;
 +
 +	release_kernel_lock(prev);
 +need_resched_nonpreemptible:
@@ -3097,11 +3595,26 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +
 +	clear_tsk_need_resched(prev);
 +
++	switch_count = &prev->nivcsw;
 +	if (prev->state && !(preempt_count() & PREEMPT_ACTIVE)) {
-+		if (unlikely(signal_pending_state(prev->state, prev)))
++		if (unlikely(signal_pending_state(prev->state, prev))) {
 +			prev->state = TASK_RUNNING;
-+		else
++		} else {
++			/*
++			 * If a worker is going to sleep, notify and
++			 * ask workqueue whether it wants to wake up a
++			 * task to maintain concurrency.  If so, wake
++			 * up the task.
++			 */
++			if (prev->flags & PF_WQ_WORKER) {
++				struct task_struct *to_wakeup;
++
++				to_wakeup = wq_worker_sleeping(prev, cpu);
++				if (to_wakeup)
++					try_to_wake_up_local(to_wakeup);
++			}
 +			deactivate = 1;
++		}
 +		switch_count = &prev->nvcsw;
 +	}
 +
@@ -3167,8 +3680,10 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +
 +		context_switch(rq, prev, next); /* unlocks the grq */
 +		/*
-+		 * the context switch might have flipped the stack from under
-+		 * us, hence refresh the local variables.
++		 * The context switch have flipped the stack from under us
++		 * and restored the local variables which were saved when
++		 * this task called schedule() in the past. prev == current
++		 * is still correct, but it can be moved to another cpu/rq.
 +		 */
 +		cpu = smp_processor_id();
 +		rq = cpu_rq(cpu);
@@ -3177,11 +3692,8 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +		grq_unlock_irq();
 +
 +rerun_prev_unlocked:
-+	if (unlikely(reacquire_kernel_lock(current) < 0)) {
-+		prev = rq->curr;
-+		switch_count = &prev->nivcsw;
++	if (unlikely(reacquire_kernel_lock(prev)))
 +		goto need_resched_nonpreemptible;
-+	}
 +
 +	preempt_enable_no_resched();
 +	if (need_resched())
@@ -3249,7 +3761,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 + * off of preempt_enable. Kernel preemptions off return from interrupt
 + * occur there and call schedule directly.
 + */
-+asmlinkage void __sched preempt_schedule(void)
++asmlinkage void __sched notrace preempt_schedule(void)
 +{
 +	struct thread_info *ti = current_thread_info();
 +
@@ -3261,9 +3773,9 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +		return;
 +
 +	do {
-+		add_preempt_count(PREEMPT_ACTIVE);
++		add_preempt_count_notrace(PREEMPT_ACTIVE);
 +		schedule();
-+		sub_preempt_count(PREEMPT_ACTIVE);
++		sub_preempt_count_notrace(PREEMPT_ACTIVE);
 +
 +		/*
 +		 * Check again in case we missed a preemption opportunity
@@ -4018,6 +4530,9 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	 */
 +	if (user && !capable(CAP_SYS_NICE)) {
 +		if (is_rt_policy(policy)) {
++			unsigned long rlim_rtprio =
++					task_rlimit(p, RLIMIT_RTPRIO);
++
 +			/* can't set/change the rt policy */
 +			if (policy != p->policy && !rlim_rtprio)
 +				return -EPERM;
@@ -4763,19 +5278,9 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +
 +#ifdef CONFIG_SMP
 +#ifdef CONFIG_NO_HZ
-+static struct {
-+	atomic_t load_balancer;
-+	cpumask_var_t cpu_mask;
-+	cpumask_var_t ilb_grp_nohz_mask;
-+} nohz ____cacheline_aligned = {
-+	.load_balancer = ATOMIC_INIT(-1),
-+};
-+
-+int get_nohz_load_balancer(void)
++void select_nohz_load_balancer(int stop_tick)
 +{
-+	return atomic_read(&nohz.load_balancer);
 +}
-+
 +#if defined(CONFIG_SCHED_MC) || defined(CONFIG_SCHED_SMT)
 +/**
 + * lowest_flag_domain - Return lowest sched_domain containing flag.
@@ -4811,86 +5316,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	for (sd = lowest_flag_domain(cpu, flag); \
 +		(sd && (sd->flags & flag)); sd = sd->parent)
 +
-+/**
-+ * is_semi_idle_group - Checks if the given sched_group is semi-idle.
-+ * @ilb_group:	group to be checked for semi-idleness
-+ *
-+ * Returns:	1 if the group is semi-idle. 0 otherwise.
-+ *
-+ * We define a sched_group to be semi idle if it has atleast one idle-CPU
-+ * and atleast one non-idle CPU. This helper function checks if the given
-+ * sched_group is semi-idle or not.
-+ */
-+static inline int is_semi_idle_group(struct sched_group *ilb_group)
-+{
-+	cpumask_and(nohz.ilb_grp_nohz_mask, nohz.cpu_mask,
-+					sched_group_cpus(ilb_group));
-+
-+	/*
-+	 * A sched_group is semi-idle when it has atleast one busy cpu
-+	 * and atleast one idle cpu.
-+	 */
-+	if (cpumask_empty(nohz.ilb_grp_nohz_mask))
-+		return 0;
-+
-+	if (cpumask_equal(nohz.ilb_grp_nohz_mask, sched_group_cpus(ilb_group)))
-+		return 0;
-+
-+	return 1;
-+}
-+
-+/**
-+ * find_new_ilb - Finds the optimum idle load balancer for nomination.
-+ * @cpu:	The cpu which is nominating a new idle_load_balancer.
-+ *
-+ * Returns:	Returns the id of the idle load balancer if it exists,
-+ *		Else, returns >= nr_cpu_ids.
-+ *
-+ * This algorithm picks the idle load balancer such that it belongs to a
-+ * semi-idle powersavings sched_domain. The idea is to try and avoid
-+ * completely idle packages/cores just for the purpose of idle load balancing
-+ * when there are other idle cpu's which are better suited for that job.
-+ */
-+static int find_new_ilb(int cpu)
-+{
-+	struct sched_domain *sd;
-+	struct sched_group *ilb_group;
-+
-+	/*
-+	 * Have idle load balancer selection from semi-idle packages only
-+	 * when power-aware load balancing is enabled
-+	 */
-+	if (!(sched_smt_power_savings || sched_mc_power_savings))
-+		goto out_done;
-+
-+	/*
-+	 * Optimize for the case when we have no idle CPUs or only one
-+	 * idle CPU. Don't walk the sched_domain hierarchy in such cases
-+	 */
-+	if (cpumask_weight(nohz.cpu_mask) < 2)
-+		goto out_done;
-+
-+	for_each_flag_domain(cpu, sd, SD_POWERSAVINGS_BALANCE) {
-+		ilb_group = sd->groups;
-+
-+		do {
-+			if (is_semi_idle_group(ilb_group))
-+				return cpumask_first(nohz.ilb_grp_nohz_mask);
-+
-+			ilb_group = ilb_group->next;
-+
-+		} while (ilb_group != sd->groups);
-+	}
-+
-+out_done:
-+	return cpumask_first(nohz.cpu_mask);
-+}
-+#else /*  (CONFIG_SCHED_MC || CONFIG_SCHED_SMT) */
-+static inline int find_new_ilb(int call_cpu)
-+{
-+	return cpumask_first(nohz.cpu_mask);
-+}
-+#endif
++#endif /*  (CONFIG_SCHED_MC || CONFIG_SCHED_SMT) */
 +
 +static inline void resched_cpu(int cpu)
 +{
@@ -4902,88 +5328,25 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +}
 +
 +/*
-+ * This routine will try to nominate the ilb (idle load balancing)
-+ * owner among the cpus whose ticks are stopped. ilb owner will do the idle
-+ * load balancing on behalf of all those cpus. If all the cpus in the system
-+ * go into this tickless mode, then there will be no ilb owner (as there is
-+ * no need for one) and all the cpus will sleep till the next wakeup event
-+ * arrives...
++ * In the semi idle case, use the nearest busy cpu for migrating timers
++ * from an idle cpu.  This is good for power-savings.
 + *
-+ * For the ilb owner, tick is not stopped. And this tick will be used
-+ * for idle load balancing. ilb owner will still be part of
-+ * nohz.cpu_mask..
-+ *
-+ * While stopping the tick, this cpu will become the ilb owner if there
-+ * is no other owner. And will be the owner till that cpu becomes busy
-+ * or if all cpus in the system stop their ticks at which point
-+ * there is no need for ilb owner.
-+ *
-+ * When the ilb owner becomes busy, it nominates another owner, during the
-+ * next busy scheduler_tick()
++ * We don't do similar optimization for completely idle system, as
++ * selecting an idle cpu will add more delays to the timers than intended
++ * (as that cpu's timer base may not be uptodate wrt jiffies etc).
 + */
-+int select_nohz_load_balancer(int stop_tick)
++int get_nohz_timer_target(void)
 +{
 +	int cpu = smp_processor_id();
++	int i;
++	struct sched_domain *sd;
 +
-+	if (stop_tick) {
-+		cpu_rq(cpu)->in_nohz_recently = 1;
-+
-+		if (!cpu_active(cpu)) {
-+			if (atomic_read(&nohz.load_balancer) != cpu)
-+				return 0;
-+
-+			/*
-+			 * If we are going offline and still the leader,
-+			 * give up!
-+			 */
-+			if (atomic_cmpxchg(&nohz.load_balancer, cpu, -1) != cpu)
-+				BUG();
-+
-+			return 0;
-+		}
-+
-+		cpumask_set_cpu(cpu, nohz.cpu_mask);
-+
-+		/* time for ilb owner also to sleep */
-+		if (cpumask_weight(nohz.cpu_mask) == num_active_cpus()) {
-+			if (atomic_read(&nohz.load_balancer) == cpu)
-+				atomic_set(&nohz.load_balancer, -1);
-+			return 0;
-+		}
-+
-+		if (atomic_read(&nohz.load_balancer) == -1) {
-+			/* make me the ilb owner */
-+			if (atomic_cmpxchg(&nohz.load_balancer, -1, cpu) == -1)
-+				return 1;
-+		} else if (atomic_read(&nohz.load_balancer) == cpu) {
-+			int new_ilb;
-+
-+			if (!(sched_smt_power_savings ||
-+						sched_mc_power_savings))
-+				return 1;
-+			/*
-+			 * Check to see if there is a more power-efficient
-+			 * ilb.
-+			 */
-+			new_ilb = find_new_ilb(cpu);
-+			if (new_ilb < nr_cpu_ids && new_ilb != cpu) {
-+				atomic_set(&nohz.load_balancer, -1);
-+				resched_cpu(new_ilb);
-+				return 0;
-+			}
-+			return 1;
-+		}
-+	} else {
-+		if (!cpumask_test_cpu(cpu, nohz.cpu_mask))
-+			return 0;
-+
-+		cpumask_clear_cpu(cpu, nohz.cpu_mask);
-+
-+		if (atomic_read(&nohz.load_balancer) == cpu)
-+			if (atomic_cmpxchg(&nohz.load_balancer, cpu, -1) != cpu)
-+				BUG();
++	for_each_domain(cpu, sd) {
++		for_each_cpu(i, sched_domain_span(sd))
++			if (!idle_cpu(i))
++				return i;
 +	}
-+	return 0;
++	return cpu;
 +}
 +
 +/*
@@ -5030,11 +5393,6 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +		smp_send_reschedule(cpu);
 +}
 +
-+/* Broken crap on 2.6.35(.0) */
-+int nohz_ratelimit(int cpu)
-+{
-+	return 0;
-+}
 +#endif /* CONFIG_NO_HZ */
 +
 +/*
@@ -5410,19 +5768,48 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 + */
 +static struct notifier_block __cpuinitdata migration_notifier = {
 +	.notifier_call = migration_call,
-+	.priority = 10
++	.priority = CPU_PRI_MIGRATION,
 +};
++
++static int __cpuinit sched_cpu_active(struct notifier_block *nfb,
++				      unsigned long action, void *hcpu)
++{
++	switch (action & ~CPU_TASKS_FROZEN) {
++	case CPU_ONLINE:
++	case CPU_DOWN_FAILED:
++		set_cpu_active((long)hcpu, true);
++		return NOTIFY_OK;
++	default:
++		return NOTIFY_DONE;
++	}
++}
++
++static int __cpuinit sched_cpu_inactive(struct notifier_block *nfb,
++					unsigned long action, void *hcpu)
++{
++	switch (action & ~CPU_TASKS_FROZEN) {
++	case CPU_DOWN_PREPARE:
++		set_cpu_active((long)hcpu, false);
++		return NOTIFY_OK;
++	default:
++		return NOTIFY_DONE;
++	}
++}
 +
 +int __init migration_init(void)
 +{
 +	void *cpu = (void *)(long)smp_processor_id();
 +	int err;
 +
-+	/* Start one for the boot CPU: */
++	/* Initialise migration for the boot CPU */
 +	err = migration_call(&migration_notifier, CPU_UP_PREPARE, cpu);
 +	BUG_ON(err == NOTIFY_BAD);
 +	migration_call(&migration_notifier, CPU_ONLINE, cpu);
 +	register_cpu_notifier(&migration_notifier);
++
++	/* Register cpu active notifiers */
++	cpu_notifier(sched_cpu_active, CPU_PRI_SCHED_ACTIVE);
++	cpu_notifier(sched_cpu_inactive, CPU_PRI_SCHED_INACTIVE);
 +
 +	return 0;
 +}
@@ -5656,24 +6043,23 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +		free_rootdomain(old_rd);
 +}
 +
-+static int init_rootdomain(struct root_domain *rd, bool bootmem)
++static int init_rootdomain(struct root_domain *rd)
 +{
-+	gfp_t gfp = GFP_KERNEL;
-+
 +	memset(rd, 0, sizeof(*rd));
 +
-+	if (bootmem)
-+		gfp = GFP_NOWAIT;
-+
-+	if (!alloc_cpumask_var(&rd->span, gfp))
++	if (!alloc_cpumask_var(&rd->span, GFP_KERNEL))
 +		goto out;
-+	if (!alloc_cpumask_var(&rd->online, gfp))
++	if (!alloc_cpumask_var(&rd->online, GFP_KERNEL))
 +		goto free_span;
-+	if (!alloc_cpumask_var(&rd->rto_mask, gfp))
++	if (!alloc_cpumask_var(&rd->rto_mask, GFP_KERNEL))
 +		goto free_online;
 +
++	if (cpupri_init(&rd->cpupri) != 0)
++		goto free_rto_mask;
 +	return 0;
 +
++free_rto_mask:
++	free_cpumask_var(rd->rto_mask);
 +free_online:
 +	free_cpumask_var(rd->online);
 +free_span:
@@ -5684,7 +6070,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +
 +static void init_defrootdomain(void)
 +{
-+	init_rootdomain(&def_root_domain, true);
++	init_rootdomain(&def_root_domain);
 +
 +	atomic_set(&def_root_domain.refcount, 1);
 +}
@@ -5697,7 +6083,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	if (!rd)
 +		return NULL;
 +
-+	if (init_rootdomain(rd, false) != 0) {
++	if (init_rootdomain(rd) != 0) {
 +		kfree(rd);
 +		return NULL;
 +	}
@@ -6889,29 +7275,35 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +}
 +#endif /* CONFIG_SCHED_MC || CONFIG_SCHED_SMT */
 +
-+#ifndef CONFIG_CPUSETS
 +/*
-+ * Add online and remove offline CPUs from the scheduler domains.
-+ * When cpusets are enabled they take over this function.
++ * Update cpusets according to cpu_active mask.  If cpusets are
++ * disabled, cpuset_update_active_cpus() becomes a simple wrapper
++ * around partition_sched_domains().
 + */
-+static int update_sched_domains(struct notifier_block *nfb,
-+				unsigned long action, void *hcpu)
++static int cpuset_cpu_active(struct notifier_block *nfb, unsigned long action,
++			     void *hcpu)
 +{
-+	switch (action) {
++	switch (action & ~CPU_TASKS_FROZEN) {
 +	case CPU_ONLINE:
-+	case CPU_ONLINE_FROZEN:
-+	case CPU_DOWN_PREPARE:
-+	case CPU_DOWN_PREPARE_FROZEN:
 +	case CPU_DOWN_FAILED:
-+	case CPU_DOWN_FAILED_FROZEN:
-+		partition_sched_domains(1, NULL, NULL);
++		cpuset_update_active_cpus();
 +		return NOTIFY_OK;
-+
 +	default:
 +		return NOTIFY_DONE;
 +	}
 +}
-+#endif
++
++static int cpuset_cpu_inactive(struct notifier_block *nfb, unsigned long action,
++			       void *hcpu)
++{
++	switch (action & ~CPU_TASKS_FROZEN) {
++	case CPU_DOWN_PREPARE:
++		cpuset_update_active_cpus();
++		return NOTIFY_OK;
++	default:
++		return NOTIFY_DONE;
++	}
++}
 +
 +static int update_runtime(struct notifier_block *nfb,
 +				unsigned long action, void *hcpu)
@@ -6983,10 +7375,8 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	mutex_unlock(&sched_domains_mutex);
 +	put_online_cpus();
 +
-+#ifndef CONFIG_CPUSETS
-+	/* XXX: Theoretical race here - CPU may be hotplugged now */
-+	hotcpu_notifier(update_sched_domains, 0);
-+#endif
++	hotcpu_notifier(cpuset_cpu_active, CPU_PRI_CPUSET_ACTIVE);
++	hotcpu_notifier(cpuset_cpu_inactive, CPU_PRI_CPUSET_INACTIVE);
 +
 +	/* RT runtime code needs to handle some hotplug events */
 +	hotcpu_notifier(update_runtime, 0);
@@ -7087,6 +7477,7 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	raw_spin_lock_init(&grq.lock);
 +	grq.nr_running = grq.nr_uninterruptible = grq.nr_switches = 0;
 +	grq.niffies = 0;
++	grq.last_jiffy = jiffies;
 +	raw_spin_lock_init(&grq.iso_lock);
 +	grq.iso_ticks = grq.iso_refractory = 0;
 +#ifdef CONFIG_SMP
@@ -7175,10 +7566,6 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	/* Allocate the nohz_cpu_mask if CONFIG_CPUMASK_OFFSTACK */
 +	zalloc_cpumask_var(&nohz_cpu_mask, GFP_NOWAIT);
 +#ifdef CONFIG_SMP
-+#ifdef CONFIG_NO_HZ
-+	zalloc_cpumask_var(&nohz.cpu_mask, GFP_NOWAIT);
-+	alloc_cpumask_var(&nohz.ilb_grp_nohz_mask, GFP_NOWAIT);
-+#endif
 +	/* May be allocated at isolcpus cmdline parse time */
 +	if (cpu_isolated_map == NULL)
 +		zalloc_cpumask_var(&cpu_isolated_map, GFP_NOWAIT);
@@ -7425,540 +7812,98 @@ Index: linux-2.6.35.5-ck1/kernel/sched_bfs.c
 +	return smt_gain;
 +}
 +#endif
-Index: linux-2.6.35.5-ck1/kernel/posix-cpu-timers.c
+Index: linux-2.6.36-ck1/kernel/sched.c
 ===================================================================
---- linux-2.6.35.5-ck1.orig/kernel/posix-cpu-timers.c	2010-08-02 11:12:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/kernel/posix-cpu-timers.c	2010-09-25 01:17:57.879918844 +1000
-@@ -249,7 +249,7 @@ void thread_group_cputime(struct task_st
- 	do {
- 		times->utime = cputime_add(times->utime, t->utime);
- 		times->stime = cputime_add(times->stime, t->stime);
--		times->sum_exec_runtime += t->se.sum_exec_runtime;
-+		times->sum_exec_runtime += tsk_seruntime(t);
+--- linux-2.6.36-ck1.orig/kernel/sched.c	2010-10-21 10:23:47.515124834 +1100
++++ linux-2.6.36-ck1/kernel/sched.c	2010-10-21 10:28:34.053580026 +1100
+@@ -1,3 +1,6 @@
++#ifdef CONFIG_SCHED_BFS
++#include "sched_bfs.c"
++#else
+ /*
+  *  kernel/sched.c
+  *
+@@ -9188,3 +9191,4 @@ void synchronize_sched_expedited(void)
+ EXPORT_SYMBOL_GPL(synchronize_sched_expedited);
  
- 		t = next_thread(t);
- 	} while (t != tsk);
-@@ -515,7 +515,7 @@ static void cleanup_timers(struct list_h
- void posix_cpu_timers_exit(struct task_struct *tsk)
- {
- 	cleanup_timers(tsk->cpu_timers,
--		       tsk->utime, tsk->stime, tsk->se.sum_exec_runtime);
-+		       tsk->utime, tsk->stime, tsk_seruntime(tsk));
- 
- }
- void posix_cpu_timers_exit_group(struct task_struct *tsk)
-@@ -525,7 +525,7 @@ void posix_cpu_timers_exit_group(struct
- 	cleanup_timers(tsk->signal->cpu_timers,
- 		       cputime_add(tsk->utime, sig->utime),
- 		       cputime_add(tsk->stime, sig->stime),
--		       tsk->se.sum_exec_runtime + sig->sum_sched_runtime);
-+		       tsk_seruntime(tsk) + sig->sum_sched_runtime);
- }
- 
- static void clear_dead_task(struct k_itimer *timer, union cpu_time_count now)
-@@ -956,7 +956,7 @@ static void check_thread_timers(struct t
- 		struct cpu_timer_list *t = list_first_entry(timers,
- 						      struct cpu_timer_list,
- 						      entry);
--		if (!--maxfire || tsk->se.sum_exec_runtime < t->expires.sched) {
-+		if (!--maxfire || tsk_seruntime(tsk) < t->expires.sched) {
- 			tsk->cputime_expires.sched_exp = t->expires.sched;
- 			break;
- 		}
-@@ -973,7 +973,7 @@ static void check_thread_timers(struct t
- 			ACCESS_ONCE(sig->rlim[RLIMIT_RTTIME].rlim_max);
- 
- 		if (hard != RLIM_INFINITY &&
--		    tsk->rt.timeout > DIV_ROUND_UP(hard, USEC_PER_SEC/HZ)) {
-+		    tsk_rttimeout(tsk) > DIV_ROUND_UP(hard, USEC_PER_SEC/HZ)) {
- 			/*
- 			 * At the hard limit, we just die.
- 			 * No need to calculate anything else now.
-@@ -981,7 +981,7 @@ static void check_thread_timers(struct t
- 			__group_send_sig_info(SIGKILL, SEND_SIG_PRIV, tsk);
- 			return;
- 		}
--		if (tsk->rt.timeout > DIV_ROUND_UP(soft, USEC_PER_SEC/HZ)) {
-+		if (tsk_rttimeout(tsk) > DIV_ROUND_UP(soft, USEC_PER_SEC/HZ)) {
- 			/*
- 			 * At the soft limit, send a SIGXCPU every second.
- 			 */
-@@ -1287,7 +1287,7 @@ static inline int fastpath_timer_check(s
- 		struct task_cputime task_sample = {
- 			.utime = tsk->utime,
- 			.stime = tsk->stime,
--			.sum_exec_runtime = tsk->se.sum_exec_runtime
-+			.sum_exec_runtime = tsk_seruntime(tsk)
- 		};
- 
- 		if (task_cputime_expired(&task_sample, &tsk->cputime_expires))
-Index: linux-2.6.35.5-ck1/kernel/exit.c
+ #endif /* #else #ifndef CONFIG_SMP */
++#endif /* CONFIG_SCHED_BFS */
+\ No newline at end of file
+Index: linux-2.6.36-ck1/kernel/sysctl.c
 ===================================================================
---- linux-2.6.35.5-ck1.orig/kernel/exit.c	2010-08-02 11:12:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/kernel/exit.c	2010-09-25 01:17:57.879918844 +1000
-@@ -123,7 +123,7 @@ static void __exit_signal(struct task_st
- 		sig->inblock += task_io_get_inblock(tsk);
- 		sig->oublock += task_io_get_oublock(tsk);
- 		task_io_accounting_add(&sig->ioac, &tsk->ioac);
--		sig->sum_sched_runtime += tsk->se.sum_exec_runtime;
-+		sig->sum_sched_runtime += tsk_seruntime(tsk);
- 	}
+--- linux-2.6.36-ck1.orig/kernel/sysctl.c	2010-10-21 10:23:47.521124572 +1100
++++ linux-2.6.36-ck1/kernel/sysctl.c	2010-10-21 10:28:34.053580026 +1100
+@@ -117,7 +117,12 @@ static int zero;
+ static int __maybe_unused one = 1;
+ static int __maybe_unused two = 2;
+ static unsigned long one_ul = 1;
+-static int one_hundred = 100;
++static int __maybe_unused one_hundred = 100;
++#ifdef CONFIG_SCHED_BFS
++extern int rr_interval;
++extern int sched_iso_cpu;
++static int __read_mostly one_thousand = 1000;
++#endif
+ #ifdef CONFIG_PRINTK
+ static int ten_thousand = 10000;
+ #endif
+@@ -254,7 +259,7 @@ static struct ctl_table root_table[] = {
+ 	{ }
+ };
  
- 	sig->nr_threads--;
-Index: linux-2.6.35.5-ck1/mm/oom_kill.c
+-#ifdef CONFIG_SCHED_DEBUG
++#if defined(CONFIG_SCHED_DEBUG) && !defined(CONFIG_SCHED_BFS)
+ static int min_sched_granularity_ns = 100000;		/* 100 usecs */
+ static int max_sched_granularity_ns = NSEC_PER_SEC;	/* 1 second */
+ static int min_wakeup_granularity_ns;			/* 0 usecs */
+@@ -271,6 +276,7 @@ static int max_extfrag_threshold = 1000;
+ #endif
+ 
+ static struct ctl_table kern_table[] = {
++#ifndef CONFIG_SCHED_BFS
+ 	{
+ 		.procname	= "sched_child_runs_first",
+ 		.data		= &sysctl_sched_child_runs_first,
+@@ -384,6 +390,7 @@ static struct ctl_table kern_table[] = {
+ 		.mode		= 0644,
+ 		.proc_handler	= proc_dointvec,
+ 	},
++#endif /* !CONFIG_SCHED_BFS */
+ #ifdef CONFIG_PROVE_LOCKING
+ 	{
+ 		.procname	= "prove_locking",
+@@ -808,6 +815,26 @@ static struct ctl_table kern_table[] = {
+ 		.proc_handler	= proc_dointvec,
+ 	},
+ #endif
++#ifdef CONFIG_SCHED_BFS
++	{
++		.procname	= "rr_interval",
++		.data		= &rr_interval,
++		.maxlen		= sizeof (int),
++		.mode		= 0644,
++		.proc_handler	= &proc_dointvec_minmax,
++		.extra1		= &one,
++		.extra2		= &one_thousand,
++	},
++	{
++		.procname	= "iso_cpu",
++		.data		= &sched_iso_cpu,
++		.maxlen		= sizeof (int),
++		.mode		= 0644,
++		.proc_handler	= &proc_dointvec_minmax,
++		.extra1		= &zero,
++		.extra2		= &one_hundred,
++	},
++#endif
+ #if defined(CONFIG_S390) && defined(CONFIG_SMP)
+ 	{
+ 		.procname	= "spin_retry",
+Index: linux-2.6.36-ck1/lib/Kconfig.debug
 ===================================================================
---- linux-2.6.35.5-ck1.orig/mm/oom_kill.c	2010-08-02 11:12:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/mm/oom_kill.c	2010-09-25 01:17:57.880918896 +1000
-@@ -411,7 +411,7 @@ static void __oom_kill_task(struct task_
- 	 * all the memory it needs. That way it should be able to
- 	 * exit() and clear out its resources quickly...
- 	 */
--	p->rt.time_slice = HZ;
-+	set_oom_timeslice(p);
- 	set_tsk_thread_flag(p, TIF_MEMDIE);
- 
- 	force_sig(SIGKILL, p);
-Index: linux-2.6.35.5-ck1/init/Kconfig
-===================================================================
---- linux-2.6.35.5-ck1.orig/init/Kconfig	2010-08-02 11:12:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/init/Kconfig	2010-09-25 01:17:57.881918947 +1000
-@@ -23,6 +23,19 @@ config CONSTRUCTORS
- 
- menu "General setup"
- 
-+config SCHED_BFS
-+	bool "BFS cpu scheduler"
-+	---help---
-+	  The Brain Fuck CPU Scheduler for excellent interactivity and
-+	  responsiveness on the desktop and solid scalability on normal
-+          hardware. Not recommended for 4096 CPUs.
-+
-+	  Currently incompatible with the Group CPU scheduler, and RCU TORTURE
-+          TEST so these options are disabled.
-+
-+          Say Y here.
-+	default y
-+
- config EXPERIMENTAL
- 	bool "Prompt for development and/or incomplete code/drivers"
- 	---help---
-@@ -537,7 +550,7 @@ config PROC_PID_CPUSET
- 
- config CGROUP_CPUACCT
- 	bool "Simple CPU accounting cgroup subsystem"
--	depends on CGROUPS
-+	depends on CGROUPS && !SCHED_BFS
- 	help
- 	  Provides a simple Resource Controller for monitoring the
- 	  total CPU consumed by the tasks in a cgroup.
-@@ -592,7 +605,7 @@ config CGROUP_MEM_RES_CTLR_SWAP
- 
- menuconfig CGROUP_SCHED
- 	bool "Group CPU scheduler"
--	depends on EXPERIMENTAL && CGROUPS
-+	depends on EXPERIMENTAL && CGROUPS && !SCHED_BFS
- 	default n
- 	help
- 	  This feature lets CPU scheduler recognize task groups and control CPU
-Index: linux-2.6.35.5-ck1/kernel/delayacct.c
-===================================================================
---- linux-2.6.35.5-ck1.orig/kernel/delayacct.c	2009-12-03 21:40:09.000000000 +1100
-+++ linux-2.6.35.5-ck1/kernel/delayacct.c	2010-09-25 01:17:57.881918947 +1000
-@@ -128,7 +128,7 @@ int __delayacct_add_tsk(struct taskstats
- 	 */
- 	t1 = tsk->sched_info.pcount;
- 	t2 = tsk->sched_info.run_delay;
--	t3 = tsk->se.sum_exec_runtime;
-+	t3 = tsk_seruntime(tsk);
- 
- 	d->cpu_count += t1;
- 
-Index: linux-2.6.35.5-ck1/fs/proc/base.c
-===================================================================
---- linux-2.6.35.5-ck1.orig/fs/proc/base.c	2010-08-02 11:12:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/fs/proc/base.c	2010-09-25 01:17:57.882918998 +1000
-@@ -355,7 +355,7 @@ static int proc_pid_stack(struct seq_fil
- static int proc_pid_schedstat(struct task_struct *task, char *buffer)
- {
- 	return sprintf(buffer, "%llu %llu %lu\n",
--			(unsigned long long)task->se.sum_exec_runtime,
-+			(unsigned long long)tsk_seruntime(task),
- 			(unsigned long long)task->sched_info.run_delay,
- 			task->sched_info.pcount);
- }
-Index: linux-2.6.35.5-ck1/init/main.c
-===================================================================
---- linux-2.6.35.5-ck1.orig/init/main.c	2010-08-02 11:12:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/init/main.c	2010-09-25 01:17:57.883919049 +1000
-@@ -834,6 +834,7 @@ static noinline int init_post(void)
- 	system_state = SYSTEM_RUNNING;
- 	numa_default_policy();
- 
-+	print_scheduler_version();
- 
- 	current->signal->flags |= SIGNAL_UNKILLABLE;
- 
-Index: linux-2.6.35.5-ck1/Documentation/scheduler/sched-BFS.txt
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.35.5-ck1/Documentation/scheduler/sched-BFS.txt	2010-09-25 01:19:19.940498094 +1000
-@@ -0,0 +1,351 @@
-+BFS - The Brain Fuck Scheduler by Con Kolivas.
-+
-+Goals.
-+
-+The goal of the Brain Fuck Scheduler, referred to as BFS from here on, is to
-+completely do away with the complex designs of the past for the cpu process
-+scheduler and instead implement one that is very simple in basic design.
-+The main focus of BFS is to achieve excellent desktop interactivity and
-+responsiveness without heuristics and tuning knobs that are difficult to
-+understand, impossible to model and predict the effect of, and when tuned to
-+one workload cause massive detriment to another.
-+
-+
-+Design summary.
-+
-+BFS is best described as a single runqueue, O(n) lookup, earliest effective
-+virtual deadline first design, loosely based on EEVDF (earliest eligible virtual
-+deadline first) and my previous Staircase Deadline scheduler. Each component
-+shall be described in order to understand the significance of, and reasoning for
-+it. The codebase when the first stable version was released was approximately
-+9000 lines less code than the existing mainline linux kernel scheduler (in
-+2.6.31). This does not even take into account the removal of documentation and
-+the cgroups code that is not used.
-+
-+Design reasoning.
-+
-+The single runqueue refers to the queued but not running processes for the
-+entire system, regardless of the number of CPUs. The reason for going back to
-+a single runqueue design is that once multiple runqueues are introduced,
-+per-CPU or otherwise, there will be complex interactions as each runqueue will
-+be responsible for the scheduling latency and fairness of the tasks only on its
-+own runqueue, and to achieve fairness and low latency across multiple CPUs, any
-+advantage in throughput of having CPU local tasks causes other disadvantages.
-+This is due to requiring a very complex balancing system to at best achieve some
-+semblance of fairness across CPUs and can only maintain relatively low latency
-+for tasks bound to the same CPUs, not across them. To increase said fairness
-+and latency across CPUs, the advantage of local runqueue locking, which makes
-+for better scalability, is lost due to having to grab multiple locks.
-+
-+A significant feature of BFS is that all accounting is done purely based on CPU
-+used and nowhere is sleep time used in any way to determine entitlement or
-+interactivity. Interactivity "estimators" that use some kind of sleep/run
-+algorithm are doomed to fail to detect all interactive tasks, and to falsely tag
-+tasks that aren't interactive as being so. The reason for this is that it is
-+close to impossible to determine that when a task is sleeping, whether it is
-+doing it voluntarily, as in a userspace application waiting for input in the
-+form of a mouse click or otherwise, or involuntarily, because it is waiting for
-+another thread, process, I/O, kernel activity or whatever. Thus, such an
-+estimator will introduce corner cases, and more heuristics will be required to
-+cope with those corner cases, introducing more corner cases and failed
-+interactivity detection and so on. Interactivity in BFS is built into the design
-+by virtue of the fact that tasks that are waking up have not used up their quota
-+of CPU time, and have earlier effective deadlines, thereby making it very likely
-+they will preempt any CPU bound task of equivalent nice level. See below for
-+more information on the virtual deadline mechanism. Even if they do not preempt
-+a running task, because the rr interval is guaranteed to have a bound upper
-+limit on how long a task will wait for, it will be scheduled within a timeframe
-+that will not cause visible interface jitter.
-+
-+
-+Design details.
-+
-+Task insertion.
-+
-+BFS inserts tasks into each relevant queue as an O(1) insertion into a double
-+linked list. On insertion, *every* running queue is checked to see if the newly
-+queued task can run on any idle queue, or preempt the lowest running task on the
-+system. This is how the cross-CPU scheduling of BFS achieves significantly lower
-+latency per extra CPU the system has. In this case the lookup is, in the worst
-+case scenario, O(n) where n is the number of CPUs on the system.
-+
-+Data protection.
-+
-+BFS has one single lock protecting the process local data of every task in the
-+global queue. Thus every insertion, removal and modification of task data in the
-+global runqueue needs to grab the global lock. However, once a task is taken by
-+a CPU, the CPU has its own local data copy of the running process' accounting
-+information which only that CPU accesses and modifies (such as during a
-+timer tick) thus allowing the accounting data to be updated lockless. Once a
-+CPU has taken a task to run, it removes it from the global queue. Thus the
-+global queue only ever has, at most,
-+
-+	(number of tasks requesting cpu time) - (number of logical CPUs) + 1
-+
-+tasks in the global queue. This value is relevant for the time taken to look up
-+tasks during scheduling. This will increase if many tasks with CPU affinity set
-+in their policy to limit which CPUs they're allowed to run on if they outnumber
-+the number of CPUs. The +1 is because when rescheduling a task, the CPU's
-+currently running task is put back on the queue. Lookup will be described after
-+the virtual deadline mechanism is explained.
-+
-+Virtual deadline.
-+
-+The key to achieving low latency, scheduling fairness, and "nice level"
-+distribution in BFS is entirely in the virtual deadline mechanism. The one
-+tunable in BFS is the rr_interval, or "round robin interval". This is the
-+maximum time two SCHED_OTHER (or SCHED_NORMAL, the common scheduling policy)
-+tasks of the same nice level will be running for, or looking at it the other
-+way around, the longest duration two tasks of the same nice level will be
-+delayed for. When a task requests cpu time, it is given a quota (time_slice)
-+equal to the rr_interval and a virtual deadline. The virtual deadline is
-+offset from the current time in jiffies by this equation:
-+
-+	jiffies + (prio_ratio * rr_interval)
-+
-+The prio_ratio is determined as a ratio compared to the baseline of nice -20
-+and increases by 10% per nice level. The deadline is a virtual one only in that
-+no guarantee is placed that a task will actually be scheduled by this time, but
-+it is used to compare which task should go next. There are three components to
-+how a task is next chosen. First is time_slice expiration. If a task runs out
-+of its time_slice, it is descheduled, the time_slice is refilled, and the
-+deadline reset to that formula above. Second is sleep, where a task no longer
-+is requesting CPU for whatever reason. The time_slice and deadline are _not_
-+adjusted in this case and are just carried over for when the task is next
-+scheduled. Third is preemption, and that is when a newly waking task is deemed
-+higher priority than a currently running task on any cpu by virtue of the fact
-+that it has an earlier virtual deadline than the currently running task. The
-+earlier deadline is the key to which task is next chosen for the first and
-+second cases. Once a task is descheduled, it is put back on the queue, and an
-+O(n) lookup of all queued-but-not-running tasks is done to determine which has
-+the earliest deadline and that task is chosen to receive CPU next.
-+
-+The CPU proportion of different nice tasks works out to be approximately the
-+
-+	(prio_ratio difference)^2
-+
-+The reason it is squared is that a task's deadline does not change while it is
-+running unless it runs out of time_slice. Thus, even if the time actually
-+passes the deadline of another task that is queued, it will not get CPU time
-+unless the current running task deschedules, and the time "base" (jiffies) is
-+constantly moving.
-+
-+Task lookup.
-+
-+BFS has 103 priority queues. 100 of these are dedicated to the static priority
-+of realtime tasks, and the remaining 3 are, in order of best to worst priority,
-+SCHED_ISO (isochronous), SCHED_NORMAL, and SCHED_IDLEPRIO (idle priority
-+scheduling). When a task of these priorities is queued, a bitmap of running
-+priorities is set showing which of these priorities has tasks waiting for CPU
-+time. When a CPU is made to reschedule, the lookup for the next task to get
-+CPU time is performed in the following way:
-+
-+First the bitmap is checked to see what static priority tasks are queued. If
-+any realtime priorities are found, the corresponding queue is checked and the
-+first task listed there is taken (provided CPU affinity is suitable) and lookup
-+is complete. If the priority corresponds to a SCHED_ISO task, they are also
-+taken in FIFO order (as they behave like SCHED_RR). If the priority corresponds
-+to either SCHED_NORMAL or SCHED_IDLEPRIO, then the lookup becomes O(n). At this
-+stage, every task in the runlist that corresponds to that priority is checked
-+to see which has the earliest set deadline, and (provided it has suitable CPU
-+affinity) it is taken off the runqueue and given the CPU. If a task has an
-+expired deadline, it is taken and the rest of the lookup aborted (as they are
-+chosen in FIFO order).
-+
-+Thus, the lookup is O(n) in the worst case only, where n is as described
-+earlier, as tasks may be chosen before the whole task list is looked over.
-+
-+
-+Scalability.
-+
-+The major limitations of BFS will be that of scalability, as the separate
-+runqueue designs will have less lock contention as the number of CPUs rises.
-+However they do not scale linearly even with separate runqueues as multiple
-+runqueues will need to be locked concurrently on such designs to be able to
-+achieve fair CPU balancing, to try and achieve some sort of nice-level fairness
-+across CPUs, and to achieve low enough latency for tasks on a busy CPU when
-+other CPUs would be more suited. BFS has the advantage that it requires no
-+balancing algorithm whatsoever, as balancing occurs by proxy simply because
-+all CPUs draw off the global runqueue, in priority and deadline order. Despite
-+the fact that scalability is _not_ the prime concern of BFS, it both shows very
-+good scalability to smaller numbers of CPUs and is likely a more scalable design
-+at these numbers of CPUs.
-+
-+It also has some very low overhead scalability features built into the design
-+when it has been deemed their overhead is so marginal that they're worth adding.
-+The first is the local copy of the running process' data to the CPU it's running
-+on to allow that data to be updated lockless where possible. Then there is
-+deference paid to the last CPU a task was running on, by trying that CPU first
-+when looking for an idle CPU to use the next time it's scheduled. Finally there
-+is the notion of cache locality beyond the last running CPU. The sched_domains
-+information is used to determine the relative virtual "cache distance" that
-+other CPUs have from the last CPU a task was running on. CPUs with shared
-+caches, such as SMT siblings, or multicore CPUs with shared caches, are treated
-+as cache local. CPUs without shared caches are treated as not cache local, and
-+CPUs on different NUMA nodes are treated as very distant. This "relative cache
-+distance" is used by modifying the virtual deadline value when doing lookups.
-+Effectively, the deadline is unaltered between "cache local" CPUs, doubled for
-+"cache distant" CPUs, and quadrupled for "very distant" CPUs. The reasoning
-+behind the doubling of deadlines is as follows. The real cost of migrating a
-+task from one CPU to another is entirely dependant on the cache footprint of
-+the task, how cache intensive the task is, how long it's been running on that
-+CPU to take up the bulk of its cache, how big the CPU cache is, how fast and
-+how layered the CPU cache is, how fast a context switch is... and so on. In
-+other words, it's close to random in the real world where we do more than just
-+one sole workload. The only thing we can be sure of is that it's not free. So
-+BFS uses the principle that an idle CPU is a wasted CPU and utilising idle CPUs
-+is more important than cache locality, and cache locality only plays a part
-+after that. Doubling the effective deadline is based on the premise that the
-+"cache local" CPUs will tend to work on the same tasks up to double the number
-+of cache local CPUs, and once the workload is beyond that amount, it is likely
-+that none of the tasks are cache warm anywhere anyway. The quadrupling for NUMA
-+is a value I pulled out of my arse.
-+
-+When choosing an idle CPU for a waking task, the cache locality is determined
-+according to where the task last ran and then idle CPUs are ranked from best
-+to worst to choose the most suitable idle CPU based on cache locality, NUMA
-+node locality and hyperthread sibling business. They are chosen in the
-+following preference (if idle):
-+
-+* Same core, idle or busy cache, idle threads
-+* Other core, same cache, idle or busy cache, idle threads.
-+* Same node, other CPU, idle cache, idle threads.
-+* Same node, other CPU, busy cache, idle threads.
-+* Same core, busy threads.
-+* Other core, same cache, busy threads.
-+* Same node, other CPU, busy threads.
-+* Other node, other CPU, idle cache, idle threads.
-+* Other node, other CPU, busy cache, idle threads.
-+* Other node, other CPU, busy threads.
-+
-+This shows the SMT or "hyperthread" awareness in the design as well which will
-+choose a real idle core first before a logical SMT sibling which already has
-+tasks on the physical CPU.
-+
-+Early benchmarking of BFS suggested scalability dropped off at the 16 CPU mark.
-+However this benchmarking was performed on an earlier design that was far less
-+scalable than the current one so it's hard to know how scalable it is in terms
-+of both CPUs (due to the global runqueue) and heavily loaded machines (due to
-+O(n) lookup) at this stage. Note that in terms of scalability, the number of
-+_logical_ CPUs matters, not the number of _physical_ CPUs. Thus, a dual (2x)
-+quad core (4X) hyperthreaded (2X) machine is effectively a 16X. Newer benchmark
-+results are very promising indeed, without needing to tweak any knobs, features
-+or options. Benchmark contributions are most welcome.
-+
-+
-+Features
-+
-+As the initial prime target audience for BFS was the average desktop user, it
-+was designed to not need tweaking, tuning or have features set to obtain benefit
-+from it. Thus the number of knobs and features has been kept to an absolute
-+minimum and should not require extra user input for the vast majority of cases.
-+There are precisely 2 tunables, and 2 extra scheduling policies. The rr_interval
-+and iso_cpu tunables, and the SCHED_ISO and SCHED_IDLEPRIO policies. In addition
-+to this, BFS also uses sub-tick accounting. What BFS does _not_ now feature is
-+support for CGROUPS. The average user should neither need to know what these
-+are, nor should they need to be using them to have good desktop behaviour.
-+
-+rr_interval
-+
-+There is only one "scheduler" tunable, the round robin interval. This can be
-+accessed in
-+
-+	/proc/sys/kernel/rr_interval
-+
-+The value is in milliseconds, and the default value is set to 6 on a
-+uniprocessor machine, and automatically set to a progressively higher value on
-+multiprocessor machines. The reasoning behind increasing the value on more CPUs
-+is that the effective latency is decreased by virtue of there being more CPUs on
-+BFS (for reasons explained above), and increasing the value allows for less
-+cache contention and more throughput. Valid values are from 1 to 1000
-+Decreasing the value will decrease latencies at the cost of decreasing
-+throughput, while increasing it will improve throughput, but at the cost of
-+worsening latencies. The accuracy of the rr interval is limited by HZ resolution
-+of the kernel configuration. Thus, the worst case latencies are usually slightly
-+higher than this actual value. The default value of 6 is not an arbitrary one.
-+It is based on the fact that humans can detect jitter at approximately 7ms, so
-+aiming for much lower latencies is pointless under most circumstances. It is
-+worth noting this fact when comparing the latency performance of BFS to other
-+schedulers. Worst case latencies being higher than 7ms are far worse than
-+average latencies not being in the microsecond range.
-+
-+Isochronous scheduling.
-+
-+Isochronous scheduling is a unique scheduling policy designed to provide
-+near-real-time performance to unprivileged (ie non-root) users without the
-+ability to starve the machine indefinitely. Isochronous tasks (which means
-+"same time") are set using, for example, the schedtool application like so:
-+
-+	schedtool -I -e amarok
-+
-+This will start the audio application "amarok" as SCHED_ISO. How SCHED_ISO works
-+is that it has a priority level between true realtime tasks and SCHED_NORMAL
-+which would allow them to preempt all normal tasks, in a SCHED_RR fashion (ie,
-+if multiple SCHED_ISO tasks are running, they purely round robin at rr_interval
-+rate). However if ISO tasks run for more than a tunable finite amount of time,
-+they are then demoted back to SCHED_NORMAL scheduling. This finite amount of
-+time is the percentage of _total CPU_ available across the machine, configurable
-+as a percentage in the following "resource handling" tunable (as opposed to a
-+scheduler tunable):
-+
-+	/proc/sys/kernel/iso_cpu
-+
-+and is set to 70% by default. It is calculated over a rolling 5 second average
-+Because it is the total CPU available, it means that on a multi CPU machine, it
-+is possible to have an ISO task running as realtime scheduling indefinitely on
-+just one CPU, as the other CPUs will be available. Setting this to 100 is the
-+equivalent of giving all users SCHED_RR access and setting it to 0 removes the
-+ability to run any pseudo-realtime tasks.
-+
-+A feature of BFS is that it detects when an application tries to obtain a
-+realtime policy (SCHED_RR or SCHED_FIFO) and the caller does not have the
-+appropriate privileges to use those policies. When it detects this, it will
-+give the task SCHED_ISO policy instead. Thus it is transparent to the user.
-+Because some applications constantly set their policy as well as their nice
-+level, there is potential for them to undo the override specified by the user
-+on the command line of setting the policy to SCHED_ISO. To counter this, once
-+a task has been set to SCHED_ISO policy, it needs superuser privileges to set
-+it back to SCHED_NORMAL. This will ensure the task remains ISO and all child
-+processes and threads will also inherit the ISO policy.
-+
-+Idleprio scheduling.
-+
-+Idleprio scheduling is a scheduling policy designed to give out CPU to a task
-+_only_ when the CPU would be otherwise idle. The idea behind this is to allow
-+ultra low priority tasks to be run in the background that have virtually no
-+effect on the foreground tasks. This is ideally suited to distributed computing
-+clients (like setiathome, folding, mprime etc) but can also be used to start
-+a video encode or so on without any slowdown of other tasks. To avoid this
-+policy from grabbing shared resources and holding them indefinitely, if it
-+detects a state where the task is waiting on I/O, the machine is about to
-+suspend to ram and so on, it will transiently schedule them as SCHED_NORMAL. As
-+per the Isochronous task management, once a task has been scheduled as IDLEPRIO,
-+it cannot be put back to SCHED_NORMAL without superuser privileges. Tasks can
-+be set to start as SCHED_IDLEPRIO with the schedtool command like so:
-+
-+	schedtool -D -e ./mprime
-+
-+Subtick accounting.
-+
-+It is surprisingly difficult to get accurate CPU accounting, and in many cases,
-+the accounting is done by simply determining what is happening at the precise
-+moment a timer tick fires off. This becomes increasingly inaccurate as the
-+timer tick frequency (HZ) is lowered. It is possible to create an application
-+which uses almost 100% CPU, yet by being descheduled at the right time, records
-+zero CPU usage. While the main problem with this is that there are possible
-+security implications, it is also difficult to determine how much CPU a task
-+really does use. BFS tries to use the sub-tick accounting from the TSC clock,
-+where possible, to determine real CPU usage. This is not entirely reliable, but
-+is far more likely to produce accurate CPU usage data than the existing designs
-+and will not show tasks as consuming no CPU usage when they actually are. Thus,
-+the amount of CPU reported as being used by BFS will more accurately represent
-+how much CPU the task itself is using (as is shown for example by the 'time'
-+application), so the reported values may be quite different to other schedulers.
-+Values reported as the 'load' are more prone to problems with this design, but
-+per process values are closer to real usage. When comparing throughput of BFS
-+to other designs, it is important to compare the actual completed work in terms
-+of total wall clock time taken and total work done, rather than the reported
-+"cpu usage".
-+
-+
-+Con Kolivas <kernel@kolivas.org> Fri Aug 27 2010
-Index: linux-2.6.35.5-ck1/lib/Kconfig.debug
-===================================================================
---- linux-2.6.35.5-ck1.orig/lib/Kconfig.debug	2010-08-02 11:12:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/lib/Kconfig.debug	2010-09-25 01:17:57.884919101 +1000
-@@ -760,7 +760,7 @@ config BOOT_PRINTK_DELAY
+--- linux-2.6.36-ck1.orig/lib/Kconfig.debug	2010-10-21 10:23:47.537123871 +1100
++++ linux-2.6.36-ck1/lib/Kconfig.debug	2010-10-21 10:28:34.054579982 +1100
+@@ -790,7 +790,7 @@ config BOOT_PRINTK_DELAY
  
  config RCU_TORTURE_TEST
  	tristate "torture tests for RCU"
@@ -7967,75 +7912,3 @@ Index: linux-2.6.35.5-ck1/lib/Kconfig.debug
  	default n
  	help
  	  This option provides a kernel module that runs torture tests
-Index: linux-2.6.35.5-ck1/arch/powerpc/platforms/cell/spufs/sched.c
-===================================================================
---- linux-2.6.35.5-ck1.orig/arch/powerpc/platforms/cell/spufs/sched.c	2010-05-17 18:51:19.000000000 +1000
-+++ linux-2.6.35.5-ck1/arch/powerpc/platforms/cell/spufs/sched.c	2010-09-25 01:17:57.884919102 +1000
-@@ -64,11 +64,6 @@ static struct timer_list spusched_timer;
- static struct timer_list spuloadavg_timer;
- 
- /*
-- * Priority of a normal, non-rt, non-niced'd process (aka nice level 0).
-- */
--#define NORMAL_PRIO		120
--
--/*
-  * Frequency of the spu scheduler tick.  By default we do one SPU scheduler
-  * tick for every 10 CPU scheduler ticks.
-  */
-Index: linux-2.6.35.5-ck1/kernel/sched.c
-===================================================================
---- linux-2.6.35.5-ck1.orig/kernel/sched.c	2010-09-25 01:17:40.373013028 +1000
-+++ linux-2.6.35.5-ck1/kernel/sched.c	2010-09-25 01:17:57.885919154 +1000
-@@ -1,3 +1,6 @@
-+#ifdef CONFIG_SCHED_BFS
-+#include "sched_bfs.c"
-+#else
- /*
-  *  kernel/sched.c
-  *
-@@ -8977,3 +8980,4 @@ void synchronize_sched_expedited(void)
- EXPORT_SYMBOL_GPL(synchronize_sched_expedited);
- 
- #endif /* #else #ifndef CONFIG_SMP */
-+#endif /* CONFIG_SCHED_BFS */
-\ No newline at end of file
-Index: linux-2.6.35.5-ck1/include/linux/ioprio.h
-===================================================================
---- linux-2.6.35.5-ck1.orig/include/linux/ioprio.h	2009-06-10 13:05:27.000000000 +1000
-+++ linux-2.6.35.5-ck1/include/linux/ioprio.h	2010-09-25 01:17:57.885919154 +1000
-@@ -64,6 +64,8 @@ static inline int task_ioprio_class(stru
- 
- static inline int task_nice_ioprio(struct task_struct *task)
- {
-+	if (iso_task(task))
-+		return 0;
- 	return (task_nice(task) + 20) / 5;
- }
- 
-Index: linux-2.6.35.5-ck1/kernel/kthread.c
-===================================================================
---- linux-2.6.35.5-ck1.orig/kernel/kthread.c	2010-05-17 18:51:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/kernel/kthread.c	2010-09-25 01:17:57.886919204 +1000
-@@ -167,7 +167,9 @@ void kthread_bind(struct task_struct *p,
- 	}
- 
- 	p->cpus_allowed = cpumask_of_cpu(cpu);
-+#ifndef CONFIG_SCHED_BFS
- 	p->rt.nr_cpus_allowed = 1;
-+#endif
- 	p->flags |= PF_THREAD_BOUND;
- }
- EXPORT_SYMBOL(kthread_bind);
-Index: linux-2.6.35.5-ck1/kernel/slow-work.c
-===================================================================
---- linux-2.6.35.5-ck1.orig/kernel/slow-work.c	2010-05-17 18:51:25.000000000 +1000
-+++ linux-2.6.35.5-ck1/kernel/slow-work.c	2010-09-25 01:17:57.886919204 +1000
-@@ -716,7 +716,6 @@ static int slow_work_thread(void *_data)
- 	DEFINE_WAIT(wait);
- 
- 	set_freezable();
--	set_user_nice(current, -5);
- 
- 	/* allocate ourselves an ID */
- 	spin_lock_irq(&slow_work_queue_lock);
