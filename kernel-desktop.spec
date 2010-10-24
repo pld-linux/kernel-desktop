@@ -34,7 +34,6 @@
 %bcond_with	laptop		# build for laptops - 100Hz
 %bcond_with	grsec_minimal	# build wihout grsec_minimal
 %bcond_with	sreadahead	# uuooaaa, be frickin' fast at boot
-%bcond_with	bfs		# Brain Fuck Scheduler - could be good only for desktops/laptops/eeePC
 %bcond_without	tuxonice	# build without tuxonice support
 %bcond_without	unionfs		# build without unionfs support
 
@@ -104,8 +103,7 @@ Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
 # sreadahead - get it from http://code.google.com/p/sreadahead/source/browse/trunk/0001-kernel-trace-open.patch
 Patch4:		kernel-desktop-trace-open.patch
-# replace for cfs : http://ck.kolivas.org/patches/bfs/ see bfs-faq.txt
-Patch5:		kernel-desktop-sched-bfs.patch
+Patch5:		bfs357-worker_fix.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -433,11 +431,10 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %if %{with sreadahead}
 %patch4 -p1
 %endif
-# bfs
-%if %{with bfs}
-%patch5 -p1
-%endif
+# Con Kolivas patchset
 %{__bzip2} -dc %{SOURCE101} | patch -p1 -s
+# fix worker for CK1
+%patch5 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
@@ -531,9 +528,7 @@ cat %{SOURCE14} >> %{defconfig}
 echo "CONFIG_OPEN_TRACER=y" >> %{defconfig}
 %endif
 
-%if %{with bfs}
 echo "CONFIG_SCHED_BFS=y" >> %{defconfig}
-%endif
 }
 
 BuildKernel() {
