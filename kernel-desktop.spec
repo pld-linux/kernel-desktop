@@ -46,7 +46,7 @@
 
 %define		_basever		2.6.36
 %define		_postver		%{nil}
-%define		_rel			0.271
+%define		_rel			0.2718
 
 %define		_enable_debug_packages			0
 
@@ -94,6 +94,9 @@ Source14:	kernel-desktop-unionfs.config
 #Source100:	tuxonice-3.1.1.1-for-2.6.35.patch.bz2
 Source100:	http://www.tuxonice.net/downloads/all/current-tuxonice-for-2.6.35.patch-20100815-v1.bz2
 # Source100-md5:	3bc0ec5e5b666753a4e9eea992dcf60f
+# Con Kolivas patchset: http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6
+Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.36/2.6.36-ck1/patch-2.6.36-ck1.bz2
+# Source101-md5:	7022362c1c7598287bdeb66db5063c4a
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.33.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
@@ -434,6 +437,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %if %{with bfs}
 %patch5 -p1
 %endif
+%{__bzip2} -dc %{SOURCE101} | patch -p1 -s
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
