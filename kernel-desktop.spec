@@ -45,7 +45,7 @@
 
 %define		_basever		2.6.36
 %define		_postver		%{nil}
-%define		_rel			0.2718
+%define		_rel			0.27182
 
 %define		_enable_debug_packages			0
 
@@ -437,10 +437,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %patch5 -p1
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
-
-# on sparc this line causes CONFIG_INPUT=m (instead of =y), thus breaking build
-sed -i -e '/select INPUT/d' net/bluetooth/hidp/Kconfig
+sed -i 's#EXTRAVERSION :=.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
