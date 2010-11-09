@@ -45,7 +45,7 @@
 
 %define		_basever		2.6.36
 %define		_postver		%{nil}
-%define		_rel			3
+%define		_rel			4
 
 %define		_enable_debug_packages			0
 
