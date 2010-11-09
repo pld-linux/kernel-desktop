@@ -45,7 +45,7 @@
 
 %define		_basever		2.6.36
 %define		_postver		%{nil}
-%define		_rel			2
+%define		_rel			3
 
 %define		_enable_debug_packages			0
 
@@ -97,7 +97,7 @@ Source100:	http://tuxonice.net/files/tuxonice-3.2-rc2-for-2.6.36.patch.bz2
 Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.36/2.6.36-ck1/patch-2.6.36-ck1.bz2
 # Source101-md5:	7022362c1c7598287bdeb66db5063c4a
 Patch0:		kernel-desktop-bootsplash.patch
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.4_for_2.6.33.diff.gz
+# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.7_for_2.6.36.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
 Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
