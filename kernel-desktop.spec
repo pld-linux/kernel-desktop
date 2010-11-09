@@ -94,8 +94,8 @@ Source14:	kernel-desktop-unionfs.config
 Source100:	http://tuxonice.net/files/tuxonice-3.2-rc2-for-2.6.36.patch.bz2
 # Source100-md5:	9e9986a855a12e44b143f741fb6ed26d
 # Con Kolivas patchset: http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6
-Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.36/2.6.36-ck1/patch-2.6.36-ck1.bz2
-# Source101-md5:	7022362c1c7598287bdeb66db5063c4a
+Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.36/2.6.36-ck2/patch-2.6.36-ck2.bz2
+# Source101-md5:	055c90cf7a835efe7dfd216df3e92828
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.7_for_2.6.36.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
