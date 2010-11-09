@@ -103,7 +103,6 @@ Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
 # sreadahead - get it from http://code.google.com/p/sreadahead/source/browse/trunk/0001-kernel-trace-open.patch
 Patch4:		kernel-desktop-trace-open.patch
-Patch5:		bfs357-worker_fix.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -433,8 +432,6 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %endif
 # Con Kolivas patchset
 %{__bzip2} -dc %{SOURCE101} | patch -p1 -s
-# fix worker for CK1
-%patch5 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION :=.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
