@@ -532,10 +532,10 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index df34283..559779b 100644
+index f2a2b8e..11d7f45 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -5877,6 +5877,14 @@ F:	Documentation/cdrom/
+@@ -5917,6 +5917,14 @@ F:	Documentation/cdrom/
  F:	drivers/cdrom/cdrom.c
  F:	include/linux/cdrom.h
  
@@ -723,11 +723,11 @@ index 0000000..f3c1ac4
 +	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..08f4fd4
+index 0000000..86c32ba
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.6 (for 2.6.36-rc5)"
++UNIONFS_VERSION="2.5.7 (for 2.6.36)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -1492,9 +1492,9 @@ index 0000000..51ea65e
 +	if (lower_file->f_op->unlocked_ioctl) {
 +		err = lower_file->f_op->unlocked_ioctl(lower_file, cmd, arg);
 +#ifdef CONFIG_COMPAT
-+	} else if (lower_file->f_op->compat_ioctl) {
++	} else if (lower_file->f_op->ioctl) {
 +		err = lower_file->f_op->compat_ioctl(
-+			//lower_file->f_path.dentry->d_inode,
++			lower_file->f_path.dentry->d_inode,
 +			lower_file, cmd, arg);
 +#endif
 +	}
@@ -8384,10 +8384,10 @@ index 0000000..570a344
 +}
 diff --git a/fs/unionfs/super.c b/fs/unionfs/super.c
 new file mode 100644
-index 0000000..b8cabec
+index 0000000..45bb9bf
 --- /dev/null
 +++ b/fs/unionfs/super.c
-@@ -0,0 +1,1026 @@
+@@ -0,0 +1,1029 @@
 +/*
 + * Copyright (c) 2003-2010 Erez Zadok
 + * Copyright (c) 2003-2006 Charles P. Wright
@@ -9223,6 +9223,9 @@ index 0000000..b8cabec
 +	struct inode *lower_inode;
 +	struct list_head *pos, *n;
 +	struct unionfs_dir_state *rdstate;
++
++	truncate_inode_pages(&inode->i_data, 0);
++	end_writeback(inode);
 +
 +	list_for_each_safe(pos, n, &UNIONFS_I(inode)->readdircache) {
 +		rdstate = list_entry(pos, struct unionfs_dir_state, cache);
