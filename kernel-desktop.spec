@@ -45,7 +45,7 @@
 
 %define		_basever		2.6.36
 %define		_postver		%{nil}
-%define		_rel			4
+%define		_rel			5
 
 %define		_enable_debug_packages			0
 
@@ -500,7 +500,7 @@ BuildConfig() {
 
 %if %{with laptop}
 %__sed -i "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:" %{defconfig}
-%__sed -i "s:CONFIG_HZ_2000=y:# CONFIG_HZ_1000 is not set:" %{defconfig}
+%__sed -i "s:CONFIG_HZ_2000=y:# CONFIG_HZ_2000 is not set:" %{defconfig}
 %__sed -i "s:CONFIG_HZ=2000:CONFIG_HZ=100:" %{defconfig}
 %__sed -i "s:# CONFIG_NO_HZ is not set:CONFIG_NO_HZ=y:" %{defconfig}
 %endif
