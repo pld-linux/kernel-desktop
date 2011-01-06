@@ -554,7 +554,7 @@ PreInstallKernel() {
 	install vmlinux $KERNEL_INSTALL_DIR/boot/vmlinux-$KernelVer
 %endif
 
-	%{__make} %CrossOpts modules_install firmware_install \
+	%{__make} -j1 %CrossOpts modules_install firmware_install \
 		%{?with_verbose:V=1} \
 		DEPMOD=%DepMod \
 		INSTALL_MOD_PATH=$KERNEL_INSTALL_DIR \
