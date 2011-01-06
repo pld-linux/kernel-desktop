@@ -43,9 +43,9 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.36
-%define		_postver		.2
-%define		_rel			1
+%define		_basever		2.6.37
+%define		_postver		%{nil}
+%define		_rel			0.1
 
 %define		_enable_debug_packages			0
 
@@ -73,7 +73,7 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	61f3739a73afb6914cb007f37fb09b62
+# Source0-md5:	c8ee37b4fdccdb651e0603d35350b434
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
 # Source1-md5:	4b01c5f9657a9587b262df5f8d784116
@@ -94,8 +94,8 @@ Source14:	kernel-desktop-unionfs.config
 Source100:	http://tuxonice.net/files/tuxonice-3.2-rc2-for-2.6.36.patch.bz2
 # Source100-md5:	9e9986a855a12e44b143f741fb6ed26d
 # Con Kolivas patchset: http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6
-Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.36/2.6.36-ck2/patch-2.6.36-ck2.bz2
-# Source101-md5:	055c90cf7a835efe7dfd216df3e92828
+Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.37/2.6.37-ck1/patch-2.6.37-ck1.bz2
+# Source101-md5:	d5c93c7df1692d364c15d8eea0b384c9
 Patch0:		kernel-desktop-bootsplash.patch
 # http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.7_for_2.6.36.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
