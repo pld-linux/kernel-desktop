@@ -1,8 +1,8 @@
 diff --git a/Documentation/filesystems/00-INDEX b/Documentation/filesystems/00-INDEX
-index 4303614..5ade4a8 100644
+index 8c624a1..4aa288b 100644
 --- a/Documentation/filesystems/00-INDEX
 +++ b/Documentation/filesystems/00-INDEX
-@@ -112,6 +112,8 @@ udf.txt
+@@ -110,6 +110,8 @@ udf.txt
  	- info and mount options for the UDF filesystem.
  ufs.txt
  	- info on the ufs filesystem.
@@ -532,10 +532,10 @@ index 0000000..1adde69
 +
 +For more information, see <http://unionfs.filesystems.org/>.
 diff --git a/MAINTAINERS b/MAINTAINERS
-index f2a2b8e..11d7f45 100644
+index 0094224..6d2421f 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -5917,6 +5917,14 @@ F:	Documentation/cdrom/
+@@ -6003,6 +6003,14 @@ F:	Documentation/cdrom/
  F:	drivers/cdrom/cdrom.c
  F:	include/linux/cdrom.h
  
@@ -551,10 +551,10 @@ index f2a2b8e..11d7f45 100644
  M:	Artem Bityutskiy <dedekind1@gmail.com>
  W:	http://www.linux-mtd.infradead.org/
 diff --git a/fs/Kconfig b/fs/Kconfig
-index 3d18530..65b6aa1 100644
+index 771f457..5d4c8c6 100644
 --- a/fs/Kconfig
 +++ b/fs/Kconfig
-@@ -169,6 +169,7 @@ if MISC_FILESYSTEMS
+@@ -171,6 +171,7 @@ if MISC_FILESYSTEMS
  source "fs/adfs/Kconfig"
  source "fs/affs/Kconfig"
  source "fs/ecryptfs/Kconfig"
@@ -563,10 +563,10 @@ index 3d18530..65b6aa1 100644
  source "fs/hfsplus/Kconfig"
  source "fs/befs/Kconfig"
 diff --git a/fs/Makefile b/fs/Makefile
-index e6ec1d3..787332e 100644
+index a7f7cef..672664b 100644
 --- a/fs/Makefile
 +++ b/fs/Makefile
-@@ -84,6 +84,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
+@@ -81,6 +81,7 @@ obj-$(CONFIG_ISO9660_FS)	+= isofs/
  obj-$(CONFIG_HFSPLUS_FS)	+= hfsplus/ # Before hfs to find wrapped HFS+
  obj-$(CONFIG_HFS_FS)		+= hfs/
  obj-$(CONFIG_ECRYPT_FS)		+= ecryptfs/
@@ -575,7 +575,7 @@ index e6ec1d3..787332e 100644
  obj-$(CONFIG_NFS_FS)		+= nfs/
  obj-$(CONFIG_EXPORTFS)		+= exportfs/
 diff --git a/fs/namei.c b/fs/namei.c
-index 24896e8..db22420 100644
+index 5362af9..3183d75 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
 @@ -385,6 +385,7 @@ void release_open_intent(struct nameidata *nd)
@@ -723,11 +723,11 @@ index 0000000..f3c1ac4
 +	  If you say Y here, you can turn on debugging output from Unionfs.
 diff --git a/fs/unionfs/Makefile b/fs/unionfs/Makefile
 new file mode 100644
-index 0000000..86c32ba
+index 0000000..3d45806
 --- /dev/null
 +++ b/fs/unionfs/Makefile
 @@ -0,0 +1,17 @@
-+UNIONFS_VERSION="2.5.7 (for 2.6.36)"
++UNIONFS_VERSION="2.5.7 (for 2.6.37-rc1)"
 +
 +EXTRA_CFLAGS += -DUNIONFS_VERSION=\"$(UNIONFS_VERSION)\"
 +
@@ -1492,9 +1492,9 @@ index 0000000..51ea65e
 +	if (lower_file->f_op->unlocked_ioctl) {
 +		err = lower_file->f_op->unlocked_ioctl(lower_file, cmd, arg);
 +#ifdef CONFIG_COMPAT
-+	} else if (lower_file->f_op->compat_ioctl) {
++	} else if (lower_file->f_op->ioctl) {
 +		err = lower_file->f_op->compat_ioctl(
-+			//lower_file->f_path.dentry->d_inode,
++			lower_file->f_path.dentry->d_inode,
 +			lower_file, cmd, arg);
 +#endif
 +	}
@@ -11171,7 +11171,7 @@ index da317c7..64f1ced 100644
   */
  
 diff --git a/include/linux/magic.h b/include/linux/magic.h
-index eb9800f..9770154 100644
+index ff690d0..37452a3 100644
 --- a/include/linux/magic.h
 +++ b/include/linux/magic.h
 @@ -47,6 +47,8 @@
@@ -11240,10 +11240,10 @@ index 0000000..c84d97e
 +#endif /* _LINUX_UNIONFS_H */
 +
 diff --git a/security/security.c b/security/security.c
-index c53949f..eb71394 100644
+index 3ef5e2a..ee28366 100644
 --- a/security/security.c
 +++ b/security/security.c
-@@ -528,6 +528,7 @@ int security_inode_permission(struct inode *inode, int mask)
+@@ -512,6 +512,7 @@ int security_inode_permission(struct inode *inode, int mask)
  		return 0;
  	return security_ops->inode_permission(inode, mask);
  }
