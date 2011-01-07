@@ -103,6 +103,7 @@ Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
 # sreadahead - get it from http://code.google.com/p/sreadahead/source/browse/trunk/0001-kernel-trace-open.patch
 Patch4:		kernel-desktop-trace-open.patch
+Patch5:		kernel-desktop-super_sched.patch
 
 #### End patches ##
 URL:		http://www.kernel.org/
@@ -413,9 +414,11 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %endif
 
 # kernel-desktop-bootsplash.patch
-%patch0 -p1
+#%patch0 -p1
 # unionfs
+%if %{with unionfs}
 %patch1 -p1
+%endif
 # TuxOnIce
 %if %{with tuxonice}
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
@@ -432,6 +435,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %endif
 # Con Kolivas patchset
 %{__bzip2} -dc %{SOURCE101} | patch -p1 -s
+%patch5 -p1
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION :=.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
