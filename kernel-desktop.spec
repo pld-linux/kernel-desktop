@@ -45,7 +45,7 @@
 
 %define		_basever		2.6.37
 %define		_postver		%{nil}
-%define		_rel			0.1
+%define		_rel			0.2
 
 %define		_enable_debug_packages			0
 
@@ -91,8 +91,8 @@ Source14:	kernel-desktop-unionfs.config
 
 #### Patches ######
 #Source100:	tuxonice-3.1.1.1-for-2.6.35.patch.bz2
-Source100:	http://tuxonice.net/files/current-tuxonice-for-2.6.37.patch.bz2
-# Source100-md5:	64654cc0fa9e895380c53b37b263b7bf
+Source100:	http://tuxonice.net/files/current-tuxonice-for-2.6.37.patch_0.bz2
+# Source100-md5:	6b19322620d4fabfb2db1bf6748020eb
 # Con Kolivas patchset: http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6
 Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.37/2.6.37-ck1/patch-2.6.37-ck1.bz2
 # Source101-md5:	d5c93c7df1692d364c15d8eea0b384c9
