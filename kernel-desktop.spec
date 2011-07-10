@@ -43,8 +43,8 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.38
-%define		_postver		.5
+%define		_basever		2.6.39
+%define		_postver		.2
 %define		_rel			1
 
 %define		_enable_debug_packages			0
@@ -73,10 +73,10 @@ Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	7d471477bfa67546f902da62227fa976
+# Source0-md5:	1aab7a741abe08d42e8eccf20de61e05
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	c8f233d1d31030eb019ab391071e65c2
+# Source1-md5:	6f81e64e790eb7847773eec4f7cbf207
 %endif
 
 Source2:	kernel-desktop-autoconf.h
@@ -90,13 +90,15 @@ Source13:	kernel-desktop-tuxonice.config
 Source14:	kernel-desktop-unionfs.config
 
 #### Patches ######
-Source100:	http://tuxonice.net/files/tuxonice-3.2-for-2.6.38.patch.bz2
-# Source100-md5:	e0e0bb351ff773cf3ad80a65b6671c51
+#Source100:	http://tuxonice.net/files/tuxonice-3.2-for-2.6.39.patch.bz2
+Source100:	http://carme.pld-linux.org/~cactus/snaps/tuxonice-3.2-for-2.6.39.2.patch.bz2
+# Source100-md5:	9e4e823014e8498b75723a02aa273967
 # Con Kolivas patchset: http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6
-Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.38/2.6.38-ck3/patch-2.6.38-ck3.bz2
-# Source101-md5:	88d5b3e0622f8c48dad19ab9ac3c16f0
+Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.39/2.6.39-ck2/patch-2.6.39-ck2.bz2
+# Source101-md5:	ffa0384d5a243d17ca47c9bd0e2217e7
+Source102:		http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.9.2_for_2.6.39.2.diff.gz
+# Source102-md5:	dd8b9d91bcfc446498b090842518af3c
 Patch0:		kernel-desktop-bootsplash.patch
-# http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.7_for_2.6.36.diff.gz
 Patch1:		kernel-desktop-unionfs.patch
 Patch2:		kernel-desktop-small_fixes.patch
 Patch3:		kernel-desktop-grsec-minimal.patch
@@ -437,7 +439,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 
 # unionfs
 %if %{with unionfs}
-%patch1 -p1
+%{__gzip} -dc  %{SOURCE102} | patch -p1 -s
 %endif
 
 # Fix EXTRAVERSION in main Makefile
