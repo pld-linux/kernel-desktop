@@ -43,8 +43,8 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		2.6.39
-%define		_postver		.2
+%define		_basever		3.0
+%define		_postver		.4
 %define		_rel			1
 
 %define		_enable_debug_packages			0
@@ -72,11 +72,11 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v2.6/linux-%{_basever}.tar.bz2
-# Source0-md5:	1aab7a741abe08d42e8eccf20de61e05
+Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{_basever}.tar.bz2
+# Source0-md5:	398e95866794def22b12dfbc15ce89c0
 %if "%{_postver}" != "%{nil}"
-Source1:	http://www.kernel.org/pub/linux/kernel/v2.6/patch-%{version}.bz2
-# Source1-md5:	6f81e64e790eb7847773eec4f7cbf207
+Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
+# Source1-md5:	62ca5f3caed233617127b2b3b7a87d15
 %endif
 
 Source2:	kernel-desktop-autoconf.h
@@ -90,14 +90,14 @@ Source13:	kernel-desktop-tuxonice.config
 Source14:	kernel-desktop-unionfs.config
 
 #### Patches ######
-#Source100:	http://tuxonice.net/files/tuxonice-3.2-for-2.6.39.patch.bz2
-Source100:	http://carme.pld-linux.org/~cactus/snaps/tuxonice-3.2-for-2.6.39.2.patch.bz2
-# Source100-md5:	9e4e823014e8498b75723a02aa273967
+Source100:	http://tuxonice.net/files/current-tuxonice-for-3.0.patch.bz2
+# Source100-md5:	afbd01926c57fc5b82ee6034dc9311e5
 # Con Kolivas patchset: http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6
-Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.39/2.6.39-ck2/patch-2.6.39-ck2.bz2
-# Source101-md5:	ffa0384d5a243d17ca47c9bd0e2217e7
-Source102:		http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.9.2_for_2.6.39.2.diff.gz
-# Source102-md5:	dd8b9d91bcfc446498b090842518af3c
+#Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.39/2.6.39-ck2/patch-2.6.39-ck2.bz2
+Source101:		http://ck.kolivas.org/patches/bfs/test/3.0-sched-bfs-410.patch
+# Source101-md5:	9f505f974c2f52f3acf86be3270948ee
+Source102:		http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.9.2_for_3.0.0-rc4.diff.gz
+# Source102-md5:	a5e946f8adead719d233eb63fc906bb7
 Patch0:		kernel-desktop-bootsplash.patch
 Patch1:		kernel-desktop-unionfs.patch
 Patch2:		kernel-desktop-small_fixes.patch
@@ -434,7 +434,8 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %endif
 
 # Con Kolivas patchset
-%{__bzip2} -dc %{SOURCE101} | patch -p1 -s
+#%{__bzip2} -dc %{SOURCE101} | patch -p1 -s
+patch -p1 < %{SOURCE101}
 #%patch5 -p1
 
 # unionfs
@@ -486,6 +487,7 @@ TuneUpConfigForIX86 () {
 	fi
 	sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
 	%endif
+	sed -i 's:# CONFIG_SCHED_BFS is not set:CONFIG_SCHED_BFS=y:' $1
 	return 0
 %endif
 }
