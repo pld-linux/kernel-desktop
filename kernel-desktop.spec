@@ -98,6 +98,8 @@ Source101:		http://ck.kolivas.org/patches/bfs/test/3.0-sched-bfs-410.patch
 # Source101-md5:	9f505f974c2f52f3acf86be3270948ee
 Source102:		http://ck.kolivas.org/patches/bfs/test/3.0-bfs410-411.patch
 # Source102-md5:	d88b88ec02ca29646a345f5bf0550dc3
+Source103:		http://carme.pld-linux.org/~cactus/snaps/kernel-desktop-sched_fix.patch
+# Source103-md5:	68a03e3b1b69ae94d8ec8fb7b7075c67
 Source110:		http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.0.4.diff.gz
 # Source110-md5:	5398834bc41b4be7e95f5b66de465980
 Patch0:		kernel-desktop-bootsplash.patch
@@ -439,6 +441,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 #%{__bzip2} -dc %{SOURCE101} | patch -p1 -s
 patch -p1 < %{SOURCE101}
 patch -p1 < %{SOURCE102}
+patch -p0 < %{SOURCE103}
 #%patch5 -p1
 
 # unionfs
@@ -448,9 +451,6 @@ patch -p1 < %{SOURCE102}
 
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:-%{alt_kernel}}#g' Makefile
-
-# temp. fix of sched.c
-sed -i 's#set_task_cpu(struct task_struct *p, unsigned int new_cpu)#set_task_cpu(struct task_struct *p, int new_cpu)#' kernel/sched.c
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
