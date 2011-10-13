@@ -45,7 +45,7 @@
 
 %define		_basever		3.0
 %define		_postver		.4
-%define		_rel			0.5
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -96,8 +96,10 @@ Source100:	http://tuxonice.net/files/current-tuxonice-for-3.0.patch.bz2
 #Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.39/2.6.39-ck2/patch-2.6.39-ck2.bz2
 Source101:		http://ck.kolivas.org/patches/bfs/test/3.0-sched-bfs-410.patch
 # Source101-md5:	9f505f974c2f52f3acf86be3270948ee
-Source102:		http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.9.2_for_3.0.0-rc4.diff.gz
-# Source102-md5:	a5e946f8adead719d233eb63fc906bb7
+Source102:		http://ck.kolivas.org/patches/bfs/test/3.0-bfs410-411.patch
+# Source102-md5:	d88b88ec02ca29646a345f5bf0550dc3
+Source110:		http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.0.4.diff.gz
+# Source110-md5:	5398834bc41b4be7e95f5b66de465980
 Patch0:		kernel-desktop-bootsplash.patch
 Patch1:		kernel-desktop-unionfs.patch
 Patch2:		kernel-desktop-small_fixes.patch
@@ -436,15 +438,16 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # Con Kolivas patchset
 #%{__bzip2} -dc %{SOURCE101} | patch -p1 -s
 patch -p1 < %{SOURCE101}
+patch -p1 < %{SOURCE102}
 #%patch5 -p1
 
 # unionfs
 %if %{with unionfs}
-%{__gzip} -dc  %{SOURCE102} | patch -p1 -s
+%{__gzip} -dc  %{SOURCE110} | patch -p1 -s
 %endif
 
 # Fix EXTRAVERSION in main Makefile
-sed -i 's#EXTRAVERSION :=.*#EXTRAVERSION = %{_postver}-%{alt_kernel}#g' Makefile
+sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:-%{alt_kernel}}#g' Makefile
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
