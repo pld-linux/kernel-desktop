@@ -449,6 +449,9 @@ patch -p1 < %{SOURCE102}
 # Fix EXTRAVERSION in main Makefile
 sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:-%{alt_kernel}}#g' Makefile
 
+# temp. fix of sched.c
+sed -i 's#set_task_cpu(struct task_struct *p, unsigned int new_cpu)#set_task_cpu(struct task_struct *p, int new_cpu)#' kernel/sched.c
+
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
 
