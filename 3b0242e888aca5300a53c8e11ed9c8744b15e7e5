@@ -1,0 +1,2 @@
+- fix BFS on x86_64
+- use macro for sed path
