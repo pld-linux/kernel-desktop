@@ -449,7 +449,7 @@ patch -p1 < %{SOURCE101}
 %endif
 
 # Fix EXTRAVERSION in main Makefile
-%__sed -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:-%{alt_kernel}}#g' Makefile
+%{__sed} -i 's#EXTRAVERSION =.*#EXTRAVERSION = %{?alt_kernel:-%{alt_kernel}}#g' Makefile
 
 # cleanup backups after patching
 find '(' -name '*~' -o -name '*.orig' -o -name '.gitignore' ')' -print0 | xargs -0 -r -l512 rm -f
@@ -464,33 +464,33 @@ TuneUpConfigForIX86 () {
 	pae=yes
 	%endif
 	%ifnarch i386
-	%__sed -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' $1
+	%{__sed} -i 's:CONFIG_M386=y:# CONFIG_M386 is not set:' $1
 	%endif
 	%ifarch i486
-	%__sed -i 's:# CONFIG_M486 is not set:CONFIG_M486=y:' $1
+	%{__sed} -i 's:# CONFIG_M486 is not set:CONFIG_M486=y:' $1
 	%endif
 	%ifarch i586
-	%__sed -i 's:# CONFIG_M586 is not set:CONFIG_M586=y:' $1
+	%{__sed} -i 's:# CONFIG_M586 is not set:CONFIG_M586=y:' $1
 	%endif
 	%ifarch i686
-	%__sed -i 's:# CONFIG_M686 is not set:CONFIG_M686=y:' $1
+	%{__sed} -i 's:# CONFIG_M686 is not set:CONFIG_M686=y:' $1
 	%endif
 	%ifarch pentium3
-	%__sed -i 's:# CONFIG_MPENTIUMIII is not set:CONFIG_MPENTIUMIII=y:' $1
+	%{__sed} -i 's:# CONFIG_MPENTIUMIII is not set:CONFIG_MPENTIUMIII=y:' $1
 	%endif
 	%ifarch pentium4
-	%__sed -i 's:# CONFIG_MPENTIUM4 is not set:CONFIG_MPENTIUM4=y:' $1
+	%{__sed} -i 's:# CONFIG_MPENTIUM4 is not set:CONFIG_MPENTIUM4=y:' $1
 	%endif
 	%ifarch athlon
-	%__sed -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
+	%{__sed} -i 's:# CONFIG_MK7 is not set:CONFIG_MK7=y:' $1
 	%endif
 	%ifarch i686 athlon pentium3 pentium4
 	if [ "$pae" = "yes" ]; then
-		%__sed -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
-		%__sed -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
+		%{__sed} -i "s:CONFIG_HIGHMEM4G=y:# CONFIG_HIGHMEM4G is not set:" $1
+		%{__sed} -i "s:# CONFIG_HIGHMEM64G is not set:CONFIG_HIGHMEM64G=y\nCONFIG_X86_PAE=y:" $1
 		echo "CONFIG_I2O_EXT_ADAPTEC_DMA64=y" >> $1
 	fi
-	%__sed -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
+	%{__sed} -i 's:CONFIG_MATH_EMULATION=y:# CONFIG_MATH_EMULATION is not set:' $1
 	%endif
 	return 0
 %endif
@@ -505,21 +505,21 @@ BuildConfig() {
 	cat $RPM_SOURCE_DIR/kernel-desktop-$Config.config > %{defconfig}
 	TuneUpConfigForIX86 %{defconfig}
 
-%{?debug:%__sed -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" %{defconfig}}
-%{?debug:%__sed -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" %{defconfig}}
-%{?debug:%__sed -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" %{defconfig}}
+%{?debug:%{__sed} -i "s:# CONFIG_DEBUG_SLAB is not set:CONFIG_DEBUG_SLAB=y:" %{defconfig}}
+%{?debug:%{__sed} -i "s:# CONFIG_DEBUG_PREEMPT is not set:CONFIG_DEBUG_PREEMPT=y:" %{defconfig}}
+%{?debug:%{__sed} -i "s:# CONFIG_RT_DEADLOCK_DETECT is not set:CONFIG_RT_DEADLOCK_DETECT=y:" %{defconfig}}
 
-%__sed -i 's:# CONFIG_SCHED_BFS is not set:CONFIG_SCHED_BFS=y:' %{defconfig}
+%{__sed} -i 's:# CONFIG_SCHED_BFS is not set:CONFIG_SCHED_BFS=y:' %{defconfig}
 	
 %ifarch i586
-%__sed -i 's:CONFIG_X86_CMOV=y:# CONFIG_X86_CMOV is not set:' %{defconfig}
+%{__sed} -i 's:CONFIG_X86_CMOV=y:# CONFIG_X86_CMOV is not set:' %{defconfig}
 %endif
 
 %if %{with laptop}
-%__sed -i "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:" %{defconfig}
-%__sed -i "s:CONFIG_HZ_2000=y:# CONFIG_HZ_2000 is not set:" %{defconfig}
-%__sed -i "s:CONFIG_HZ=2000:CONFIG_HZ=100:" %{defconfig}
-%__sed -i "s:# CONFIG_NO_HZ is not set:CONFIG_NO_HZ=y:" %{defconfig}
+%{__sed} -i "s:# CONFIG_HZ_100 is not set:CONFIG_HZ_100=y:" %{defconfig}
+%{__sed} -i "s:CONFIG_HZ_2000=y:# CONFIG_HZ_2000 is not set:" %{defconfig}
+%{__sed} -i "s:CONFIG_HZ=2000:CONFIG_HZ=100:" %{defconfig}
+%{__sed} -i "s:# CONFIG_NO_HZ is not set:CONFIG_NO_HZ=y:" %{defconfig}
 %endif
 
 %if %{with tuxonice}
@@ -535,7 +535,7 @@ cat %{SOURCE14} >> %{defconfig}
 %endif
 
 %if %{with sreadahead}
-#%__sed -i "s:# CONFIG_OPEN_TRACER is not set:CONFIG_OPEN_TRACER=y:" %{defconfig}
+#%{__sed} -i "s:# CONFIG_OPEN_TRACER is not set:CONFIG_OPEN_TRACER=y:" %{defconfig}
 echo "CONFIG_OPEN_TRACER=y" >> %{defconfig}
 %endif
 
