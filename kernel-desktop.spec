@@ -44,8 +44,8 @@
 %define		have_isa	1
 
 %define		_basever		3.0
-%define		_postver		.6
-%define		_rel			2
+%define		_postver		.8
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -75,11 +75,8 @@ Group:		Base/Kernel
 Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{_basever}.tar.bz2
 # Source0-md5:	398e95866794def22b12dfbc15ce89c0
 %if "%{_postver}" != "%{nil}"
-#Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
-
-# for now: ftp://ftp.archlinux.org/other/linux/patch-3.0.6.gz
-Source1:	ftp://ftp.archlinux.org/other/linux/patch-%{version}.gz
-# Source1-md5:	792f01cc8874d03a84e47fd0e7065df8
+Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
+# Source1-md5:	49618d8c7a71549c8870eb709c7d3f81
 %endif
 
 Source2:	kernel-desktop-autoconf.h
