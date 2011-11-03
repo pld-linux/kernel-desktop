@@ -412,8 +412,7 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %setup -q -n linux-%{_basever}
 
 %if "%{_postver}" != "%{nil}"
-#%{__bzip2} -dc %{SOURCE1} | patch -p1 -s
-%{__gzip} -dc %{SOURCE1} | patch -p1 -s
+%{__bzip2} -dc %{SOURCE1} | patch -p1 -s
 %endif
 
 # kernel-desktop-bootsplash.patch
