@@ -93,10 +93,12 @@ Source14:	kernel-desktop-unionfs.config
 Source100:	http://tuxonice.net/files/current-tuxonice-for-3.0.patch.bz2
 # Source100-md5:	afbd01926c57fc5b82ee6034dc9311e5
 # Con Kolivas patchset: http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6
-#Source101:		http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.39/2.6.39-ck2/patch-2.6.39-ck2.bz2
-Source101:		http://ck.kolivas.org/patches/bfs/3.0.0/3.0-sched-bfs-413.patch
+#Source101:	http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.39/2.6.39-ck2/patch-2.6.39-ck2.bz2
+Source101:	http://ck.kolivas.org/patches/bfs/3.0.0/3.0-sched-bfs-413.patch
 # Source101-md5:	c14d3f82fabde4e39f2ea49a7fc7f0df
-Source110:		http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.0.4.diff.gz
+Source102:	http://carme.pld-linux.org/~cactus/snaps/linux-3.0.8-bfs_fix.patch
+# Source102-md5:	2e96dfd9aacf2c7f4799db9f5b7eb9eb
+Source110:	http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.0.4.diff.gz
 # Source110-md5:	5398834bc41b4be7e95f5b66de465980
 Patch0:		kernel-desktop-bootsplash.patch
 Patch1:		kernel-desktop-unionfs.patch
@@ -432,6 +434,9 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 %if %{with tuxonice}
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
 %endif
+
+# first fix source for bfs
+patch -p1 < %{SOURCE102}
 
 # Con Kolivas patchset
 #%{__bzip2} -dc %{SOURCE101} | patch -p1 -s
