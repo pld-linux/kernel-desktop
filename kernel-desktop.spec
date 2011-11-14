@@ -44,8 +44,8 @@
 %define		have_isa	1
 
 %define		_basever		3.0
-%define		_postver		.8
-%define		_rel			2
+%define		_postver		.9
+%define		_rel			1
 
 %define		_enable_debug_packages			0
 
@@ -76,7 +76,7 @@ Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{_basever}.tar.bz2
 # Source0-md5:	398e95866794def22b12dfbc15ce89c0
 %if "%{_postver}" != "%{nil}"
 Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
-# Source1-md5:	49618d8c7a71549c8870eb709c7d3f81
+# Source1-md5:	0154d21e63d3f14fc1084cdb130fab2d
 %endif
 
 Source2:	kernel-desktop-autoconf.h
