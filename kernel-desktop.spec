@@ -43,8 +43,8 @@
 %define		have_sound	1
 %define		have_isa	1
 
-%define		_basever		3.0
-%define		_postver		.9
+%define		_basever		3.1
+%define		_postver		.8
 %define		_rel			1
 
 %define		_enable_debug_packages			0
@@ -72,11 +72,11 @@ Release:	%{_rel}
 Epoch:		3
 License:	GPL v2
 Group:		Base/Kernel
-Source0:	http://www.kernel.org/pub/linux/kernel/v3.0/linux-%{_basever}.tar.bz2
-# Source0-md5:	398e95866794def22b12dfbc15ce89c0
+Source0:	http://www.kernel.org/pub/linux/kernel/v3.x/linux-%{_basever}.tar.bz2
+# Source0-md5:	8d43453f8159b2332ad410b19d86a931
 %if "%{_postver}" != "%{nil}"
-Source1:	http://www.kernel.org/pub/linux/kernel/v3.0/patch-%{version}.bz2
-# Source1-md5:	0154d21e63d3f14fc1084cdb130fab2d
+Source1:	http://www.kernel.org/pub/linux/kernel/v3.x/patch-%{version}.bz2
+# Source1-md5:	54fac8e4b0b55201e012ef0337a6cc87
 %endif
 
 Source2:	kernel-desktop-autoconf.h
@@ -90,16 +90,17 @@ Source13:	kernel-desktop-tuxonice.config
 Source14:	kernel-desktop-unionfs.config
 
 #### Patches ######
-Source100:	http://tuxonice.net/files/current-tuxonice-for-3.0.patch.bz2
-# Source100-md5:	afbd01926c57fc5b82ee6034dc9311e5
+#Source100:	http://tuxonice.net/files/current-tuxonice-for-3.0.patch.bz2
+Source100:	http://user.it.uu.se/~mikpe/linux/patches/tuxonice/tuxonice-3.2-for-3.1.patch.bz2
+# Source100-md5:	99662fc0ae86d5d5d9e1a920445389cb
 # Con Kolivas patchset: http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6
 #Source101:	http://www.kernel.org/pub/linux/kernel/people/ck/patches/2.6/2.6.39/2.6.39-ck2/patch-2.6.39-ck2.bz2
-Source101:	http://ck.kolivas.org/patches/bfs/3.0.0/3.0-sched-bfs-413.patch
-# Source101-md5:	c14d3f82fabde4e39f2ea49a7fc7f0df
-Source102:	http://carme.pld-linux.org/~cactus/snaps/linux-3.0.8-bfs_fix.patch
-# Source102-md5:	2e96dfd9aacf2c7f4799db9f5b7eb9eb
-Source110:	http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.0.4.diff.gz
-# Source110-md5:	5398834bc41b4be7e95f5b66de465980
+Source101:	http://ck.kolivas.org/patches/bfs/3.1.0/3.1-sched-bfs-415.patch
+# Source101-md5:	ca540400289cdf0550b3796899212a1e
+Source102:	http://user.it.uu.se/~mikpe/linux/patches/tuxonice/tuxonice-3.2-for-3.1-fix-1.patch
+# Source102-md5:	dbec567331a93d38ac25978d2cf71c36
+Source110:	http://download.filesystems.org/unionfs/unionfs-2.x/unionfs-2.5.10_for_3.1.0-rc4.diff.gz
+# Source110-md5:	bea58cf1e8628885fada256494d515fa
 Patch0:		kernel-desktop-bootsplash.patch
 Patch1:		kernel-desktop-unionfs.patch
 Patch2:		kernel-desktop-small_fixes.patch
@@ -433,10 +434,9 @@ Pakiet zawiera dokumentację do jądra Linuksa pochodzącą z katalogu
 # TuxOnIce
 %if %{with tuxonice}
 %{__bzip2} -dc %{SOURCE100} | patch -p1 -s
-%endif
-
-# first fix source for bfs
+# first fix tuxonice
 patch -p1 < %{SOURCE102}
+%endif
 
 # Con Kolivas patchset
 #%{__bzip2} -dc %{SOURCE101} | patch -p1 -s
